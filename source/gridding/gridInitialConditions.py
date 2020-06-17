@@ -38,7 +38,7 @@ from config import figure_path
 
 anc_data_path='../../anc_data/'
 dx=50000
-xptsG, yptsG, latG, lonG, proj, crs = cF.create_grid(dxRes=dx)
+xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 print(xptsG)
 print(yptsG)
 
@@ -68,7 +68,7 @@ print(t2mdurGclim.shape)
 w99=cF.getWarren(lonG, latG, 7)
 
 
-for yearT in range(2018, 2019+1, 1):
+for yearT in range(2010, 2015+1, 1):
 	if (yearT==1987):
  		continue
 
