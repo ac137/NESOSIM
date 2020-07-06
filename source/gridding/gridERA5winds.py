@@ -32,6 +32,7 @@ import utils as cF
 import os
 import pyproj
 import cartopy.crs as ccrs
+from netCDF4 import Dataset
 
 from config import reanalysis_raw_path
 from config import forcing_save_path
@@ -45,7 +46,7 @@ def get_ERA5_wind(proj, era5_data_path, yearStr, monStr, numday, freq=6, lowerla
 
 	print(yearStr, monStr, numday)
 
-	f1 = Dataset(era5_data_path+'/ERA5/t2m_uv_pr/e5_t2m_uv_pr_daily_{}.nc'.format(yearStr), 'r')
+	f1 = Dataset(era5_data_path+'/t2m_uv_pr/e5_t2m_uv_pr_daily_{}.nc'.format(yearStr), 'r')
 
 	lon = f1.variables['longitude'][:]
 	
@@ -118,7 +119,7 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 		print('Wind day:', dayT)
 		
 		#in  kg/m2 per day
-		xptsM, yptsM, lonsM, latsM, WindMag =cF.get_ERA5_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
+		xptsM, yptsM, lonsM, latsM, WindMag =get_ERA5_wind(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
 
 		windMagG = griddata((xptsM.flatten(), yptsM.flatten()), WindMag.flatten(), (xptsG, yptsG), method='linear')
 
@@ -128,7 +129,7 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	for y in range(2017, 2017+1, 1):
 		print (y)
 		main(y, startMonth=0,endMonth=4)
 
