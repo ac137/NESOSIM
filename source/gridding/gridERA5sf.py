@@ -32,6 +32,7 @@ import utils as cF
 import os
 import pyproj
 import cartopy.crs as ccrs
+from netCDF4 import Dataset
 
 from config import reanalysis_raw_path
 from config import forcing_save_path
@@ -42,7 +43,7 @@ def get_ERA5_precip(proj, era5_data_path, yearStr, monStr, numday, lowerlatlim=0
 
 	print(yearStr, monStr, numday)
 
-	f1 = Dataset(era5_data_path+'/ERA5/sf/e5_sf_daily_{}.nc'.format(yearStr), 'r')
+	f1 = Dataset(era5_data_path+'/sf/e5_sf_daily_{}.nc'.format(yearStr))
 
 	# Units given in m of freshwater in the previous 1 hour period. 
 	# So to convert to kg/m2/s multiply by den
@@ -117,7 +118,7 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 		print('Precip day:', dayT, dayinmonth)
 		
 		#in  kg/m2 per day
-		xptsM, yptsM, lonsM, latsM, Precip =cF.get_ERA5_precip_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
+		xptsM, yptsM, lonsM, latsM, Precip =get_ERA5_precip(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
 		print(Precip)
 		PrecipG = griddata((xptsM.flatten(), yptsM.flatten()), Precip.flatten(), (xptsG, yptsG), method='linear')
 
@@ -127,7 +128,7 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	for y in range(2017, 2017+1, 1):
 		print (y)
 		main(y)
 
