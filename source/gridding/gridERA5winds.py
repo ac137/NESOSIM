@@ -39,6 +39,36 @@ from config import figure_path
 
 
 
+# my files have this stored in single days; 
+# just keep the function here for now so as not to have to change all of utils
+def get_ERA5_wind(proj, era5_data_path, yearStr, monStr, numday, freq=6, lowerlatlim=0):
+
+	print(yearStr, monStr, numday)
+
+	f1 = Dataset(era5_data_path+'/ERA5/t2m_uv_pr/e5_t2m_uv_pr_daily_{}.nc'.format(yearStr), 'r')
+
+	lon = f1.variables['longitude'][:]
+	
+	lat = f1.variables['latitude'][:]
+	
+	#print lat[1]-lat[0]
+	lowerLatidx=int((90-lowerlatlim)/(lat[0]-lat[1]))
+	#print lowerLatidx
+	lat=lat[0:lowerLatidx]
+
+	# Had to switch lat and lon around when using proj!
+	xpts, ypts=proj(*np.meshgrid(lon, lat))
+
+	# data is daily averaged here
+
+	u10=f1.variables['u10'][numday:numday+1, 0:lowerLatidx, :].astype(np.float16)
+	v10=f1.variables['v10'][numday:numday+1:, 0:lowerLatidx, :].astype(np.float16)
+	mag=np.mean(np.sqrt((u10**2)+(v10**2)), axis=0)
+
+
+	return xpts, ypts, lon, lat, mag
+
+
 def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Winds/ERA5/', fig_path=figure_path+'Winds/ERA5/', anc_data_path='../../anc_data/'):
 
 
