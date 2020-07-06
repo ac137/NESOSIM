@@ -740,11 +740,11 @@ def getSTOSIWIGday(m, dayFiles, delim, mask_hs=1):
 		snowDepth= snowRange*convFactor
 
 		if (mask_hs==1):
-			goodhs=where((snowDepth>=0.)&(snowDepth<=1.5))
-			lats = array(lats[goodhs])
-			lons = array(lons[goodhs])
+			goodhs=np.where((snowDepth>=0.)&(snowDepth<=1.5))
+			lats = np.array(lats[goodhs])
+			lons = np.array(lons[goodhs])
 
-			snowDepth = array(snowDepth[goodhs])
+			snowDepth = np.array(snowDepth[goodhs])
 
 		lats_total.extend(lats)
 		lons_total.extend(lons)
@@ -928,7 +928,7 @@ def get_budgets2layers_day(outStrings, outPath, folderStr, dayT, totalOutStr, re
 
 	data=xr.open_dataset(outPath+folderStr+'/budgets/'+totalOutStr+'.nc') 
 
-	iceConcDay=array(data['iceConc'][dayT])
+	iceConcDay=np.array(data['iceConc'][dayT])
 	#iceConcDay=ma.masked_where(iceConcDay<0.15, iceConcDay)
 
 
@@ -961,7 +961,7 @@ def get_budgets2layers_day(outStrings, outPath, folderStr, dayT, totalOutStr, re
 				precipT=data[outString][0:dayT] #.fillna(0)
 			else:
 				precipT=data[outString]
-			snowDataT = sum(precipT/200., axis=0)
+			snowDataT = np.sum(precipT/200., axis=0)
 
 		else:
 
@@ -980,7 +980,7 @@ def get_budgets2layers_day(outStrings, outPath, folderStr, dayT, totalOutStr, re
 
 		snowBudget.append(snowDataT)
 
-	if (size(outStrings)>1):
+	if (np.size(outStrings)>1):
 		return snowBudget
 	else:
 		print ('1 var')
