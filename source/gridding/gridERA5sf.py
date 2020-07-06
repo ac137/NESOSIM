@@ -38,6 +38,37 @@ from config import forcing_save_path
 from config import figure_path
 
 
+def get_ERA5_precip(proj, era5_data_path, yearStr, monStr, numday, lowerlatlim=0, varStr='sf'):
+
+	print(yearStr, monStr, numday)
+
+	f1 = Dataset(era5_data_path+'/ERA5/sf/e5_sf_daily_{}.nc'.format(yearStr), 'r')
+
+	# Units given in m of freshwater in the previous 1 hour period. 
+	# So to convert to kg/m2/s multiply by den
+	#var=var*1000./(60.*60.*12.)
+
+	lon = f1.variables['longitude'][:]
+	
+	lat = f1.variables['latitude'][:]
+	
+	#print lat[1]-lat[0]
+	lowerLatidx=int((90-lowerlatlim)/(lat[0]-lat[1]))
+	#print lowerLatidx
+	lat=lat[0:lowerLatidx]
+
+	# Had to switch lat and lon around when using proj!
+	xpts, ypts=proj(*np.meshgrid(lon, lat))
+
+	# in units of m of water so times by 1000, the density of water, to express this as kg/m2
+	# data is every 1 hour (starting at 1 am on the first day of each month), so sum over the first 24 time intervals 
+	#(index 0=1am to 23=midnight)
+
+	varT=f1.variables[varStr][numday:numday+1, 0:lowerLatidx, :].astype(np.float16)*1000.
+	
+	var=np.sum(varT, axis=0)
+
+	return xpts, ypts, lon, lat, var
 
 
 def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Precip/ERA5/', fig_path=figure_path+'Precip/ERA5/', anc_data_path='../../anc_data/'):
