@@ -546,19 +546,24 @@ def read_icebridge_snowdepths(proj, dataPath, year, mask=1):
 	snow_thickness_days=[]
 	dates=[]
 	if (year>2013):
-		files = glob(dataPath+'/quicklook/*'+str(year)+'*/*.txt')
+		files = glob(dataPath+'/*'+str(year)+'*/*.txt')
 	else:
-		files = glob(dataPath+'/final/*'+str(year)+'*/*.txt')
+		files = glob(dataPath+'/*'+str(year)+'*/*.txt')
 	
 	for x in range(np.size(files)):
+		print(files[x])
 		data = np.genfromtxt(files[x], delimiter=',', skip_header=1, dtype=str)
 		# data is a table-like structure (a numpy recarray) in which you can access columns and rows easily
 		lats = data[:, 0].astype(float)
 		lons = data[:, 1].astype(float)
 		snow_thickness = data[:, 7].astype(float)
 		xpts,ypts = proj(lons, lats)
+		
+		if year < 2013:
 
-		date=files[x][-12:-4]
+			date=files[x][-12:-4]
+		else:
+			date=files[x][-19:-11]
 
 		if (mask==1):
 			good_data=np.where((snow_thickness>=0.)&(snow_thickness<=2.))
