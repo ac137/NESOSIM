@@ -25,9 +25,13 @@ wpf=5.8e-7
 wpt=5
 llf=5.8e-7
 
+day_start = 1
+month_start = 9
+year_start = 2010
+
 # hardcoding this for now
 dirname_nesosim = 'ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
-fname_nesosim = 'ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11-01092018-30042019'
+fname_nesosim = 'ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11-0109{}-3004{}'.format(year_start,year_start+1)
 
 # dirname_nesosim = 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
 # fname_nesosim = 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11-01092018-30042019'
@@ -41,17 +45,14 @@ fname_nesosim = 'ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_W
 # clean up later
 outPath = model_save_path
 folderStr = dirname_nesosim
-dayT = 217 # for 2019-04-06 (testing)
-day_val = 217
+
 totalOutStr = fname_nesosim
 
 file_list = os.listdir(OIBpath)
 print(file_list)
 
 # start day for when NESOSIM was run (9 september)
-day_start = 1
-month_start = 9
-year_start = 2018
+
 
 date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year_start,month_start,day_start))
 
@@ -63,7 +64,7 @@ NESOSIM_list = []
 
 
 for f in file_list:
-	if f.startswith('2019'):
+	if f.startswith(str(year_start+1)):
 		# select only 2019 for now
 		print(f[:8])
 
@@ -139,7 +140,9 @@ plt.plot(x_plot,slope*x_plot+intercept)
 plt.text(0.1,0.1,'r = {:01.2f}'.format(r_val))
 plt.xlabel('NESOSIM snow depth')
 plt.ylabel('OIB snow depth')
-plt.title('NESOSIM vs OIB for 2019')
-plt.show()
+plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
+# plt.show()
+plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
+plt.close()
 
 
