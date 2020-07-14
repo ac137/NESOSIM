@@ -559,9 +559,12 @@ def read_icebridge_snowdepths(proj, dataPath, year, mask=1):
 		snow_thickness = data[:, 7].astype(float)
 		xpts,ypts = proj(lons, lats)
 		
-		if year < 2013:
+		if year < 2013 or year > 2015:
 
 			date=files[x][-12:-4]
+		elif year == 2013:
+			date=files[x][-22:-14] #do some regex here instead sometime
+			print(date)
 		else:
 			date=files[x][-19:-11]
 
