@@ -47,7 +47,7 @@ def bin_oib(xptsOIB, yptsOIB, xptsG, yptsG, oibVar):
 	return oibG
 
 dx=50000
-year=2018
+year=2017
 extraStr='v11'
 xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 print(xptsG)
