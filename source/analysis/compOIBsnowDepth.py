@@ -27,7 +27,7 @@ llf=5.8e-7
 
 day_start = 1
 month_start = 9
-year_start = 2010
+year_start = 2017
 
 # hardcoding this for now
 dirname_nesosim = 'ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
@@ -103,50 +103,71 @@ for f in file_list:
 			# plt.colorbar()
 			# plt.show()
 
+			# mask out values less than/greater than limits
+
+			snowDepthM[snowDepthM<=0.04] = np.nan
+			snowDepthM[snowDepthM>0.8] = np.nan
+			depth_OIB[depth_OIB<=0.04] = np.nan
+			depth_OIB[depth_OIB>0.8] = np.nan
+
+
 			# flatten and select non-nan values for linear regression
 			x_val, y_val = np.ravel(snowDepthM),np.ravel(depth_OIB)
 			nan_mask= ~np.isnan(x_val) & ~np.isnan(y_val)
 
-			# linear regression, statistics, etc.
-			slope,intercept,r_val,p_val,stderr = st.linregress(x_val[nan_mask],y_val[nan_mask])
 
-			print('slope and intercept ', slope, intercept)
-			# print('r ',r_val)
+			# print(x_val[nan_mask])
 
-			# scatter plot with regression; do kde later? 
-			# not many points for single day; do this with all available data as next step
-			# plt.scatter(x_val,y_val)
-			# plt.plot(x_val[nan_mask],slope*x_val[nan_mask]+intercept)
-			# plt.title('NESOSIM vs OIB snow depth for 2019-04-06')
-			# plt.xlabel('OIB snow depth (m)')
-			# plt.ylabel('NESOSIM snow depth (m)')
-			# plt.show()
 
-			NESOSIM_list.append(x_val[nan_mask])
-			OIB_obs_list.append(y_val[nan_mask])
+			# check if nonempty
+
+			if len(x_val[nan_mask] > 0):
+
+				# linear regression, statistics, etc.
+				slope,intercept,r_val,p_val,stderr = st.linregress(x_val[nan_mask],y_val[nan_mask])
+
+				print('slope and intercept ', slope, intercept)
+				# print('r ',r_val)
+
+				# scatter plot with regression; do kde later? 
+				# not many points for single day; do this with all available data as next step
+				# plt.scatter(x_val,y_val)
+				# plt.plot(x_val[nan_mask],slope*x_val[nan_mask]+intercept)
+				# plt.title('NESOSIM vs OIB snow depth for 2019-04-06')
+				# plt.xlabel('OIB snow depth (m)')
+				# plt.ylabel('NESOSIM snow depth (m)')
+				# plt.show()
+
+				NESOSIM_list.append(x_val[nan_mask])
+				OIB_obs_list.append(y_val[nan_mask])
+			else:
+				print('no valid values')
 
 # collected all the obs into 2 lists; convert to 1d arrays
 
 OIB_obs_arr = np.concatenate(OIB_obs_list)
 NESOSIM_arr = np.concatenate(NESOSIM_list)
 
+rmse = np.sqrt(np.mean((OIB_obs_arr - NESOSIM_arr)**2))
+
 slope,intercept,r_val,p_val,stderr = st.linregress(NESOSIM_arr,OIB_obs_arr)
 
 #x_plot = np.arange(0,0.85,0.1)
 
 print(slope, intercept, r_val)
+print(rmse)
 plt.scatter(NESOSIM_arr,OIB_obs_arr)
 #plt.plot(x_plot,slope*x_plot+intercept)
 
 plt.plot(NESOSIM_arr,slope*NESOSIM_arr+intercept)
 
 
-plt.text(0.1,0.1,'r = {:01.2f}'.format(r_val))
+plt.text(0.1,0.1,'r = {:01.2f} \n RMSE = {:01.2f}'.format(r_val, rmse))
 plt.xlabel('NESOSIM snow depth')
 plt.ylabel('OIB snow depth')
 plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
-plt.show()
-#plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
-#plt.close()
+# plt.show()
+plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
+plt.close()
 
 
