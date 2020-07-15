@@ -108,9 +108,9 @@ for f in file_list:
 			nan_mask= ~np.isnan(x_val) & ~np.isnan(y_val)
 
 			# linear regression, statistics, etc.
-			# slope,intercept,r_val,p_val,stderr = st.linregress(x_val[nan_mask],y_val[nan_mask])
+			slope,intercept,r_val,p_val,stderr = st.linregress(x_val[nan_mask],y_val[nan_mask])
 
-			# print('slope and intercept ', slope, intercept)
+			print('slope and intercept ', slope, intercept)
 			# print('r ',r_val)
 
 			# scatter plot with regression; do kde later? 
@@ -132,17 +132,21 @@ NESOSIM_arr = np.concatenate(NESOSIM_list)
 
 slope,intercept,r_val,p_val,stderr = st.linregress(NESOSIM_arr,OIB_obs_arr)
 
-x_plot = np.arange(0,0.85,0.1)
+#x_plot = np.arange(0,0.85,0.1)
 
 print(slope, intercept, r_val)
 plt.scatter(NESOSIM_arr,OIB_obs_arr)
-plt.plot(x_plot,slope*x_plot+intercept)
+#plt.plot(x_plot,slope*x_plot+intercept)
+
+plt.plot(NESOSIM_arr,slope*NESOSIM_arr+intercept)
+
+
 plt.text(0.1,0.1,'r = {:01.2f}'.format(r_val))
 plt.xlabel('NESOSIM snow depth')
 plt.ylabel('OIB snow depth')
 plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
-# plt.show()
-plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
-plt.close()
+plt.show()
+#plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
+#plt.close()
 
 
