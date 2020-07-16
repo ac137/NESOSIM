@@ -168,8 +168,8 @@ anc_data_pathT='../../anc_data/'
 dx=50000.
 
 
-startYear=2017
-endYear=2018
+startYear=2010
+endYear=2015
 numYears=endYear-startYear+1
 years=[str(year) for year in range(startYear, endYear+1)]
 years.append('All years')
@@ -195,7 +195,8 @@ products_plot=['GSFC']
 reanalysis='ERA5'
 
 # make this selectable better later (for now just using full path)
-folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
+#folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
+folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
 snowDepthOIBAllProducts=[]
 snowDepthMMAllProducts=[]
 
