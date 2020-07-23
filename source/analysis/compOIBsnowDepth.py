@@ -12,7 +12,6 @@ from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 
 
 
-OIBpath = forcing_save_path + 'OIB/'
 
 
 # file path construction etc. - fix later to work with different files/settings/etc.
@@ -28,6 +27,9 @@ llf=5.8e-7
 day_start = 1
 month_start = 9
 year_start = 2017
+
+OIBpath = forcing_save_path + 'OIB/{}/'.format(year_start+1)
+
 
 # hardcoding this for now
 dirname_nesosim = 'ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
