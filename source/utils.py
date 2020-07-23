@@ -30,6 +30,8 @@ import pyproj
 import numpy.ma as ma
 from scipy.ndimage.filters import gaussian_filter
 import datetime
+from astropy.convolution import convolve
+from astropy.convolution import Gaussian2DKernel
 
 def getLeapYr(year):
 	leapYrs=[1976, 1980, 1984, 1988, 1992, 1996, 2000, 2004, 2008, 2012, 2016, 2020]
@@ -96,6 +98,43 @@ def int_smooth_drifts(xptsG, yptsG, xptsF, yptsF, latsF, driftFmon, sigma_factor
 
 	return driftFG
 
+def int_smooth_drifts_v2(xptsG, yptsG, xptsF, yptsF, latsF, driftFmon, sigma_factor=1, truncate=1):
+	# use info from https://stackoverflow.com/questions/18697532/gaussian-filtering-a-image-with-nan-in-python
+	# to better rapply to nan regions
+	nx=xptsG.shape[0]
+	ny=xptsG.shape[1]
+
+	driftFG=ma.masked_all((2, nx, ny))
+
+	# Bodge way of making a mask
+	badData = np.zeros((xptsF.shape))
+	# & (latsF>88)) if we want to mask the pole hole
+	badData[np.where(np.isnan(driftFmon[1])& (latsF>90))]=1
+
+	driftFx = driftFmon[0][np.where(badData<0.5)]
+	driftFy = driftFmon[1][np.where(badData<0.5)]
+	xptsFM = xptsF[np.where(badData<0.5)]
+
+	yptsFM = yptsF[np.where(badData<0.5)]
+
+	driftFGx = griddata((xptsFM, yptsFM), driftFx, (xptsG, yptsG), method='linear')
+	driftFGy = griddata((xptsFM, yptsFM), driftFy, (xptsG, yptsG), method='linear')
+
+	#driftFGx[np.isnan(driftFGx)]=0
+	#driftFGy[np.isnan(driftFGy)]=0
+
+	kernel = Gaussian2DKernel(x_stddev=sigma_factor)
+
+	driftFGxg = convolve(driftFGx, kernel)
+	driftFGyg = convolve(driftFGy, kernel)
+
+	# Mask based on original gridded data
+	driftFG[0]=ma.masked_where(np.isnan(driftFGx), driftFGxg)
+	driftFG[1]=ma.masked_where(np.isnan(driftFGy), driftFGyg)
+	
+
+	return driftFG
+	
 def getOSISAFDrift(m, fileT):
 	"""
 	Calculate the OSI-SAF vectors on our map projection
@@ -127,7 +166,7 @@ def getOSISAFDrift(m, fileT):
 	# TL: no need to rotate : the xt, and yt are already in the basemap's projection
 
 	# compute magnitude (speed scalar)
-	mag=sqrt(xt**2+yt**2)
+	mag=np.sqrt(xt**2+yt**2)
 	#print mag.mean(), mag.min(), mag.max()
 
 	return xt, yt, mag, lat, lon, xpts, ypts
@@ -184,8 +223,8 @@ def getFowlerdriftMonthV3(rawdatapath, year, month, m, mean=0):
 
 	#files = glob(fowlerPath+str(year)+'/*.bin')
 	files= files[timeIndex[month]:timeIndex[month+1]]
-	print ('Num of days:', size(files))
-	driftFmon=ma.masked_all((size(files), 2, lonsF.shape[0], lonsF.shape[1]))
+	print ('Num of days:', np.size(files))
+	driftFmon=ma.masked_all((np.size(files), 2, lonsF.shape[0], lonsF.shape[1]))
 
 	
 	x=0
@@ -195,8 +234,8 @@ def getFowlerdriftMonthV3(rawdatapath, year, month, m, mean=0):
 
 		xvel,yvel = m.rotate_vector(uvelT,vvelT,lonsF,latsF)
 
-		xvel[where(ma.getmask(xvel))]=np.nan
-		yvel[where(ma.getmask(yvel))]=np.nan
+		xvel[np.where(ma.getmask(xvel))]=np.nan
+		yvel[np.where(ma.getmask(yvel))]=np.nan
 		driftFmon[x, 0]=xvel
 		driftFmon[x, 1]=yvel
 		x+=1
@@ -244,27 +283,27 @@ def get_day_concSN_NRT(datapath, year, month, day, alg=0, pole='A', vStr='v1.1',
 	year_str=str(year)
 	
 	files = glob(datapath+'/ICE_CONC/'+team+'/'+poleStr+'/NRT/*'+str(year)+month_str+day_str+'*')
-	if (size(files)>0):
+	if (np.size(files)>0):
 		print('Same day conc file exists:')
 
-	if (size(files)==0):
+	if (np.size(files)==0):
 		# first try day before
 		day_str = '%02d' % (day)
 		files = glob(datapath+'/ICE_CONC/'+team+'/'+poleStr+'/NRT/*'+str(year)+month_str+day_str+'*')
-		if (size(files)>0):
+		if (np.size(files)>0):
 			print('Using day before file:')
 
 	# If still nothing try day after
-	if (size(files)==0):
+	if (np.size(files)==0):
 		# try day after
 		day_str = '%02d' % (day+2)
 		files = glob(datapath+'/ICE_CONC/'+team+'/'+poleStr+'/NRT/*'+str(year)+month_str+day_str+'*')
-		if (size(files)>0):
+		if (np.size(files)>0):
 			print('Using day after file:')
 
 	
 	fd = open(files[0], 'r')
-	data = fromfile(file=fd, dtype=datatype)
+	data = np.fromfile(file=fd, dtype=datatype)
 	data = data[header:]
 	#FIRST 300 FILES ARE HEADER INFO
 	ice_conc = np.reshape(data, [rows, cols])
@@ -314,12 +353,12 @@ def get_month_concSN_daily(datapath, year, month, alg=0, pole='A', vStr='v1.1', 
 	files = glob(datapath+'/ICE_CONC/'+team+'/'+poleStr+'/daily/'++str(year)+'/'+team_s+'_'+str(year)+month_str+'*'+vStr+'*')
 	
 
-	print('Num conc files:', size(files), 'in month:'+month_str)
-	ice_conc = ma.masked_all((size(files), rows, cols))
+	print('Num conc files:', np.size(files), 'in month:'+month_str)
+	ice_conc = ma.masked_all((np.size(files), rows, cols))
 	
-	for x in range(size(files)):
+	for x in range(np.size(files)):
 		fd = open(files[x], 'r')
-		data = fromfile(file=fd, dtype=datatype)
+		data = np.fromfile(file=fd, dtype=datatype)
 		data = data[header:]
 		#FIRST 300 FILES ARE HEADER INFO
 		ice_conc[x] = np.reshape(data, [rows, cols])
@@ -367,7 +406,7 @@ def get_ERA_precip_days(m, dataPath, yearT, dayT, varStr='tp'):
 	#in units of m of water so times by 1000, the density of water, to express this as kg/m2
 	# data is every 12-hours, so need to multiply numdays by 2, then also sum over the first two time intervals
 	varT=f1.variables[varStr][numday*2:(numday*2)+2, 0:lowerLatidx, :].astype(np.float16)*1000.
-	var=sum(varT, axis=0)
+	var=np.sum(varT, axis=0)
 
 	return xpts, ypts, lon, lat, var
 
@@ -393,7 +432,7 @@ def get_ERA_wind_days(m, dataPath, yearT, dayT):
 	# only pick out the first 60 rows as want Arctic data only
 	u10=f1.variables['u10'][numday*4:(numday*4)+4, 0:60, :].astype(np.float16)
 	v10=f1.variables['v10'][numday*4:(numday*4)+4, 0:60, :].astype(np.float16)
-	mag=mean(sqrt((u10**2)+(v10**2)), axis=0)
+	mag=np.mean(np.sqrt((u10**2)+(v10**2)), axis=0)
 
 	return xpts, ypts, lon, lat, mag
 
@@ -486,7 +525,7 @@ def get_ERA5_meltduration(m, dataPath, yearT):
 
 	glob(dataPath+'REANALYSES/ERA5/ERA5_temp6hour'+'_'+str(yearT)+'*cds.nc')
 
-	numDaysYearT=size(f1.variables['time'][:])/4
+	numDaysYearT=np.size(f1.variables['time'][:])/4
 	print(numDaysYearT)
 
 	lon = f1.variables['longitude'][:]
@@ -502,7 +541,7 @@ def get_ERA5_meltduration(m, dataPath, yearT):
 	# only pick out the first 60 rows as want Arctic data only
 	temp2mAnnual=ma.masked_all((numDaysYearT, lowerLatidx, lon.shape[0]))
 	for x in range(numDaysYearT):
-		temp2mAnnual[x]=mean(f1.variables['t2m'][x*4:(x*4)+4, 0:lowerLatidx, :].astype(float16), axis=0)-273.15
+		temp2mAnnual[x]=np.mean(f1.variables['t2m'][x*4:(x*4)+4, 0:lowerLatidx, :].astype(float16), axis=0)-273.15
 
 
 	return xpts, ypts, lon, lat, temp2mAnnual
@@ -592,7 +631,7 @@ def plot_gridded_cartopy(lons, lats, var, proj=ccrs.NorthPolarStereo(central_lon
 	
 	#ax.imshow(data, transform=ccrs.PlateCarree(), zorder=2)
 	# for some reason this extent can freak out if you set 180 to 180
-	ax.set_extent([-179, 179, 50, 90], ccrs.PlateCarree())
+	ax.set_extent([-179, 179, 45, 90], ccrs.PlateCarree())
 	cax,kw = mcbar.make_axes(ax,location='bottom',pad=0.05,shrink=0.7)
 	cb=fig.colorbar(cs,cax=cax,extend='both',**kw)
 	cb.set_label(varStr+' ('+units_lab+')',size=8)
@@ -670,16 +709,16 @@ def get_region_maskAOsnow(datapath, mplot, xypts_return=0, latN=60):
 	
 	
 	fd = open(file_mask, 'rb')
-	region_mask = fromfile(file=fd, dtype=datatype)
+	region_mask = np.fromfile(file=fd, dtype=datatype)
 	region_mask = np.reshape(region_mask[header:], [448, 304])
 
 	mask_latf = open(datapath+'/OTHER/psn25lats_v3.dat', 'rb')
 	mask_lonf = open(datapath+'/OTHER/psn25lons_v3.dat', 'rb')
-	lats_mask = np.reshape(fromfile(file=mask_latf, dtype='<i4')/100000., [448, 304])
-	lons_mask = np.reshape(fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
+	lats_mask = np.reshape(np.fromfile(file=mask_latf, dtype='<i4')/100000., [448, 304])
+	lons_mask = np.reshape(np.fromfile(file=mask_lonf, dtype='<i4')/100000., [448, 304])
 
 	region_maskAO=np.zeros((lons_mask.shape))
-	mask = where((region_mask<11) & (lats_mask>latN))
+	mask = np.where((region_mask<11) & (lats_mask>latN))
 	region_maskAO[mask]=1
 
 	if (xypts_return==1):
@@ -702,22 +741,6 @@ def getGrid(outPath, dx):
 
 	return lonG, latG, xptsG, yptsG
 
-def getDays(year1, month1, day1, year2, month2, day2):
-	"""Get days in model time period
-	"""
-	numDaysYear1=getLeapYr(year1)
-
-	dT01 = datetime.datetime(year1, 1, 1)
-	d1 = datetime.datetime(year1, month1+1, day1+1)
-	d2 = datetime.datetime(year2, month2+1, day2+1)
-	startDayT=(d1 - dT01).days
-	numDaysT=(d2 - d1).days+1
-
-	fmt = '%d%m%Y'
-	date1Str=d1.strftime(fmt)
-	date2Str=d2.strftime(fmt)
-
-	return startDayT, numDaysT, numDaysYear1, date1Str+'-'+date2Str
 
 def getSTOSIWIGday(m, dayFiles, delim, mask_hs=1):
 	"""  Get all snow radar data from all files in one OIB campaign day
