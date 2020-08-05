@@ -100,10 +100,12 @@ for f in file_list:
 			# plt.show()
 
 			# # plot of difference
-			# plt.imshow(snowDepthM - depth_OIB)
-			# plt.title("NESOSIM - OIB snow depth for 2019-04-06 (m)")
-			# plt.colorbar()
-			# plt.show()
+#			plt.imshow(snowDepthM - depth_OIB)
+			plt.imshow(snowDepthM)
+			plt.imshow(depth_OIB)
+			plt.title("NESOSIM and OIB snow depth for {}".format(f[:8]))
+			plt.colorbar()
+			plt.show()
 
 			# mask out values less than/greater than limits
 
@@ -158,18 +160,18 @@ slope,intercept,r_val,p_val,stderr = st.linregress(NESOSIM_arr,OIB_obs_arr)
 
 print(slope, intercept, r_val)
 print(rmse)
-plt.scatter(NESOSIM_arr,OIB_obs_arr)
+#plt.scatter(NESOSIM_arr,OIB_obs_arr)
 #plt.plot(x_plot,slope*x_plot+intercept)
 
-plt.plot(NESOSIM_arr,slope*NESOSIM_arr+intercept)
+#plt.plot(NESOSIM_arr,slope*NESOSIM_arr+intercept)
 
 
-plt.text(0.1,0.1,'r = {:01.2f} \n RMSE = {:01.2f}'.format(r_val, rmse))
-plt.xlabel('NESOSIM snow depth')
-plt.ylabel('OIB snow depth')
-plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
-# plt.show()
-plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
-plt.close()
+#plt.text(0.1,0.1,'r = {:01.2f} \n RMSE = {:01.2f}'.format(r_val, rmse))
+#plt.xlabel('NESOSIM snow depth')
+#plt.ylabel('OIB snow depth')
+#plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
+#plt.show()
+#plt.savefig('nesosim_oib_comp_{}'.format(year_start+1))
+#plt.close()
 
 

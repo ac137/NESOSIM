@@ -136,7 +136,7 @@ if __name__ == '__main__':
 	#figPath='/data/users/aapetty/Figures/NESOSIMdev/Drifts/'+product+extra+'/'
 	#outPath = '/data/users/aapetty/Forcings/Drifts/'+product+extra+'/'
 	
-	for year in range(2018, 2020+1, 1):
+	for year in range(2010, 2020+1, 1):
 		print(year)
 		main(year)
 	
