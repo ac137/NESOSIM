@@ -27,35 +27,36 @@ from config import figure_path
 
 
 
-def get_ERAI_precip_days(proj, erai_data_path, yearStr, monStr, numday, lowerlatlim=0, varStr='sf'):
-	
-	f1 = xr.open_mfdataset(erai_data_path+'fcinterim_daily_{}*.grb'.format(str(yearT)),engine='cfgrib')
+def get_ERAI_precip_days_pyproj(proj, erai_data_path, yearStr, monStr, numday, lowerlatlim=0, varStr='sf'):
+	print(erai_data_path+'fcinterim_daily_{}*.grb'.format(yearStr))	
+	f1 = xr.open_mfdataset(erai_data_path+'fcinterim_daily_{}*.grb'.format(yearStr),engine='cfgrib')
 
 	# Units given in m of freshwater in a 12 hour period. 
 	# So to convert to kg/m2/s multiply by den
 	#var=var*1000./(60.*60.*12.)
 
-	lon = f1['longitude'].values
+	lon = f1['longitude'].values[:]
 
 
-	lat = f1['latitude'].values
-	#print lat[1]-lat[0]
+	lat = f1['latitude'].values[:]
+	print(lat[1]-lat[0])
 
 
 	lowerLatidx=int((90-lowerlatlim)/(lat[0]-lat[1]))
-	#print lowerLatidx
+	print(lowerLatidx)
 	lat=lat[0:lowerLatidx]
 
 	# Had to switch lat and lon around when using proj!
 	xpts, ypts=proj(*np.meshgrid(lon, lat))
+	print(xpts,ypts)
 
 	# in units of m of water so times by 1000, the density of water, to express this as kg/m2
 	# data is every 1 hour (starting at 1 am on the first day of each month), so sum over the first 24 time intervals 
 	#(index 0=1am to 23=midnight)
 
-	varT=f1.variables[varStr][(numday*24):(numday*24)+24, 0:lowerLatidx, :].astype(np.float16)*1000.
+	varT=f1[varStr][(numday*24):(numday*24)+24, 0:lowerLatidx, :].astype(np.float16)*1000.
 	
-	var=np.sum(varT, axis=0)
+	var=np.sum(varT, axis=0).values
 
 	return xpts, ypts, lon, lat, var
 
@@ -108,7 +109,7 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 		print('Precip day:', dayT, dayinmonth)
 		
 		#in  kg/m2 per day
-		xptsM, yptsM, lonsM, latsM, Precip =cF.get_ERAI_precip_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
+		xptsM, yptsM, lonsM, latsM, Precip =get_ERAI_precip_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
 		print(Precip)
 		PrecipG = griddata((xptsM.flatten(), yptsM.flatten()), Precip.flatten(), (xptsG, yptsG), method='linear')
 
@@ -118,7 +119,7 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	for y in range(2010, 2015+1, 1):
 		print (y)
 		main(y,data_path='/users/jk/18/acabaj/EI/')
 
