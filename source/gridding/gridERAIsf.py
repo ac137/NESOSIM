@@ -51,10 +51,9 @@ def get_ERAI_precip_days_pyproj(proj, erai_data_path, yearStr, monStr, numday, l
 	print(xpts,ypts)
 
 	# in units of m of water so times by 1000, the density of water, to express this as kg/m2
-	# data is every 1 hour (starting at 1 am on the first day of each month), so sum over the first 24 time intervals 
-	#(index 0=1am to 23=midnight)
+	# data is every 12-hours, so need to multiply numdays by 2, then also sum over the first two time intervals
 
-	varT=f1[varStr][(numday*24):(numday*24)+24, 0:lowerLatidx, :].astype(np.float16)*1000.
+	varT=f1[varStr][(numday*2):(numday*2)+2, 0:lowerLatidx, :].astype(np.float16)*1000.
 	
 	var=np.sum(varT, axis=0).values
 
