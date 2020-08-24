@@ -120,6 +120,6 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 if __name__ == '__main__':
 	for y in range(2010, 2015+1, 1):
 		print (y)
-		main(y,data_path='/users/jk/18/acabaj/EI/')
+		main(y,startMonth=8,endMonth=12,data_path='/users/jk/18/acabaj/EI/')
 
 

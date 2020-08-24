@@ -112,8 +112,8 @@ def main(year, start_month=0, end_month=11, extraStr='v11', dx=50000, data_path=
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2018, 2020+1, 1):
+	for y in range(2009, 2018+1, 1):
 		print(y)
-		main(y)
+		main(y,dx=100000)
 
 

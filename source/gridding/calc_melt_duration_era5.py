@@ -36,9 +36,9 @@ from config import figure_path
 
 def get_ERA5_temps(proj, data_pathT, yearT):
 	
-	tempdata=xr.open_mfdataset(data_pathT+'/ERA5_temp6hour'+'_'+str(yearT)+'*cds.nc')
+	tempdata=xr.open_dataset(data_pathT+'/t2m_uv_pr/e5_t2m_uv_pr_daily_'+str(yearT)+'.nc')
 		
-	numDaysYearT=np.size(tempdata['time'][:])/4
+	numDaysYearT=np.size(tempdata['time'][:])
 	print (numDaysYearT)
 
 	lon = tempdata['longitude'][:]
@@ -112,9 +112,9 @@ def main(yearT, startMonth=0, endMonth=11, extraStr='v11', dx=50000, data_path=r
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2018, 2019+1, 1):
+	for y in range(2009, 2018+1, 1):
 		print(y)
-		main(y)
+		main(y,dx=100000)
 
 
 	

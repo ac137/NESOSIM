@@ -98,9 +98,12 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	ac_path = '/data/kushner_group/ERA5/achereque/'
+	
+	for y in range(2009, 2015+1, 1):
 		print (y)
-		main(y, startMonth=0,endMonth=4)
+		main(y, startMonth=0,endMonth=4,dx=100000,data_path=ac_path)
+		main(y, startMonth=8,endMonth=11,dx=100000,data_path=ac_path)
 
 
 

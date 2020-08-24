@@ -96,9 +96,14 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	data_path_ac = '/users/jk/17/acabaj/e5-daily/'
+#	data_path_ac = '/data/kushner_group/ERA5/achereque/snowfall_full_data/'
+	for y in range(2009, 2016+1, 1):
 		print (y)
-		main(y)
+		main(y,dx=100000,data_path=data_path_ac)
+		main(y,8,11,dx=100000,data_path=data_path_ac)
+
+#		main(y,3,4,data_path=data_path_ac)
 
 
 

@@ -1,7 +1,7 @@
 """
-gridERAIsf.py
+gridERAIwinds.py
 
-script for gridding ERA-Interim snowfall data
+script for gridding ERA-Interim wind data
 
 """
 
@@ -27,7 +27,7 @@ from config import figure_path
 
 
 
-def get_ERAI_wind_days_pyproj(proj, erai_data_path, yearStr, monStr, numday, lowerlatlim=0, varStr='sf'):
+def get_ERAI_wind_days_pyproj(proj, erai_data_path, yearStr, monStr, numday, lowerlatlim=0):
 	print(erai_data_path+'fcinterim_daily_{}*.grb'.format(yearStr))	
 	f1 = xr.open_mfdataset(erai_data_path+'fcinterim_daily_{}*.grb'.format(yearStr),engine='cfgrib')
 
@@ -75,7 +75,7 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_path, proj, xypts_return=1)
 	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
-	varStr='sf'
+	varStr='winds'
 
 	if not os.path.exists(fig_path):
 		os.makedirs(fig_path)
@@ -109,18 +109,23 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 		print('Wind day:', dayT, dayinmonth)
 		
 		#in  kg/m2 per day
-		xptsM, yptsM, lonsM, latsM, WindMag =get_ERAI_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
+		xptsM, yptsM, lonsM, latsM, WindMag =get_ERAI_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
 		print(WindMag)
 		WindMagG = griddata((xptsM.flatten(), yptsM.flatten()), WindMag.flatten(), (xptsG, yptsG), method='linear')
 
-		cF.plot_gridded_cartopy(lonG, latG, WindMagG, proj=ccrs.NorthPolarStereo(central_longitude=-45), out=fig_path+'/'+varStr+'-'+str(yearT)+'_d'+str(dayT)+'T2', date_string=str(yearT), month_string=str(dayT), extra=extraStr, varStr='ERAI snowfall ', units_lab=r'kg/m2', minval=0, maxval=10, cmap_1=plt.cm.viridis)
+		cF.plot_gridded_cartopy(lonG, latG, WindMagG, proj=ccrs.NorthPolarStereo(central_longitude=-45), out=fig_path+'/'+varStr+'-'+str(yearT)+'_d'+str(dayT)+'T2', date_string=str(yearT), month_string=str(dayT), extra=extraStr, varStr='ERAI winds', units_lab=r'kg/m2', minval=0, maxval=10, cmap_1=plt.cm.viridis)
 		
 		WindMagG.dump(out_path+str(yearT)+'/ERAI'+varStr+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2010, 2015+1, 1):
+	for y in range(2016, 2018+1, 1):
 		print (y)
-		main(y,data_path='/users/jk/18/acabaj/EI/')
+
+		main(y, startMonth=8, endMonth=12,data_path='/users/jk/18/acabaj/EI/')
+		main(y, startMonth=1, endMonth=4,data_path='/users/jk/18/acabaj/EI/')
+
+		main(y, startMonth=8, endMonth=12,data_path='/users/jk/18/acabaj/EI/')
+		main(y, startMonth=8, endMonth=12,data_path='/users/jk/18/acabaj/EI/')
 
 
