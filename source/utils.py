@@ -440,7 +440,9 @@ def get_ERA5_precip_days_pyproj(proj, era5_data_path, yearStr, monStr, numday, l
 
 	print(yearStr, monStr, numday)
 
-	f1 = Dataset(era5_data_path+'/ERA5_'+varStr+'_'+yearStr+monStr+'cds.nc', 'r')
+	#f1 = Dataset(era5_data_path+'/ERA5_'+varStr+'_'+yearStr+monStr+'cds.nc', 'r')
+
+	f1 = Dataset(era5_data_path+'/e5_{}_hourly_{}_{}.nc'.format(varStr,yearStr,monStr), 'r')
 
 	# Units given in m of freshwater in the previous 1 hour period. 
 	# So to convert to kg/m2/s multiply by den
@@ -472,7 +474,7 @@ def get_ERA5_wind_days_pyproj(proj, era5_data_path, yearStr, monStr, numday, fre
 
 	print(yearStr, monStr, numday)
 
-	f1 = Dataset(era5_data_path+'/ERA5_winds_'+yearStr+monStr+'cds.nc', 'r')
+	f1 = Dataset(era5_data_path+'/e5_t2m_uv_pr_hourly_'+yearStr+'_'+monStr+'.nc', 'r')
 
 	lon = f1.variables['longitude'][:]
 	
