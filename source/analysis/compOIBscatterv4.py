@@ -71,7 +71,7 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 
 
 
-	folderPath=forcingPath+'/OIB/{}/'.format(yearT)
+	folderPath=forcingPath+'/OIB/{}binned/{}/'.format(dxStr,yearT)
 	days_list = os.listdir(folderPath)
 	# print(days_list)
 	# OIBdaysAfterSepT = days_list
@@ -165,8 +165,8 @@ anc_data_pathT='../../anc_data/'
 
 
 # Get model grid
-dx=50000.
-
+#dx=50000.
+dx=100000# comparing with new model output
 
 startYear=2010
 endYear=2015
@@ -198,13 +198,13 @@ reanalysis='ERA5'
 #folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
 #folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
 # e5sf 
-folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
+#folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
 #folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
 # 2x llf
 #folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11v2_s03'
 #folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
 
-folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03'
+folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-100kmv114x_v2_s03'
 
 
 
