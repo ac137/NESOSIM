@@ -21,16 +21,33 @@ year = 2010
 ei_precip_path = forcing_save_path + '/Precip/ERAI/{}/'.format(year)
 e5_precip_path = forcing_save_path + '/Precip/ERA5/{}/'.format(year)
 
+
+ei_wind_path = forcing_save_path + '/Winds/ERAI/{}/'.format(year)
+e5_wind_path = forcing_save_path + '/Winds/ERA5/{}/'.format(year)
+
 sf_ei = np.load(ei_precip_path + 'ERAIsf50km-2010_d000v11',allow_pickle=True)
 sf_e5 = np.load(e5_precip_path + 'ERA5sf50km-2010_d000v11',allow_pickle=True)
 
+
+w_ei = np.load(ei_wind_path + 'ERAIwinds50km-2010_d000v11',allow_pickle=True)
+w_e5 = np.load(e5_wind_path + 'ERA5winds50km-2010_d000v11',allow_pickle=True)
+
+
 # this isn't masked over land, though
-print(sf_ei)
-print(sf_ei.shape)
+#print(sf_ei)
+#print(sf_ei.shape)
 
 
 plt.hexbin(np.ravel(sf_ei),np.ravel(sf_e5),bins='log',gridsize=30,extent=[0,35,0,35])
 plt.colorbar()
 plt.xlabel('ERA-Interim snowfall')
 plt.ylabel('ERA5 snowfall')
+plt.show()
+
+
+#plt.scatter(np.ravel(w_ei),np.ravel(w_e5))
+plt.hexbin(np.ravel(w_ei),np.ravel(w_e5),bins='log',gridsize=30,extent=[0,25,0,25])
+plt.colorbar()
+plt.xlabel('ERA-I wind')
+plt.ylabel('ERA5 wind')
 plt.show()

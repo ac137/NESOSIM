@@ -165,11 +165,11 @@ anc_data_pathT='../../anc_data/'
 
 
 # Get model grid
-#dx=50000.
-dx=100000# comparing with new model output
+dx=50000.
+#dx=100000# comparing with new model output
 
 startYear=2010
-endYear=2015
+endYear=2011
 numYears=endYear-startYear+1
 years=[str(year) for year in range(startYear, endYear+1)]
 years.append('All years')
@@ -204,7 +204,7 @@ reanalysis='ERA5'
 #folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11v2_s03'
 #folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
 
-folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-100kmv114x_v2_s03'
+folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03'
 
 
 
@@ -246,7 +246,8 @@ print(snowDepthOIBAll)
 colors=['#984ea3', '#377eb8', '#4daf4a', '#e41a1c', '#ff7f00', 'c', '#a65628', 'k']
 #colors=['m', 'r', 'g', 'b', 'c', 'y', 'k']
 letters=['(a)', '(b)', '(c)','(d)']
-fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(10, 3.7))
+#fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(10, 3.7))
+fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(3,3.7))
 import scipy.stats as st
 
 # calculate mean of all products and add to array 
@@ -262,7 +263,8 @@ import scipy.stats as st
 i=0
 for i in range(size(products_plot)):
 	#print ax
-	ax=axs.flatten()[i]
+	#ax=axs.flatten()[i]
+	ax = axs
 	sca(ax)
 
 	im1 = scatter(snowDepthMMAllProducts[i],snowDepthOIBAllProducts[i], color='0.4',s=6, marker='x', alpha=0.7, label=products_plot[i])
@@ -309,7 +311,7 @@ for i in range(size(products_plot)):
 #leg = ax.legend(loc=1, ncol=1,columnspacing=0.3, handletextpad=0.2, bbox_to_anchor=(1.4, 1.), markerscale=2, frameon=False)
 
 
-subplots_adjust(bottom=0.11, left=0.06, top = 0.95, right=0.98)
+subplots_adjust(bottom=0.11, left=0.2, top = 0.95, right=0.96)
 savefig(figpath+'/NewOIBcorrelationsAllBinned'+folderStr+str(startYear)+str(endYear)+icetype+'Allproductspanels3v2.png', dpi=300)
 #savefig(figpath+'/seasonalSnowDensityComp4'+folderStr+'.png', dpi=300)
 close(fig)
