@@ -51,7 +51,7 @@ rcParams['font.size']=8
 rc('font',**{'family':'sans-serif','sans-serif':['Arial']})
 
 
-def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, days_ds, diff_ds):
+def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_100=False):#, days_ds, diff_ds):
 	"""Grid all the OIB data and correlate"""
 
 	xptsGMall=[]
@@ -61,6 +61,14 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 
 	# lonG, latG, xptsG, yptsG, nx, ny = cF.getGrid(, dx)
 	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
+
+	# set up the option to regrid 50x50 nesosim output to 100x100
+	if grid_100:
+		# when using this flag, set folderStr, totalOutStr to load
+		# the 50x50 km resolution product, and set dx=100
+
+		# get 50x50 grid to be regridded to the 100x100 grid
+		xptsM, yptsM, latM, lonM, projM = cF.create_grid(dxRes=50000)
 
 
 	dxStr=str(int(dx/1000))+'km'
@@ -110,6 +118,10 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 
 		# snow depth from NESOSIM output (budget)
 		snowDepthM=cF.get_budgets2layers_day(['snowDepthTotalConc'], outPath, folderStr, day_val, totalOutStr)
+		
+		if grid_100:
+			# snow here was loaded as 50x50 (M), grid to 100x100 (G) to compare with OIB
+			snowDepthM = griddata((xptsM.flatten(), yptsM.flatten()), snowDepthM.flatten(), (xptsG, yptsG), method='linear')
 
 		# masking
 		maskDay=np.zeros((xptsG.shape[0], xptsG.shape[1]))
@@ -164,8 +176,6 @@ anc_data_pathT='../../anc_data/'
 
 
 
-# Get model grid
-dx=50000.
 #dx=100000# comparing with new model output
 
 startYear=2010
@@ -192,7 +202,28 @@ products_plot=['GSFC']
 
 # load file with differences between OIB products (for each day)
 
-reanalysis='ERA5'
+precipVar='ERA5'
+windVar='ERA5'
+driftVar='OSISAF'
+concVar='CDR'
+densityTypeT='variable'
+IC=2
+dynamicsInc=1
+windpackInc=1
+leadlossInc=1
+windPackFactorT=5.8e-7
+windPackThreshT=5
+leadLossFactorT=1.16e-6
+
+# Get model grid
+dx=100000.
+dxStr='50km' # using this to load NESOSIM at 50km but OIB at 100km
+extraStr='v11'
+outStr='4x_v2_s03'
+
+
+folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
+
 
 # make this selectable better later (for now just using full path)
 #folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
@@ -204,7 +235,7 @@ reanalysis='ERA5'
 #folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11v2_s03'
 #folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
 
-folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03'
+# folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03'
 
 
 
@@ -235,7 +266,7 @@ for year1 in range(startYear, endYear):
 
 
 	# get depth by year for given product
-	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis)#, days_y, diff_y)
+	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=True)#, days_y, diff_y)
 	snowDepthOIBAll.extend(snowDepthOIByr)
 	snowDepthMMAll.extend(snowDepthMMyr)
 snowDepthOIBAllProducts.append(snowDepthOIBAll)
