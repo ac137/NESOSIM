@@ -25,13 +25,13 @@ sic='CDR'
 wpf=5.8e-7
 wpt=5
 llf=5.8e-7
-dx=50
-
+dx=50000
+dxstr='50km'
 day_start = 1
 month_start = 9
-year_start = 2018
+year_start = 2014
 
-OIBpath = forcing_save_path + 'OIB/{}/'.format(year_start+1)
+OIBpath = forcing_save_path + 'OIB/{}binned/{}/'.format(dxstr,year_start+1)
 
 
 # hardcoding this for now
@@ -72,11 +72,14 @@ OIB_obs_list = []
 NESOSIM_list = []
 
 xptsG, yptsG, latG, lonG, proj = ut.create_grid(dxRes=dx)
+print('grid created')
 
 
 for f in file_list:
+	print('file ',f)
 	if f.startswith(str(year_start+1)):
 		# select only 2019 for now
+		print('date')
 		print(f[:8])
 
 		fname = OIBpath + f
@@ -115,7 +118,7 @@ for f in file_list:
 #			plt.title("NESOSIM and OIB snow depth for {}".format(f[:8]))
 #			plt.colorbar()
 #			plt.show()
-			ut.plot_gridded_cartopy(lonG, latG, snowDepthM-depth_OIB,proj=ccrs.NorthPolarStereo(central_longitude=-45),date_string=f[:8],out='/users/jk/18/acabaj/NESOSIM/Figures/OIB_maps/{}'.format(f[:8]),units_lab='m',varStr='Snow depth difference',minval=-5,maxval=5)
+			ut.plot_gridded_cartopy(lonG, latG, snowDepthM-depth_OIB,proj=ccrs.NorthPolarStereo(central_longitude=-45),date_string=f[:8],out='/users/jk/18/acabaj/NESOSIM/Figures/OIB_maps/{}'.format(f[:8]),units_lab='m',varStr='Snow depth difference',minval=-1.5,maxval=1.5,cmap_1=plt.cm.RdBu)
 
 			# mask out values less than/greater than limits
 
