@@ -8,6 +8,8 @@ import sys
 sys.path.append('../')
 import utils as ut
 import scipy.stats as st
+import cartopy.crs as ccrs
+
 from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 
 
@@ -23,6 +25,7 @@ sic='CDR'
 wpf=5.8e-7
 wpt=5
 llf=5.8e-7
+dx=50
 
 day_start = 1
 month_start = 9
@@ -68,6 +71,8 @@ date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year_start,month_start,day_s
 OIB_obs_list = []
 NESOSIM_list = []
 
+xptsG, yptsG, latG, lonG, proj = ut.create_grid(dxRes=dx)
+
 
 for f in file_list:
 	if f.startswith(str(year_start+1)):
@@ -110,6 +115,7 @@ for f in file_list:
 #			plt.title("NESOSIM and OIB snow depth for {}".format(f[:8]))
 #			plt.colorbar()
 #			plt.show()
+			ut.plot_gridded_cartopy(lonG, latG, snowDepthM-depth_OIB,proj=ccrs.NorthPolarStereo(central_longitude=-45),date_string=f[:8],out='/users/jk/18/acabaj/NESOSIM/Figures/OIB_maps/{}'.format(f[:8]),units_lab='m',varStr='Snow depth difference',minval=-5,maxval=5)
 
 			# mask out values less than/greater than limits
 
