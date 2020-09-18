@@ -70,6 +70,7 @@ date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year_start,month_start,day_s
 
 OIB_obs_list = []
 NESOSIM_list = []
+difference_list = []
 
 xptsG, yptsG, latG, lonG, proj = ut.create_grid(dxRes=dx)
 print('grid created')
@@ -112,13 +113,18 @@ for f in file_list:
 			# plt.show()
 
 			# # plot of difference
-#			plt.imshow(snowDepthM - depth_OIB)
-#			plt.imshow(snowDepthM)
-#			plt.imshow(depth_OIB)
-#			plt.title("NESOSIM and OIB snow depth for {}".format(f[:8]))
-#			plt.colorbar()
-#			plt.show()
-			ut.plot_gridded_cartopy(lonG, latG, snowDepthM-depth_OIB,proj=ccrs.NorthPolarStereo(central_longitude=-45),date_string=f[:8],out='/users/jk/18/acabaj/NESOSIM/Figures/OIB_maps/{}'.format(f[:8]),units_lab='m',varStr='Snow depth difference',minval=-1.5,maxval=1.5,cmap_1=plt.cm.RdBu)
+			# plt.imshow(snowDepthM - depth_OIB)
+			# plt.imshow(snowDepthM)
+			# plt.imshow(depth_OIB)
+			# plt.title("NESOSIM and OIB snow depth for {}".format(f[:8]))
+			# plt.colorbar()
+			# plt.show()
+
+			# concatenate differences into a single list for plotting later
+			difference_list.append(snowDepthM - depth_OIB)
+			
+			# plot of differences
+			# ut.plot_gridded_cartopy(lonG, latG, snowDepthM-depth_OIB,proj=ccrs.NorthPolarStereo(central_longitude=-45),date_string=f[:8],out='/users/jk/18/acabaj/NESOSIM/Figures/OIB_maps/{}'.format(f[:8]),units_lab='m',varStr='Snow depth difference',minval=-1.5,maxval=1.5,cmap_1=plt.cm.RdBu)
 
 			# mask out values less than/greater than limits
 
@@ -173,18 +179,31 @@ slope,intercept,r_val,p_val,stderr = st.linregress(NESOSIM_arr,OIB_obs_arr)
 
 print(slope, intercept, r_val)
 print(rmse)
-plt.scatter(NESOSIM_arr,OIB_obs_arr)
-#plt.plot(x_plot,slope*x_plot+intercept)
-
-plt.plot(NESOSIM_arr,slope*NESOSIM_arr+intercept)
 
 
-plt.text(0.1,0.1,'r = {:01.2f} \n RMSE = {:01.2f}'.format(r_val, rmse))
-plt.xlabel('NESOSIM snow depth')
-plt.ylabel('OIB snow depth')
-plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
-#plt.show()
-plt.savefig('nesosim_oib_comp_{}_newdrift'.format(year_start+1))
-plt.close()
+# plot of differences (map)
+difference_arr = np.stack(difference_list) #3d array
+
+# average differences, disregarding nan
+diff_mean = np.nanmean(difference_arr,axis=0)
+
+
+# plot differences:
+ut.plot_gridded_cartopy(lonG, latG, diff_mean,proj=ccrs.NorthPolarStereo(central_longitude=-45),date_string=str(year_start+1),out='/users/jk/18/acabaj/NESOSIM/Figures/OIB_maps/year_{}'.format(year_start+1),units_lab='m',varStr='Snow depth difference',minval=-1.5,maxval=1.5,cmap_1=plt.cm.RdBu)
+
+
+# plt.scatter(NESOSIM_arr,OIB_obs_arr)
+# #plt.plot(x_plot,slope*x_plot+intercept)
+
+# plt.plot(NESOSIM_arr,slope*NESOSIM_arr+intercept)
+
+
+# plt.text(0.1,0.1,'r = {:01.2f} \n RMSE = {:01.2f}'.format(r_val, rmse))
+# plt.xlabel('NESOSIM snow depth')
+# plt.ylabel('OIB snow depth')
+# plt.title('NESOSIM vs OIB for {}'.format(year_start+1))
+# #plt.show()
+# plt.savefig('nesosim_oib_comp_{}_newdrift'.format(year_start+1))
+# plt.close()
 
 
