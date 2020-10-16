@@ -42,7 +42,7 @@ from config import figure_path
 def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Winds/ERA5/', fig_path=figure_path+'Winds/ERA5/', anc_data_path='../../anc_data/'):
 
 
-	xptsG, yptsG, latG, lonG, proj = cF.create_grid()
+	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 	print(xptsG)
 	print(yptsG)
 
@@ -100,7 +100,7 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 if __name__ == '__main__':
 	ac_path = '/data/kushner_group/ERA5/achereque/'
 	
-	for y in range(2009, 2015+1, 1):
+	for y in range(2016, 2018+1, 1):
 		print (y)
 		main(y, startMonth=0,endMonth=4,dx=100000,data_path=ac_path)
 		main(y, startMonth=8,endMonth=11,dx=100000,data_path=ac_path)
