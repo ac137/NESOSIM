@@ -37,7 +37,7 @@ from config import forcing_save_path
 from config import figure_path
 
 anc_data_path='../../anc_data/'
-dx=50000
+dx=100000
 xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 print(xptsG)
 print(yptsG)
@@ -48,13 +48,13 @@ print(dxStr)
 region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_path, proj, xypts_return=1)
 region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
-reanalysis='ERA5'
+reanalysis='ERAI'
 varStr='t2m'
 extraStr='v11'
-temp_path=forcing_save_path+'Temp/ERA5/'
+temp_path=forcing_save_path+'Temp/{}/'.format(reanalysis)
 iceconc_path=forcing_save_path+'IceConc/CDR/'
-ic_path=forcing_save_path+'InitialConditions/'
-fig_path=figure_path+'Temp/ERA5/'
+ic_path=forcing_save_path+'InitialConditions/ERAI/'
+fig_path=figure_path+'Temp/{}/'.format(reanalysis)
 
 t2mdurGAll=[]
 for y in range(1980, 1991+1, 1):
@@ -68,7 +68,7 @@ print(t2mdurGclim.shape)
 w99=cF.getWarren(lonG, latG, 7)
 
 
-for yearT in range(2018, 2019+1, 1):
+for yearT in range(2010, 2017+1, 1):
 	if (yearT==1987):
  		continue
 
