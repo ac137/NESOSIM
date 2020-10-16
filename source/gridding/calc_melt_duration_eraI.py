@@ -37,10 +37,10 @@ from config import figure_path
 
 def get_ERAI_temps(proj, data_pathT, yearT):
 	
-	tempdata=xr.open_mfdataset(data_pathT+'/fcinterim_daily_'+str(yearT)+'*.grb')
+	tempdata=xr.open_mfdataset(data_pathT+'/fcinterim_daily_'+str(yearT)+'*.grb', engine='cfgrib')
 		
 	numDaysYearT=np.size(tempdata['time'][:])
-	print (numDaysYearT)
+	print ('number of days in year ', numDaysYearT)
 
 	lon = tempdata['longitude'][:]
 	lowerlat=20
@@ -113,7 +113,7 @@ def main(yearT, startMonth=0, endMonth=11, extraStr='v11', dx=50000, data_path=r
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(1980, 1991, 1):
+	for y in range(1991, 1992, 1):
 		print(y)
 		main(y,dx=100000,data_path='/users/jk/18/acabaj/EI/')
 
