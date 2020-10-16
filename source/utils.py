@@ -515,8 +515,9 @@ def create_grid(epsg_string='3413', dxRes=50000, lllat=36, llon=-90, urlat=36, u
 	ny = int((urcrn[1]-llcrn[1])/dxRes)+1
 	print(nx, ny)
 
-	x = llcrn[0]+dxRes*np.indices((ny,nx),np.float32)[0] # 1=column indicdes
-	y = llcrn[1]+dxRes*np.indices((ny,nx),np.float32)[1] # 0=row indices
+	# FIXING GRID: x should be [1] at the end and y should be [0]
+	x = llcrn[0]+dxRes*np.indices((ny,nx),np.float32)[1] # 1=column indicdes
+	y = llcrn[1]+dxRes*np.indices((ny,nx),np.float32)[0] # 0=row indices
 
 	lons, lats = p(x, y, inverse=True)
 	
@@ -587,9 +588,9 @@ def read_icebridge_snowdepths(proj, dataPath, year, mask=1):
 	snow_thickness_days=[]
 	dates=[]
 	if (year>2013):
-		files = glob(dataPath+'/quicklook/*'+str(year)+'*/*.txt')
+		files = glob(dataPath+'/*'+str(year)+'*/*.txt')
 	else:
-		files = glob(dataPath+'/final/*'+str(year)+'*/*.txt')
+		files = glob(dataPath+'/*'+str(year)+'*/*.txt')
 	
 	for x in range(np.size(files)):
 		data = np.genfromtxt(files[x], delimiter=',', skip_header=1, dtype=str)
@@ -598,8 +599,13 @@ def read_icebridge_snowdepths(proj, dataPath, year, mask=1):
 		lons = data[:, 1].astype(float)
 		snow_thickness = data[:, 7].astype(float)
 		xpts,ypts = proj(lons, lats)
+		if year < 2013 or year > 2015:
+			date=files[x][-12:-4]
+		elif year == 2013:
+			date=files[x][-22:-14]
+		else:
+			date=files[x][-19:-11]
 
-		date=files[x][-12:-4]
 
 		if (mask==1):
 			good_data=np.where((snow_thickness>=0.)&(snow_thickness<=2.))
@@ -626,7 +632,7 @@ def plot_gridded_cartopy(lons, lats, var, proj=ccrs.NorthPolarStereo(central_lon
 	fig=plt.figure(figsize=(5, 6))
 	ax = plt.axes(projection = proj)
 	#ax.imshow(data, transform=ccrs.PlateCarree(), zorder=2)
-	cs=ax.pcolormesh(lons, lats, var, vmin=minval, vmax=maxval, transform=ccrs.PlateCarree(), zorder=2)
+	cs=ax.pcolormesh(lons, lats, var, vmin=minval, vmax=maxval, transform=ccrs.PlateCarree(), zorder=2,cmap=cmap_1)
 	ax.coastlines(zorder=3)
 	ax.gridlines(draw_labels=True,
               linewidth=0.22, color='gray', alpha=0.5, linestyle='--')
