@@ -104,6 +104,7 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 		try:
 			# print(os.path.join(folderPath,file_day))
 			snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
+			snowDepthOIB = snowDepthOIB.T
 
 		except:
 			continue
@@ -122,6 +123,7 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 		if grid_100:
 			# snow here was loaded as 50x50 (M), grid to 100x100 (G) to compare with OIB
 			snowDepthM = griddata((xptsM.flatten(), yptsM.flatten()), snowDepthM.flatten(), (xptsG, yptsG), method='linear')
+			snowDepthM = ma.masked_invalid(snowDepthM)
 
 		# masking
 		maskDay=np.zeros((xptsG.shape[0], xptsG.shape[1]))
@@ -178,8 +180,8 @@ anc_data_pathT='../../anc_data/'
 
 #dx=100000# comparing with new model output
 
-startYear=2010
-endYear=2011
+startYear=2015
+endYear=2016
 numYears=endYear-startYear+1
 years=[str(year) for year in range(startYear, endYear+1)]
 years.append('All years')
@@ -203,6 +205,8 @@ products_plot=['GSFC']
 # load file with differences between OIB products (for each day)
 
 precipVar='ERA5'
+reanalysis=precipVar
+CSstr=''
 windVar='ERA5'
 driftVar='OSISAF'
 concVar='CDR'
@@ -213,13 +217,15 @@ windpackInc=1
 leadlossInc=1
 windPackFactorT=5.8e-7
 windPackThreshT=5
-leadLossFactorT=1.16e-6
+#leadLossFactorT=1.16e-6
+leadLossFactorT=2.9e-7
 
 # Get model grid
 dx=100000.
-dxStr='50km' # using this to load NESOSIM at 50km but OIB at 100km
+dxStr='100km' # using this to load NESOSIM at 50km but OIB at 100km
 extraStr='v11'
-outStr='4x_v2_s03'
+#outStr='4x_v2_s03'
+outStr=''
 
 
 folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
@@ -266,7 +272,7 @@ for year1 in range(startYear, endYear):
 
 
 	# get depth by year for given product
-	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=True)#, days_y, diff_y)
+	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=False)#, days_y, diff_y)
 	snowDepthOIBAll.extend(snowDepthOIByr)
 	snowDepthMMAll.extend(snowDepthMMyr)
 snowDepthOIBAllProducts.append(snowDepthOIBAll)

@@ -25,11 +25,11 @@ sic='CDR'
 wpf=5.8e-7
 wpt=5
 llf=5.8e-7
-dx=50000
-dxstr='50km'
+dx=100000
+dxstr='100km'
 day_start = 1
 month_start = 9
-year_start = 2014
+year_start = 2010
 
 OIBpath = forcing_save_path + 'OIB/{}binned/{}/'.format(dxstr,year_start+1)
 
@@ -41,8 +41,8 @@ OIBpath = forcing_save_path + 'OIB/{}binned/{}/'.format(dxstr,year_start+1)
 # dirname_nesosim = 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
 # fname_nesosim = 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11-01092018-30042019'
 
-dirname_nesosim= 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03'
-fname_nesosim = 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03-0109{}-3004{}'.format(year_start,year_start+1)
+dirname_nesosim= 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-100kmv114x_v2_s03'
+fname_nesosim = 'ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-100kmv114x_v2_s03-0109{}-3004{}'.format(year_start,year_start+1)
 
 
 
