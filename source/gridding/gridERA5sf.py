@@ -43,7 +43,7 @@ from config import figure_path
 def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Precip/ERA5/', fig_path=figure_path+'Precip/ERA5/', anc_data_path='../../anc_data/'):
 
 
-	xptsG, yptsG, latG, lonG, proj = cF.create_grid()
+	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 	print(xptsG)
 	print(yptsG)
 
@@ -96,9 +96,9 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 
 #-- run main program
 if __name__ == '__main__':
-	data_path_ac = '/users/jk/17/acabaj/e5-daily/'
-#	data_path_ac = '/data/kushner_group/ERA5/achereque/snowfall_full_data/'
-	for y in range(2009, 2016+1, 1):
+#	data_path_ac = '/users/jk/17/acabaj/e5-daily/'
+	data_path_ac = '/data/kushner_group/ERA5/achereque/snowfall_full_data/'
+	for y in range(2017, 2018+1, 1):
 		print (y)
 		main(y,dx=100000,data_path=data_path_ac)
 		main(y,8,11,dx=100000,data_path=data_path_ac)

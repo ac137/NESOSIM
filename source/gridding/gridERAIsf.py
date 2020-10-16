@@ -63,7 +63,7 @@ def get_ERAI_precip_days_pyproj(proj, erai_data_path, yearStr, monStr, numday, l
 def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=reanalysis_raw_path+'ERAI/', out_path=forcing_save_path+'Precip/ERAI/', fig_path=figure_path+'Precip/ERAI/', anc_data_path='../../anc_data/'):
 
 
-	xptsG, yptsG, latG, lonG, proj = cF.create_grid()
+	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 	print(xptsG)
 	print(yptsG)
 
@@ -118,8 +118,11 @@ def main(year, startMonth=0, endMonth=4, dx=50000, extraStr='v11', data_path=rea
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2010, 2015+1, 1):
+	for y in range(1980, 1990+1, 1):
 		print (y)
-		main(y,startMonth=8,endMonth=12,data_path='/users/jk/18/acabaj/EI/')
+		main(y,dx=100000,data_path='/users/jk/18/acabaj/EI/')
+
+		main(y,startMonth=8,endMonth=11,dx=100000,data_path='/users/jk/18/acabaj/EI/')
+
 
 
