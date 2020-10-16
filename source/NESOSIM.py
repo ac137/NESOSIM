@@ -482,7 +482,10 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
 	
 	try:
-		driftGdayG=np.load(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)	
+		#load drift with _n suffix for new (fixed) drifts
+		
+		print(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_n')	
+		driftGdayG=np.load(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_n', allow_pickle=True)	
 	except:
 		# if no drifts exist for that day then just set drifts to masked array (i.e. no drift).
 		print('No drift data')
@@ -495,7 +498,9 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 		print('No temp data')
 		tempDayG=ma.masked_all((iceConcDayG.shape[0], iceConcDayG.shape[1]))
 	
-	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
+	# transpose inputs to fix issues with grid; except for drifts
+
+	return iceConcDayG.T, precipDayG.T, driftGdayG, windDayG.T, tempDayG.T
 
 def densityCalc(snowDepthsT, iceConcDayT, region_maskT):
 	"""Assign initial density based on snow depths
@@ -667,7 +672,9 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		
 		# Load daily data 
 		iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
-		
+#		if precipVar == 'ERA5':
+			# multiply by 24 (temporary correction) for era5?
+#			precipDayG = precipDayG*24		
 		# apply CloudSat scaling if used
 		if scaleCS:
 			currentMonth = doyToMonth(day, yearCurrent) # get current month

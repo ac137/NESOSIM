@@ -32,7 +32,7 @@ yearE=2013
 monthE=4
 #dayE=monthrange(yearE, monthE)[1]
 
-for y in range(2010,2017):
+for y in range(2010,2015+1):
 	yearS = y
 	yearE = y+1
 
@@ -47,7 +47,7 @@ for y in range(2010,2017):
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR',
 	densityTypeT='variable', extraStr='v11', outStr='4x_v2_s03', IC=2, 
 	windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=11.6e-7,
-	dynamicsInc=1, leadlossInc=1, windpackInc=1,scaleCS=True)
+	dynamicsInc=1, leadlossInc=1, windpackInc=1,dx=100000,scaleCS=False)
 
 # old
 # densityTypeT='variable', extraStr='v11', outStr='', IC=2, 
