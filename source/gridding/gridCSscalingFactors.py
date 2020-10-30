@@ -22,21 +22,51 @@ import xarray as xr
 
 
 ancDataPath = '../../anc_data/'
-xptsG, yptsG, latG, lonG, proj = cF.create_grid()
+dx=50000
+dxStr=str(int(dx/1000))+'km'
+
+xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 
 # print(xptsG, yptsG)
 
 print('grid generated')
 print(latG.shape)
+# print(latG[0][43:47])
+# print(latG[0][87:91])
 
+lat_len = latG.shape[0]
+# print(lat_len)
+# print(lat_len//2) # central index
+# print(latG[0][lat_len//2])
+# array of central index; find here which value is closest to 60
+# print(latG[:,lat_len//2])
+lat_60_idx = np.argmin(np.abs(latG[:,lat_len//2]-60)) # index of lat closest to 60
+
+# check which side of the centre the limit is on
+if lat_60_idx < lat_len // 2:
+	lim_low = lat_60_idx
+	lim_high = lat_len-lat_60_idx
+else:
+	lim_low = lat_len-lat_60_idx
+	lim_high = lat_60_idx
+
+
+
+
+
+print(lim_low, lim_high)
 
 # use centre of grid up to 60 degrees latitude on all sides for interpolation 
-latG_centre = latG[23:156,23:156] # hardcoding these indices for now
+# latG_centre = latG[23:156,23:156] # hardcoding these indices for now
+latG_centre = latG[lim_low:lim_high,lim_low:lim_high] # replace 23 with lim_low, 156 with lim_high
+
 print('centre grid shape')
 print(latG_centre.shape)
 
 nx,ny = latG.shape
 nxs,nys = latG_centre.shape
+
+print(latG_centre[-1,:])
 
 REANs = ['ERAI','ERA5','MERRA_2']
 R_FN = ['EI','E5','M2']
@@ -64,46 +94,47 @@ for i in range(12):
 
 	# monthly scaling factors; load into an array with values in corners; 
 	# values to be interpolated over the centre of the model domain
-	z0 = np.array([[cs.loc[i+1, 'q4'], cs.loc[i+1, 'q3']], [cs.loc[i+1, 'q1'], cs.loc[i+1, 'q2']]])
+	z0 = np.array([[cs.loc[i+1, 'q4'], cs.loc[i+1, 'q1']], [cs.loc[i+1, 'q3'], cs.loc[i+1, 'q2']]])
+	print(z0)
 	# interpolate over centre (square bounded by 60 N)
 	f = interp2d(x0, y0, z0, kind='linear')
 	# fill centre with interpolation
-	scale_factors[i,23:156,23:156] = f(x,y)
+	scale_factors[i,lim_low:lim_high,lim_low:lim_high] = f(x,y)
 
 	# pad the rest of the domain by extending to the edges
 	# todo: would be cleaner with numpy.pad, but this works for now
 
 	# top edge
-	scale_factors[i,:23,23:156] = scale_factors[i,23,23:156]
+	scale_factors[i,:lim_low,lim_low:lim_high] = scale_factors[i,lim_low,lim_low:lim_high]
 	# bottom edge
-	scale_factors[i,156:,23:156] = scale_factors[i,155,23:156]
+	scale_factors[i,lim_high:,lim_low:lim_high] = scale_factors[i,lim_high-1,lim_low:lim_high]
 	# left edge
-	scale_factors[i,23:156,:23] = np.transpose(np.tile(scale_factors[i,23:156,23],(23,1)))
+	scale_factors[i,lim_low:lim_high,:lim_low] = np.transpose(np.tile(scale_factors[i,lim_low:lim_high,lim_low],(lim_low,1)))
 	# right edge
-	scale_factors[i,23:156,156:] = np.transpose(np.tile(scale_factors[i,23:156,155],(23,1)))
+	scale_factors[i,lim_low:lim_high,lim_high:] = np.transpose(np.tile(scale_factors[i,lim_low:lim_high,lim_high-1],(lim_low,1)))
 
 	# extend to corners; fill corners with constants
 	#top left corner
-	scale_factors[i,:23,:23]=scale_factors[i,23,23]
+	scale_factors[i,:lim_low,:lim_low]=scale_factors[i,lim_low,lim_low]
 	# bottom right corner
-	scale_factors[i,156:,156:]=scale_factors[i,155,155]
+	scale_factors[i,lim_high:,lim_high:]=scale_factors[i,lim_high-1,lim_high-1]
 	# top right
-	scale_factors[i,:23,156:]=scale_factors[i,23,155]
+	scale_factors[i,:lim_low,lim_high:]=scale_factors[i,lim_low,lim_high-1]
 	# bottom left
-	scale_factors[i,156:,:23]=scale_factors[i,155,23]
+	scale_factors[i,lim_high:,:lim_low]=scale_factors[i,lim_high-1,lim_low]
 
 	# plot to double-check (optional)
 	plt.imshow(scale_factors[i],origin='upper',interpolation=None)
 	plt.title('Scaling factors for month {}'.format(i+1))
 	plt.colorbar()
-	# plt.savefig('scaling_factors_full_{}_{}.png'.format(i+1,R_FN[R_IDX]))
+	# plt.savefig('scaling_factors_full_{}_{}_100km.png'.format(i+1,R_FN[R_IDX]))
 	plt.show()
 
-# output gridded scaling factors
+# # output gridded scaling factors
 
-# convert to dataarray for saving as netcdf
+# # convert to dataarray for saving as netcdf
 scale_da = xr.DataArray(scale_factors, dims=['time','x','y'],coords={'time':cs.index},name='scale_factors')
-print(scale_da)
+# print(scale_da)
 
-# save to netcdf file
-scale_da.to_netcdf('{}scale_coeffs_{}.nc'.format(ancDataPath,REANs[R_IDX]))
+# # save to netcdf file
+scale_da.to_netcdf('{}scale_coeffs_{}_{}_v2.nc'.format(ancDataPath,REANs[R_IDX],dxStr))
