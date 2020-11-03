@@ -182,11 +182,10 @@ anc_data_pathT='../../anc_data/'
 
 #dx=100000# comparing with new model output
 
-startYear=2010
-endYear=2011
-numYears=endYear-startYear+1
-years=[str(year) for year in range(startYear, endYear+1)]
-years.append('All years')
+
+start_years = np.arange(2010,2015)
+
+
 
 
 day_start = 1
@@ -233,111 +232,118 @@ outStr='2nov'
 
 folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
 
-
-snowDepthOIBAllProducts=[]
-snowDepthMMAllProducts=[]
-
-# iterate over products (SRLD, JPL, GSFC)
-# there's just one here for now; remove loop
-# for i in xrange(size(products)):
-snowDepthOIBAll=[]
-snowDepthMMAll=[]
-
-# iterate over all years
-for year1 in range(startYear, endYear):
-	month1=8 # 8=September
-	day1=0
-
-	year2=year1+1
-	month2=3 # 4=May
-	day2=29
-
-	date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
+for y in start_years:
+	startYear=y
+	endYear=y+1
+	numYears=endYear-startYear+1
+	years=[str(year) for year in range(startYear, endYear+1)]
+	years.append('All years')
 
 
-	# Get time period info
-	_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
-	totalOutStr=''+folderStr+'-'+dateOut
+	snowDepthOIBAllProducts=[]
+	snowDepthMMAllProducts=[]
+
+	# iterate over products (SRLD, JPL, GSFC)
+	# there's just one here for now; remove loop
+	# for i in xrange(size(products)):
+	snowDepthOIBAll=[]
+	snowDepthMMAll=[]
+
+	# iterate over all years
+	for year1 in range(startYear, endYear):
+		month1=8 # 8=September
+		day1=0
+
+		year2=year1+1
+		month2=3 # 4=May
+		day2=29
+
+		date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
 
 
-	# get depth by year for given product
-	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=False)#, days_y, diff_y)
-	snowDepthOIBAll.extend(snowDepthOIByr)
-	snowDepthMMAll.extend(snowDepthMMyr)
-snowDepthOIBAllProducts.append(snowDepthOIBAll)
-snowDepthMMAllProducts.append(snowDepthMMAll)
-
-print(snowDepthOIBAll)
-
-colors=['#984ea3', '#377eb8', '#4daf4a', '#e41a1c', '#ff7f00', 'c', '#a65628', 'k']
-#colors=['m', 'r', 'g', 'b', 'c', 'y', 'k']
-letters=['(a)', '(b)', '(c)','(d)']
-#fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(10, 3.7))
-fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(3,3.7))
-import scipy.stats as st
-
-# calculate mean of all products and add to array 
-# [only if more than one product, leave out for now]
-# meanOIB = np.mean(snowDepthOIBAllProducts,axis=0)
-# meanMM = np.mean(snowDepthMMAllProducts,axis=0)
-# snowDepthMMAllProducts.append(list(meanMM))
-# snowDepthOIBAllProducts.append(list(meanOIB))
-# print(meanOIB)
+		# Get time period info
+		_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
+		totalOutStr=''+folderStr+'-'+dateOut
 
 
-# print(snowDepthMMAllProducts)
-i=0
-for i in range(size(products_plot)):
-	#print ax
-	#ax=axs.flatten()[i]
-	ax = axs
-	sca(ax)
+		# get depth by year for given product
+		_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=False)#, days_y, diff_y)
+		snowDepthOIBAll.extend(snowDepthOIByr)
+		snowDepthMMAll.extend(snowDepthMMyr)
+	snowDepthOIBAllProducts.append(snowDepthOIBAll)
+	snowDepthMMAllProducts.append(snowDepthMMAll)
 
-	im1 = scatter(snowDepthMMAllProducts[i],snowDepthOIBAllProducts[i], color='0.4',s=6, marker='x', alpha=0.7, label=products_plot[i])
+	print(snowDepthOIBAll)
 
-	# Peform the kernel density estimate
-	xx, yy = np.mgrid[0:90:100j, 0:90:100j]
-	positions = np.vstack([xx.ravel(), yy.ravel()])
-	values = np.vstack([snowDepthMMAllProducts[i], snowDepthOIBAllProducts[i]])
-	print(values)
-	kernel = st.gaussian_kde(values)
-	f = np.reshape(kernel(positions).T, xx.shape)
+	colors=['#984ea3', '#377eb8', '#4daf4a', '#e41a1c', '#ff7f00', 'c', '#a65628', 'k']
+	#colors=['m', 'r', 'g', 'b', 'c', 'y', 'k']
+	letters=['(a)', '(b)', '(c)','(d)']
+	#fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(10, 3.7))
+	fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(3,3.7))
+	import scipy.stats as st
 
-	cset = ax.contour(xx, yy, f, cmap=cm.Reds)
-	# Label plot
-
-	plot(np.arange(0, 100, 0.1), np.arange(0, 100, 0.1), 'k', ls='--')
-
-	#for x in xrange(size(years)):
-
-	#ax.annotate(years[x], xy=(1.015, 0.9-(0.12*x)), xycoords='axes fraction', horizontalalignment='left',color=colors[x])
-	ax.annotate(letters[i]+' '+products_plot[i], xy=(0.02, 1.01), xycoords='axes fraction', verticalalignment='bottom', horizontalalignment='left',color='k')
-
-	trend, sig, r_a, intercept = cF.correlateVars(snowDepthMMAllProducts[i],snowDepthOIBAllProducts[i])
-	r_str = '%.2f' % r_a
-	rmse=sqrt(mean((array(snowDepthMMAllProducts[i])-array(snowDepthOIBAllProducts[i]))**2))
-	rmsStr='%.0f' % rmse
-
-	ax.annotate('r: '+r_str+'  RMSE: '+rmsStr+' cm', xy=(0.02, 0.94),
-			xycoords='axes fraction', color='k', verticalalignment='bottom', horizontalalignment='left')
-
-	xlim(0, 80)
-	ylim(0, 80)
-	#if (x>5):
-
-	if (i==0):
-		ylabel('OIB snow depth (cm)')
-	if (i==1):
-		if SCALED:
-			xlabel('NESOSIM ({}-SF) snow depth (cm) with CloudSat scaling; WPF: {}, WPT: {}, LLF: {}'.format(reanalysis,wpfStr,wptStr,llfStr))
-		else:
-			xlabel('NESOSIM ({}-SF) snow depth (cm); WPF: {}, WPT: {}, LLF: {}'.format(reanalysis,wpfStr,wptStr,llfStr))
-
-#fig.delaxes(axs.flatten()[8])
-#leg = ax.legend(loc=1, ncol=1,columnspacing=0.3, handletextpad=0.2, bbox_to_anchor=(1.4, 1.), markerscale=2, frameon=False)
+	# calculate mean of all products and add to array 
+	# [only if more than one product, leave out for now]
+	# meanOIB = np.mean(snowDepthOIBAllProducts,axis=0)
+	# meanMM = np.mean(snowDepthMMAllProducts,axis=0)
+	# snowDepthMMAllProducts.append(list(meanMM))
+	# snowDepthOIBAllProducts.append(list(meanOIB))
+	# print(meanOIB)
 
 
-subplots_adjust(bottom=0.11, left=0.2, top = 0.95, right=0.96)
-savefig(figpath+'/NewOIBcorrelationsAllBinned'+folderStr+str(startYear)+str(endYear)+icetype+'Allproductspanels3v2.png', dpi=300)
-#savefig(figpath+'/seasonalSnowDensityComp4'+folderStr+'.png', dpi=300)
-close(fig)
+	# print(snowDepthMMAllProducts)
+	i=0
+	for i in range(size(products_plot)):
+		#print ax
+		#ax=axs.flatten()[i]
+		ax = axs
+		sca(ax)
+
+		im1 = scatter(snowDepthMMAllProducts[i],snowDepthOIBAllProducts[i], color='0.4',s=6, marker='x', alpha=0.7, label=products_plot[i])
+
+		# Peform the kernel density estimate
+		xx, yy = np.mgrid[0:90:100j, 0:90:100j]
+		positions = np.vstack([xx.ravel(), yy.ravel()])
+		values = np.vstack([snowDepthMMAllProducts[i], snowDepthOIBAllProducts[i]])
+		print(values)
+		kernel = st.gaussian_kde(values)
+		f = np.reshape(kernel(positions).T, xx.shape)
+
+		cset = ax.contour(xx, yy, f, cmap=cm.Reds)
+		# Label plot
+
+		plot(np.arange(0, 100, 0.1), np.arange(0, 100, 0.1), 'k', ls='--')
+
+		#for x in xrange(size(years)):
+
+		#ax.annotate(years[x], xy=(1.015, 0.9-(0.12*x)), xycoords='axes fraction', horizontalalignment='left',color=colors[x])
+		ax.annotate(letters[i]+' '+products_plot[i], xy=(0.02, 1.01), xycoords='axes fraction', verticalalignment='bottom', horizontalalignment='left',color='k')
+
+		trend, sig, r_a, intercept = cF.correlateVars(snowDepthMMAllProducts[i],snowDepthOIBAllProducts[i])
+		r_str = '%.2f' % r_a
+		rmse=sqrt(mean((array(snowDepthMMAllProducts[i])-array(snowDepthOIBAllProducts[i]))**2))
+		rmsStr='%.0f' % rmse
+
+		ax.annotate('r: '+r_str+'  RMSE: '+rmsStr+' cm', xy=(0.02, 0.94),
+				xycoords='axes fraction', color='k', verticalalignment='bottom', horizontalalignment='left')
+
+		xlim(0, 80)
+		ylim(0, 80)
+		#if (x>5):
+
+		if (i==0):
+			ylabel('OIB snow depth (cm)')
+		if (i==1):
+			if SCALED:
+				xlabel('NESOSIM ({}-SF) snow depth (cm) with CloudSat scaling; WPF: {}, WPT: {}, LLF: {}'.format(reanalysis,wpfStr,wptStr,llfStr))
+			else:
+				xlabel('NESOSIM ({}-SF) snow depth (cm); WPF: {}, WPT: {}, LLF: {}'.format(reanalysis,wpfStr,wptStr,llfStr))
+
+	#fig.delaxes(axs.flatten()[8])
+	#leg = ax.legend(loc=1, ncol=1,columnspacing=0.3, handletextpad=0.2, bbox_to_anchor=(1.4, 1.), markerscale=2, frameon=False)
+
+
+	subplots_adjust(bottom=0.11, left=0.2, top = 0.95, right=0.96)
+	savefig(figpath+'/NewOIBcorrelationsAllBinned'+folderStr+str(startYear)+str(endYear)+icetype+'Allproductspanels3v2.png', dpi=300)
+	#savefig(figpath+'/seasonalSnowDensityComp4'+folderStr+'.png', dpi=300)
+	close(fig)
