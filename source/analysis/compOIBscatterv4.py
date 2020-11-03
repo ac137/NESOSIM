@@ -104,6 +104,7 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 		try:
 			# print(os.path.join(folderPath,file_day))
 			snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
+			# transpose (when using old OIB files)
 			snowDepthOIB = snowDepthOIB.T
 
 		except:
@@ -172,7 +173,8 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 
 # clean these variables up later
 figpath = figure_path
-outPath = model_save_path
+outPath = model_save_path+'/100km/'
+print(outPath)
 forcingPath = forcing_save_path
 anc_data_pathT='../../anc_data/'
 
@@ -180,8 +182,8 @@ anc_data_pathT='../../anc_data/'
 
 #dx=100000# comparing with new model output
 
-startYear=2015
-endYear=2016
+startYear=2010
+endYear=2011
 numYears=endYear-startYear+1
 years=[str(year) for year in range(startYear, endYear+1)]
 years.append('All years')
@@ -215,6 +217,7 @@ IC=2
 dynamicsInc=1
 windpackInc=1
 leadlossInc=1
+atmlossInc=0
 windPackFactorT=5.8e-7
 windPackThreshT=5
 #leadLossFactorT=1.16e-6
@@ -225,24 +228,10 @@ dx=100000.
 dxStr='100km' # using this to load NESOSIM at 50km but OIB at 100km
 extraStr='v11'
 #outStr='4x_v2_s03'
-outStr=''
+outStr='2nov'
 
 
-folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
-
-
-# make this selectable better later (for now just using full path)
-#folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
-#folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11'
-# e5sf 
-#folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
-#folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
-# 2x llf
-#folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF5.8e-07-50kmv11v2_s03'
-#folderStr='ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF2.9e-07-50kmv11v2_s03'
-
-# folderStr='ERA5sfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_WPF5.8e-07_WPT5_LLF1.16e-06-50kmv114x_v2_s03'
-
+folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
 
 
 snowDepthOIBAllProducts=[]
