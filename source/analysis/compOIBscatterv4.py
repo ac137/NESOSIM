@@ -188,10 +188,11 @@ start_years = np.arange(2010,2015)
 
 
 
-day_start = 1
-month_start = 9
+#day_start = 1
+#month_start = 9
 # year_start = 2017
-
+day_start=15
+month_start=8
 
 
 icetype=''
@@ -207,7 +208,8 @@ products_plot=['GSFC']
 
 precipVar='ERA5'
 reanalysis=precipVar
-CSstr=''
+CSstr='CSscaled'
+#CSstr=''
 windVar='ERA5'
 driftVar='OSISAF'
 concVar='CDR'
@@ -215,8 +217,8 @@ densityTypeT='variable'
 IC=2
 dynamicsInc=1
 windpackInc=1
-leadlossInc=1
-atmlossInc=0
+leadlossInc=0
+atmlossInc=1
 windPackFactorT=5.8e-7
 windPackThreshT=5
 #leadLossFactorT=1.16e-6
@@ -251,8 +253,8 @@ for y in start_years:
 
 	# iterate over all years
 	for year1 in range(startYear, endYear):
-		month1=8 # 8=September
-		day1=0
+		month1=month_start-1 # 8=September
+		day1=day_start-1
 
 		year2=year1+1
 		month2=3 # 4=May
@@ -344,6 +346,6 @@ for y in start_years:
 
 
 	subplots_adjust(bottom=0.11, left=0.2, top = 0.95, right=0.96)
-	savefig(figpath+'/NewOIBcorrelationsAllBinned'+folderStr+str(startYear)+str(endYear)+icetype+'Allproductspanels3v2.png', dpi=300)
+	savefig(figpath+'/NewOIBcorrelationsAllBinned'+folderStr+str(startYear)+str(endYear)+'start'+str(day_start)+str(month_start)+icetype+'Allproductspanels3v2.png', dpi=300)
 	#savefig(figpath+'/seasonalSnowDensityComp4'+folderStr+'.png', dpi=300)
 	close(fig)
