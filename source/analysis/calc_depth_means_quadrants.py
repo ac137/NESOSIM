@@ -36,8 +36,8 @@ month_start=8
 # params, etc.
 precipVar='ERA5'
 reanalysis=precipVar
-CSstr='CSscaled'
-#CSstr=''
+#CSstr='CSscaled'
+CSstr=''
 windVar='ERA5'
 driftVar='OSISAF'
 concVar='CDR'
@@ -72,7 +72,7 @@ END_YEAR = 2015
 fig = plt.figure()
 ax = plt.gca()
 
-outpath = '/users/jk/18/acabaj/NESOSIM/Output'
+outpath = '/users/jk/18/acabaj/NESOSIM/Output/100km'
 
 # arrays to collect means and standard deviations
 means_rean = [[],[],[],[]]
@@ -126,7 +126,7 @@ for j in range(len(REANs)):
         # if year==1987:
         #     continue # skip 1987: missing data
 
-        fn = os.path.join(outpath, folderStr, 'budgets',folderStr+'-1508{}-0105{}.nc'.format(year,year+1))
+        fn = os.path.join(outpath, folderStr, 'budgets',folderStr+'-1508{}-3004{}.nc'.format(year,year+1))
         print(fn)
 
         try: # to avoid files that don't exist; this should actually eliminate the need to exclude e5, per se
@@ -161,7 +161,7 @@ for j in range(len(REANs)):
             mid = depth_conc.shape[2]//2
 
             # quadrants in order 1-4 (grns,kala,esch,caa)
-            depth_conc_quadrants = [depth_conc[:,:mid,mid:],depth_conc[:,mid:,mid:],depth_conc[:,mid:,:mid],depth_conc[:mid,:mid]]
+            depth_conc_quadrants = [depth_conc[:,:mid,mid:],depth_conc[:,mid:,mid:],depth_conc[:,mid:,:mid],depth_conc[:,:mid,:mid]]
             # depth_conc_quadrants = [depth_conc[:,mid:,mid:],depth_conc[:,:mid,mid:],depth_conc[:,mid:,:mid],depth_conc[:,:mid,:mid]]
             mean_depth_conc_q = []
 
@@ -196,8 +196,8 @@ for j in range(len(REANs)):
     # then just aggregate this by month
 
     df_name = '{}'.format(reanalysis)
-    if len(scaling) > 0:
-        df_name += ', scaled'
+   # if len(scaling) > 0:
+   #     df_name += ', scaled'
 
     for i in range(4):
         # iterating over quadrants here
@@ -245,12 +245,12 @@ for m in range(4):
     # iterate over quadrants
     # save as hdf files
     mon_m_df = pd.concat(mon_means_rean[m],axis=1)
-    mon_m_df.to_hdf('depth_mon_mean_ext_q{}_{}.csv'.format(m+1,quadrant_list[m]))
+    mon_m_df.to_csv('depth_mon_mean_q{}_{}_{}.csv'.format(m+1,quadrant_list[m],folderStr))
 
     clim_df = pd.concat(means_rean[m],axis=1)
-    clim_df.to_hdf('depth_clim_2_q{}_{}.csv'.format(m+1, quadrant_list[m]))
+    clim_df.to_csv('depth_clim_q{}_{}_{}.csv'.format(m+1, quadrant_list[m],folderStr))
 
     clim_s_df = pd.concat(std_rean[m],axis=1)
-    clim_s_df.to_hdf('depth_std_q{}_{}.csv'.format(m+1, quadrant_list[m]))
+    clim_s_df.to_csv('depth_std_q{}_{}_{}.csv'.format(m+1, quadrant_list[m],folderStr))
 
 
