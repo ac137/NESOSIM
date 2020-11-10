@@ -32,6 +32,9 @@ MIN_CONC = 0.15 # minimum ice concentration
 
 day_start=15
 month_start=8
+
+day_start=1
+month_start=9
 # use day_start and month_start eventually also
 # params, etc.
 precipVar='ERA5'
@@ -45,8 +48,8 @@ densityTypeT='variable'
 IC=2
 dynamicsInc=1
 windpackInc=1
-leadlossInc=0
-atmlossInc=1
+leadlossInc=1
+atmlossInc=0
 windPackFactorT=5.8e-7
 windPackThreshT=5
 #leadLossFactorT=1.16e-6
@@ -109,6 +112,7 @@ quadrant_list=['GRNS','KALA','ESCH','CAA']
 # quadrants numbered 1 through 4
 
 # do I need this loop though
+REANs = ['ERA5']
 for j in range(len(REANs)):
     reanalysis=REANs[j]
     # scaling = scalings[j]
@@ -126,7 +130,8 @@ for j in range(len(REANs)):
         # if year==1987:
         #     continue # skip 1987: missing data
 
-        fn = os.path.join(outpath, folderStr, 'budgets',folderStr+'-1508{}-3004{}.nc'.format(year,year+1))
+#        fn = os.path.join(outpath, folderStr, 'budgets',folderStr+'-0109{}-3004{}.nc'.format(year,year+1))
+        fn = os.path.join(outpath, folderStr, 'budgets',folderStr+'-{:02d}{:02d}{}-3004{}.nc'.format(day_start,month_start,year,year+1))
         print(fn)
 
         try: # to avoid files that don't exist; this should actually eliminate the need to exclude e5, per se
@@ -178,7 +183,9 @@ for j in range(len(REANs)):
 
             # day0 = pd.to_datetime()
 
-            dates_depth = pd.date_range('{}-08-15'.format(year), periods=len(mean_depth_conc_q[0]), freq='D')
+            dates_depth = pd.date_range('{}-{:02d}-{:02d}'.format(year,month_start,day_start), periods=len(mean_depth_conc_q[0]), freq='D')
+
+            #dates_depth = pd.date_range('{}-09-01'.format(year), periods=len(mean_depth_conc_q[0]), freq='D')
 
             for k, quad_val in enumerate(mean_depth_conc_q):
 
@@ -245,12 +252,12 @@ for m in range(4):
     # iterate over quadrants
     # save as hdf files
     mon_m_df = pd.concat(mon_means_rean[m],axis=1)
-    mon_m_df.to_csv('depth_mon_mean_q{}_{}_{}.csv'.format(m+1,quadrant_list[m],folderStr))
+    mon_m_df.to_csv('depth_mon_mean_q{}_{}_{}_{:02d}{:02d}.csv'.format(m+1,quadrant_list[m],folderStr,month_start,day_start))
 
     clim_df = pd.concat(means_rean[m],axis=1)
-    clim_df.to_csv('depth_clim_q{}_{}_{}.csv'.format(m+1, quadrant_list[m],folderStr))
+    clim_df.to_csv('depth_clim_q{}_{}_{}_{:02d}{:02d}.csv'.format(m+1, quadrant_list[m],folderStr,month_start,day_start))
 
     clim_s_df = pd.concat(std_rean[m],axis=1)
-    clim_s_df.to_csv('depth_std_q{}_{}_{}.csv'.format(m+1, quadrant_list[m],folderStr))
+    clim_s_df.to_csv('depth_std_q{}_{}_{}_{:02d}{:02d}.csv'.format(m+1, quadrant_list[m],folderStr,month_start,day_start))
 
 
