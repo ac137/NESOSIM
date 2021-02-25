@@ -90,6 +90,22 @@ y = np.linspace(0,1,nys)
 # grid of monthly scaling factors for each month
 scale_factors = np.zeros((12,nx,ny))
 
+
+
+# quadrant layout for array
+# index 0,0 at upper left
+
+#   -90      -45        0
+#       CAA   |  GR
+#             |  NS
+#   -135 ------------- 45
+#         ES  |  KA
+#         CH  |  LA
+#   180      135       90    
+
+# q1: gr/ns, q2: ka/la, q3: es/ch, q4: caa
+
+
 for i in range(12):
 
 	# monthly scaling factors; load into an array with values in corners; 
