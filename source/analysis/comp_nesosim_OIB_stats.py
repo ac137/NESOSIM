@@ -106,15 +106,15 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 
 		# where difference is greater than 10 cm
 		# maskDay[where(diff_val_day>0.1)]=1
-		maskDay[where(np.isnan(snowDepthOIB))]=1
+		maskDay[np.where(np.isnan(snowDepthOIB))]=1
 		# maskDay[where(np.isnan(snowDepthOIB))]
-		maskDay[where(snowDepthOIB<=0.04)]=1
-		maskDay[where(snowDepthM<=0.04)]=1
+		maskDay[np.where(snowDepthOIB<=0.04)]=1
+		maskDay[np.where(snowDepthM<=0.04)]=1
 
-		maskDay[where(snowDepthOIB>0.8)]=1
-		maskDay[where(snowDepthM>0.8)]=1
+		maskDay[np.where(snowDepthOIB>0.8)]=1
+		maskDay[np.where(snowDepthM>0.8)]=1
 
-		maskDay[where(region_maskG>8.2)]=1
+		maskDay[np.where(region_maskG>8.2)]=1
 
 
 		snowDepthMM= snowDepthM[maskDay<1]
@@ -250,8 +250,8 @@ print(snowDepthOIBAll)
 i=0
 
 
-ax = axs
-sca(ax)
+#ax = axs
+#sca(ax)
 
 trend, sig, r_a, intercept = cF.correlateVars(snowDepthMMAll,snowDepthOIBAll)
 
