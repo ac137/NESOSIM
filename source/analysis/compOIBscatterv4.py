@@ -174,6 +174,7 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 # clean these variables up later
 figpath = figure_path
 outPath = model_save_path+'/100km/'
+outPath = model_save_path + '/50km/'
 print(outPath)
 forcingPath = forcing_save_path
 anc_data_pathT='../../anc_data/'
@@ -183,16 +184,16 @@ anc_data_pathT='../../anc_data/'
 #dx=100000# comparing with new model output
 
 
-start_years = np.arange(2010,2015)
+#start_years = np.arange(2010,2015)
+start_years=[2010]
 
 
 
-
-#day_start = 1
-#month_start = 9
+day_start = 1
+month_start = 9
 # year_start = 2017
-day_start=15
-month_start=8
+#day_start=15
+#month_start=8
 
 
 icetype=''
@@ -217,8 +218,8 @@ densityTypeT='variable'
 IC=2
 dynamicsInc=1
 windpackInc=1
-leadlossInc=0
-atmlossInc=1
+leadlossInc=1
+atmlossInc=0
 windPackFactorT=5.8e-7
 windPackThreshT=5
 #leadLossFactorT=1.16e-6
@@ -226,7 +227,11 @@ leadLossFactorT=2.9e-7
 
 # Get model grid
 dx=100000.
-dxStr='100km' # using this to load NESOSIM at 50km but OIB at 100km
+#dxStr='100km' # using this to load NESOSIM at 50km but OIB at 100km
+
+
+#dx = 50000
+dxStr='50km'
 extraStr='v11'
 #outStr='4x_v2_s03'
 outStr='2nov'
@@ -236,7 +241,7 @@ folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'
 
 for y in start_years:
 	startYear=y
-	endYear=y+1
+	endYear=y+5
 	numYears=endYear-startYear+1
 	years=[str(year) for year in range(startYear, endYear+1)]
 	years.append('All years')
@@ -269,7 +274,7 @@ for y in start_years:
 
 
 		# get depth by year for given product
-		_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=False)#, days_y, diff_y)
+		_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=True)#, days_y, diff_y)
 		snowDepthOIBAll.extend(snowDepthOIByr)
 		snowDepthMMAll.extend(snowDepthMMyr)
 	snowDepthOIBAllProducts.append(snowDepthOIBAll)
@@ -319,14 +324,18 @@ for y in start_years:
 		#for x in xrange(size(years)):
 
 		#ax.annotate(years[x], xy=(1.015, 0.9-(0.12*x)), xycoords='axes fraction', horizontalalignment='left',color=colors[x])
-		ax.annotate(letters[i]+' '+products_plot[i], xy=(0.02, 1.01), xycoords='axes fraction', verticalalignment='bottom', horizontalalignment='left',color='k')
+		ax.annotate(letters[i]+' '+products_plot[i], xy=(0.02, 1.5), xycoords='axes fraction', verticalalignment='bottom', horizontalalignment='left',color='k')
 
 		trend, sig, r_a, intercept = cF.correlateVars(snowDepthMMAllProducts[i],snowDepthOIBAllProducts[i])
 		r_str = '%.2f' % r_a
 		rmse=sqrt(mean((array(snowDepthMMAllProducts[i])-array(snowDepthOIBAllProducts[i]))**2))
 		rmsStr='%.0f' % rmse
+		merr=np.mean(np.array(snowDepthMMAllProducts[i])-np.array(snowDepthOIBAllProducts[i]))
+		merrStr='%.1f' % merr
+		std=np.std(np.array(snowDepthMMAllProducts[i])-merr-np.array(snowDepthOIBAllProducts[i]))
+		stdStr='%.1f' % std
 
-		ax.annotate('r: '+r_str+'  RMSE: '+rmsStr+' cm', xy=(0.02, 0.94),
+		ax.annotate('r: '+r_str+'\nRMSE: '+rmsStr+' cm' + '\nMean bias ' + merrStr + ' cm'+'\nSD: '+stdStr+' cm', xy=(0.02, 0.8),
 				xycoords='axes fraction', color='k', verticalalignment='bottom', horizontalalignment='left')
 
 		xlim(0, 80)
@@ -335,6 +344,7 @@ for y in start_years:
 
 		if (i==0):
 			ylabel('OIB snow depth (cm)')
+			xlabel('NESOSIM snow depth (cm)')
 		if (i==1):
 			if SCALED:
 				xlabel('NESOSIM ({}-SF) snow depth (cm) with CloudSat scaling; WPF: {}, WPT: {}, LLF: {}'.format(reanalysis,wpfStr,wptStr,llfStr))
