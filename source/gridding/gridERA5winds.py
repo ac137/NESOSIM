@@ -33,6 +33,9 @@ import os
 import pyproj
 import cartopy.crs as ccrs
 
+from scipy.spatial import Delaunay
+from scipy.interpolate import LinearNDInterpolator
+
 from config import reanalysis_raw_path
 from config import forcing_save_path
 from config import figure_path
@@ -76,6 +79,26 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 	else:
 		endDay=monIndex[endMonth+1]
 
+
+        # start with first day for Delaunay triangulation
+	dayT0 = startDay
+	dayStr='%03d' %dayT0
+	month=np.where(dayT0-np.array(monIndex)>=0)[0][-1]
+	monStr='%02d' %(month+1)
+	dayinmonth=dayT0-monIndex[month]
+	print('Precip day:', dayT0, dayinmonth)
+	# calculate Delaunay grid for test
+	xptsM, yptsM, lonsM, latsM, WindMag =cF.get_ERA5_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
+	print('calculating Delaunay triangulation')
+
+	ptM_arr = np.array([xptsM.flatten(),yptsM.flatten()]).T
+	print('array shape, should be npts,ndim')
+	print(ptM_arr.shape)
+
+	tri = Delaunay(ptM_arr)
+	# end Delaunay calculation
+
+
 	for dayT in range(startDay, endDay):
 	
 		dayStr='%03d' %dayT
@@ -90,7 +113,11 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 		#in  kg/m2 per day
 		xptsM, yptsM, lonsM, latsM, WindMag =cF.get_ERA5_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
 
-		windMagG = griddata((xptsM.flatten(), yptsM.flatten()), WindMag.flatten(), (xptsG, yptsG), method='linear')
+#		windMagG = griddata((xptsM.flatten(), yptsM.flatten()), WindMag.flatten(), (xptsG, yptsG), method='linear')
+
+# implementing Delaunay gridding
+		interp = LinearNDInterpolator(tri,WindMag.flatten())
+		windMagG = interp((xptsG,yptsG))
 
 		cF.plot_gridded_cartopy(lonG, latG, windMagG, proj=ccrs.NorthPolarStereo(central_longitude=-45), out=fig_path+'/ERA5winds-'+str(yearT)+'_d'+str(dayT)+extraStr, date_string=str(yearT), month_string=str(dayT), extra=extraStr, varStr='ERA5 winds ', units_lab=r'kg/m2', minval=0, maxval=10, cmap_1=plt.cm.viridis)
 		
@@ -98,12 +125,13 @@ def main(year, startMonth=0, endMonth=11, dx=50000, extraStr='v11', data_path=re
 
 #-- run main program
 if __name__ == '__main__':
-	ac_path = '/data/kushner_group/ERA5/achereque/'
+	ac_path = '/data/kushner_group/ERA/achereque/'
+#	ac_path = '/users/jk/17/acabaj/e5-daily/'
 	
-	for y in range(2016, 2018+1, 1):
+	for y in range(1980, 2019, 1):
 		print (y)
 		main(y, startMonth=0,endMonth=4,dx=100000,data_path=ac_path)
-		main(y, startMonth=8,endMonth=11,dx=100000,data_path=ac_path)
+		main(y, startMonth=7,endMonth=11,dx=100000,data_path=ac_path)
 
 
 
