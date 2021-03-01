@@ -112,8 +112,10 @@ def main(year, start_month=8, end_month=11, extraStr='v11_n', dx=100000, data_pa
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2010, 2010+1, 1):
+	for y in range(2010, 2019+1, 1):
 		print(y)
-		main(y,dx=100000)
+#		main(y,start_month=0,end_month=5,dx=50000)
+		main(y,start_month=7,end_month=9,dx=50000)
+#		main(y,dx=50000)
 
 

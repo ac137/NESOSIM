@@ -33,6 +33,9 @@ import os
 import pyproj
 import cartopy.crs as ccrs
 
+from scipy.spatial import Delaunay
+from scipy.interpolate import LinearNDInterpolator
+
 from config import reanalysis_raw_path
 from config import forcing_save_path
 from config import figure_path
@@ -77,6 +80,24 @@ def main(year, startMonth=8, endMonth=11, dx=100000, extraStr='v11_1', data_path
 	else:
 		endDay=monIndex[endMonth+1]
 
+	# start with first day for Delaunay triangulation
+	dayT0 = startDay
+	dayStr='%03d' %dayT0
+	month=np.where(dayT0-np.array(monIndex)>=0)[0][-1]
+	monStr='%02d' %(month+1)
+	dayinmonth=dayT0-monIndex[month]
+	print('Precip day:', dayT0, dayinmonth)
+	# calculate Delaunay grid for test
+	xptsM, yptsM, lonsM, latsM, Precip =cF.get_ERA5_precip_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
+	print('calculating Delaunay triangulation')
+
+	ptM_arr = np.array([xptsM.flatten(),yptsM.flatten()]).T
+	print('array shape, should be npts,ndim')
+	print(ptM_arr.shape)
+
+	tri = Delaunay(ptM_arr)
+	# end Delaunay calculation
+
 	for dayT in range(startDay, endDay):
 	
 		dayStr='%03d' %dayT
@@ -88,7 +109,11 @@ def main(year, startMonth=8, endMonth=11, dx=100000, extraStr='v11_1', data_path
 		#in  kg/m2 per day
 		xptsM, yptsM, lonsM, latsM, Precip =cF.get_ERA5_precip_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30, varStr=varStr)
 		print(Precip)
-		PrecipG = griddata((xptsM.flatten(), yptsM.flatten()), Precip.flatten(), (xptsG, yptsG), method='linear')
+# old precip grid code
+#		PrecipG = griddata((xptsM.flatten(), yptsM.flatten()), Precip.flatten(), (xptsG, yptsG), method='linear')
+# new precip grid code
+		interp = LinearNDInterpolator(tri,Precip.flatten())
+		PrecipG = interp((xptsG,yptsG))
 
 		cF.plot_gridded_cartopy(lonG, latG, PrecipG, proj=ccrs.NorthPolarStereo(central_longitude=-45), out=fig_path+'/'+varStr+'-'+str(yearT)+'_d'+str(dayT)+'T2', date_string=str(yearT), month_string=str(dayT), extra=extraStr, varStr='ERA5 snowfall ', units_lab=r'kg/m2', minval=0, maxval=10, cmap_1=plt.cm.viridis)
 		
@@ -97,13 +122,13 @@ def main(year, startMonth=8, endMonth=11, dx=100000, extraStr='v11_1', data_path
 #-- run main program
 if __name__ == '__main__':
 #	data_path_ac = '/users/jk/17/acabaj/e5-daily/'
-	data_path_ac = '/data/kushner_group/ERA5/achereque/snowfall_full_data/'
-	for y in range(2017, 2018+1, 1):
+	data_path_ac = '/data/kushner_group/ERA/achereque/snowfall_full_data/'
+	for y in range(1989, 1990, 1):
 		print (y)
-		main(y,dx=100000,data_path=data_path_ac)
-		main(y,8,11,dx=100000,data_path=data_path_ac)
+#		main(y,0,4,dx=100000,data_path=data_path_ac)
+#		main(y,7,7,dx=100000,data_path=data_path_ac)
 
-#		main(y,3,4,data_path=data_path_ac)
+		main(y,3,4,data_path=data_path_ac)
 
 
 

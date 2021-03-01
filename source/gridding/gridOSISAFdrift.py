@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
 	for year in range(2010, 2020+1, 1):
 		print(year)
-		main(year)
+		main(year,dx=50000)
 	
 
 
