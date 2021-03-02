@@ -565,6 +565,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	saveStr= precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr+'-'+dateOut
 	saveStrNoDate=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
 	
+	# comment out this part; no saving
 	print ('Saving to:', saveStr)
 	 #'../../DataOutput/'
 
@@ -639,6 +640,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		
 		if (plotdaily==1):
 			cF.plot_gridded_cartopy(lonG, latG, snowDepths[x+1, 0]+snowDepths[x+1, 1], proj=ccrs.NorthPolarStereo(central_longitude=-45), date_string='', out=figpath+'daily_snow_depths/snowTot_'+saveStrNoDate+str(x), units_lab='m', varStr='Snow depth', minval=0., maxval=0.6)
+	# end loop over days
 	
 	#------ Load last data 
 	iceConcDayG, precipDayG, _, windDayG, tempDayG =loadData(yearCurrent, day+1, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
