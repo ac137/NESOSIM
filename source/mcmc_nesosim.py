@@ -9,7 +9,7 @@ np.random.seed(42)
 # default llf 2.9e-7 ? different default for multiseason
 
 ITER_MAX = 10 # start small
-UNCERT = 200 # obs uncertainty for log-likelihood (also can be used to tune)
+UNCERT = 100 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
 PAR_SIGMA = 1 # standard deviation for parameter distribution
@@ -19,6 +19,7 @@ PAR_SIGMA = 1 # standard deviation for parameter distribution
 
 # currently just iterating over lead loss
 par_vals = np.array([2.9e-7])
+print('calculating initial log-likelihood')
 p0, stats_0 = loglike.main(par_vals, UNCERT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
@@ -27,6 +28,8 @@ print(stats_0)
 par_list = [par_vals]
 loglike_list = [p0]
 stats_list = [stats_0] # collect rmse and r also, etc.
+var_cond_list=[]
+diff_list=[]
 
 # first just try metropolis (don't reject proposed values of params)
 
@@ -40,6 +43,7 @@ step_vals = np.random.normal(0,PAR_SIGMA,ITER_MAX)*1e-7
 acceptance_count = 0
 
 for i in range(ITER_MAX):
+	print('iterating')
 	# random perturbation to step; adjust choice here
 	rand_val = step_vals[i]
 
@@ -55,17 +59,22 @@ for i in range(ITER_MAX):
 	# not doing this for now
 
 	if (par_new < 0).any() == False:
+		print('calculating new log-likelihood')
 		# calculate new log-likelihood
 		p, stats = loglike.main(par_new, UNCERT)
 
 		# accept/reject; double-check this with mcmc code
 		# in log space, p/q becomes p - q, so check difference here
 		# checking with respect to uniform distribution
-		if p-p0 > np.log(np.random.rand()):
+		var_cond = np.log(np.random.rand())
+		var_cond_list.append(var_cond)
+		diff = p-p0
+		diff_list.append(diff)
+		if p-p0 > var_cond:
 			# accept value
 			print('accepted value')
 			acceptance_count += 1
-			print('acceptance rate: {}/{} = {}'.format(acceptance_count,i,acceptance_count/i))
+			print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
 			par_vals = par_new
 			p0 = p
 			# append to list/ possibly save these to disk so that interrupting the
@@ -79,5 +88,5 @@ for i in range(ITER_MAX):
 np.savetxt('par_vals.txt',par_list)
 np.savetxt('log_likelihoods.txt',loglike_list)
 np.savetxt('stat_vals.txt',np.array(stats_list)) 
-
-
+np.savetxt('var_cond.txt',var_cond_list)
+np.savetxt('diff.txt',diff_list)

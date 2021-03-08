@@ -29,7 +29,7 @@ from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 
 # write oib function to get oib data separately
 
-def get_OIB_and_mask(dx, yearT, depthBudget):#, days_ds, diff_ds):
+def get_OIB_and_mask(dx, yearT, depthBudget,date_start):#, days_ds, diff_ds):
 	"""Grid all the OIB data and correlate"""
 
 	# rewrite this to load the OIB data only once?
@@ -52,6 +52,8 @@ def get_OIB_and_mask(dx, yearT, depthBudget):#, days_ds, diff_ds):
 
 	dxStr=str(int(dx/1000))+'km'
 	# region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
+	anc_data_pathT = '../anc_data/'
+	forcingPath = forcing_save_path
 
 	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
 	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
@@ -61,7 +63,7 @@ def get_OIB_and_mask(dx, yearT, depthBudget):#, days_ds, diff_ds):
 	
 	for file_day in days_list:
 
-		print('File:', file_day)
+#		print('File:', file_day)
 		day_val = (pd.to_datetime(file_day[:8])-date_start).days
 
 		try:
@@ -73,7 +75,7 @@ def get_OIB_and_mask(dx, yearT, depthBudget):#, days_ds, diff_ds):
 		except:
 			continue
 
-		print('Num points in day:', np.size(snowDepthOIB))
+#		print('Num points in day:', np.size(snowDepthOIB))
 		if (np.size(snowDepthOIB)==0):
 			#nodata
 			continue
@@ -150,6 +152,7 @@ windPackFactorT=5.8e-7
 windPackThreshT=5
 #leadLossFactorT=1.16e-6
 leadLossFactorT=2.9e-7
+dx = 100000
 
 day_start = 1
 month_start = 9
@@ -220,16 +223,18 @@ def main(params, uncert):
 	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
 	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
 	    windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF,
-	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, plotBudgets=0, plotdaily=0,
-	    scaleCS=True, dx=100000)
+	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=0, plotBudgets=0, plotdaily=0,
+	    scaleCS=True, dx=dx,returnBudget=1)
 
 
 		# get depth by year for given product
-		snowDepthOIByr, snowDepthMMyr= get_OIB_and_mask(dx, year2, budgets)
+		snowDepthOIByr, snowDepthMMyr= get_OIB_and_mask(dx, year2, budgets,date_start)
 		snowDepthOIBAll.extend(snowDepthOIByr)
 		snowDepthMMAll.extend(snowDepthMMyr)
 
 	# calculate the log-likelihood
+	snowDepthMMAll = np.array(snowDepthMMAll)
+	snowDepthOIBAll = np.array(snowDepthOIBAll)
 	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, uncert)
 
 	# calculate other statistics for reference

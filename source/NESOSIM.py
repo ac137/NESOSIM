@@ -386,13 +386,13 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	
 	#------- Read in precipitation -----------
 	try:
-		print('Loading gridded snowfall forcing from:', forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+#		print('Loading gridded snowfall forcing from:', forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_1', allow_pickle=True)
 		
 	except:
 		if (dayStr=='365'):
 			
-			precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
+			precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr+'_1', allow_pickle=True)
 			print('no leap year data, used data from the previous day')
 		else:
 			print('No precip data so exiting!')
@@ -400,7 +400,7 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	
 	#------- Read in wind magnitude -----------
 	try:
-		print('Loading gridded wind forcing from:', forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+#		print('Loading gridded wind forcing from:', forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 		windDayG=np.load(forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
 		
 	except:
@@ -414,8 +414,8 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 
 	#------- Read in ice concentration -----------
 	try:
-		print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+#		print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_n', allow_pickle=True)
 		
 	except:
 		if (dayStr=='365'):
@@ -431,7 +431,7 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	
 	#------- Read in ice drifts -----------
 	try:
-		print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+#		print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 		driftGdayG=np.load(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)	
 
 	except:
@@ -519,9 +519,9 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	outPath=outPathT+dxStr+'/'
 	forcingPath=forcingPathT+dxStr+'/'
 	ancDataPath=anc_data_pathT
-	print('OutPath:', outPath)
-	print('forcingPath:', forcingPath)
-	print('ancDataPath:', ancDataPath)
+#	print('OutPath:', outPath)
+#	print('forcingPath:', forcingPath)
+#	print('ancDataPath:', ancDataPath)
 
 	# Assign density of the two snow layers
 	global snowDensityFresh, snowDensityOld, minSnowD, minConc, leadLossFactor, windPackThresh, windPackFactor, deltaT
@@ -566,22 +566,23 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	saveStrNoDate=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
 	
 	# comment out this part; no saving
-	print ('Saving to:', saveStr)
+#	print ('Saving to:', saveStr)
 	 #'../../DataOutput/'
 
 	savePath=outPath+saveFolder+'/'+saveStrNoDate
+# TODO: put these behind an if statement; commenting so that we don't get a bunch of empty dirs for mcmc
 	# Declare empty arrays for compiling budgets
-	if not os.path.exists(savePath+'/budgets/'):
-		os.makedirs(savePath+'/budgets/')
-	if not os.path.exists(savePath+'/final/'):
-		os.makedirs(savePath+'/final/')
+#	if not os.path.exists(savePath+'/budgets/'):
+#		os.makedirs(savePath+'/budgets/')
+#	if not os.path.exists(savePath+'/final/'):
+#		os.makedirs(savePath+'/final/')
 
 	global figpath
 	figpath=figPathT+'/Diagnostic/'+dxStr+'/'+saveStrNoDate+'/'
-	if not os.path.exists(figpath):
-		os.makedirs(figpath)
-	if not os.path.exists(figpath+'/daily_snow_depths/'):
-		os.makedirs(figpath+'/daily_snow_depths/')
+#	if not os.path.exists(figpath):
+#		os.makedirs(figpath)
+#	if not os.path.exists(figpath+'/daily_snow_depths/'):
+#		os.makedirs(figpath+'/daily_snow_depths/')
 
 	precipDays, iceConcDays, windDays, tempDays, snowDepths, density, snowDiv, snowAdv, snowAcc, snowOcean, snowWindPack, snowWindPackLoss, snowWindPackGain, snowLead, snowAtm = genEmptyArrays(numDays, nx, ny)
 
@@ -619,8 +620,8 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 			day=day-numDaysYear1
 			yearCurrent=year2
 		
-		print ('Day of year:', day)
-		print ('Date:', dates[x])
+#		print ('Day of year:', day)
+#		print ('Date:', dates[x])
 		
 		#-------- Load daily data 
 		iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)

@@ -1310,4 +1310,8 @@ def get_region_mask_pyproj(anc_data_path, proj, xypts_return=0):
 	else:
 		return region_mask
 
-
+def correlateVars(var1, var2):
+#correlate two variables
+	trend, intercept, r_a, prob, stderr = stats.linregress(var1, var2)
+	sig = 100.*(1.-prob)
+	return trend, sig, r_a, intercept 
