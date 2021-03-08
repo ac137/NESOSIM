@@ -62,6 +62,7 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 
 		print('File:', file_day)
 		day_val = (pd.to_datetime(file_day[:8])-date_start).days
+		print(day_val)
 
 		try:
 			# print(os.path.join(folderPath,file_day))
@@ -133,7 +134,8 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis,grid_1
 
 figpath = figure_path
 outPath = model_save_path+'/100km/'
-outPath = model_save_path + '/50km/'
+#outPath = model_save_path + '/50km/'
+# change this when changing dx...
 print(outPath)
 forcingPath = forcing_save_path
 anc_data_pathT='../../anc_data/'
@@ -179,7 +181,7 @@ IC=2
 dynamicsInc=1
 windpackInc=1
 leadlossInc=1
-atmlossInc=0
+atmlossInc=1
 windPackFactorT=5.8e-7
 windPackThreshT=5
 #leadLossFactorT=1.16e-6
@@ -187,11 +189,11 @@ leadLossFactorT=2.9e-7
 
 # Get model grid
 dx=100000.
-#dxStr='100km' # using this to load NESOSIM at 50km but OIB at 100km
+dxStr='100km' 
 
 
 #dx = 50000
-dxStr='50km'
+#dxStr='50km' # set to 50 with dx=100km to load nesosim at 50km but oib at 100km
 extraStr='v11'
 #outStr='4x_v2_s03'
 outStr='2nov'
@@ -236,11 +238,11 @@ for year1 in range(startYear, endYear):
 
 
 	# get depth by year for given product
-	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=True)#, days_y, diff_y)
+	_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=False)#, days_y, diff_y)
 	snowDepthOIBAll.extend(snowDepthOIByr)
 	snowDepthMMAll.extend(snowDepthMMyr)
 
-print(snowDepthOIBAll)
+#print(snowDepthOIBAll)
 
 
 
@@ -267,3 +269,13 @@ std_o = np.std(snowDepthOIBAll)
 
 
 print("r: {:.2f} \ns_n: {:.1f} \ns_o: {:.1f}".format(r_a, std_n, std_o))
+
+print(snowDepthMMAll[:10],snowDepthOIBAll[:10])
+uncert = np.ones(len(snowDepthMMAll))*200
+log_p = -0.5*np.sum((np.array(snowDepthMMAll)-np.array(snowDepthOIBAll))**2/uncert**2)
+
+pert_arr = np.ones(len(snowDepthMMAll))*10
+#log_p = -0.5*np.sum((np.array(snowDepthMMAll)-np.array(snowDepthMMAll)+pert_arr)**2/uncert**2)
+
+
+print(log_p, np.exp(log_p))
