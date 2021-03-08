@@ -73,7 +73,7 @@ def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
 
 	print ('saving to:', savePath+'/budgets/'+saveStr)
 
-	dataSet.to_netcdf(savePath+'/budgets/'+saveStr+'.nc') 
+	dataSet.to_netcdf(savePath+'/budgets/'+saveStr+'.nc')
 
 
 def OutputSnowModelFinal(savePath, saveStr, lons, lats, xpts, ypts, snowVolT,snowDepthT, densityT, iceConcT, precipT, windsT, tempT, datesT, ice_conc_mask=0.5):
@@ -189,6 +189,41 @@ def OutputSnowModelFinal(savePath, saveStr, lons, lats, xpts, ypts, snowVolT,sno
 	f.data_range = "Date range: "+str(datesT[0])+'-'+str(datesT[-1])
 
 	f.close()
+
+
+def ReturnMCMCBudget(snowDepths, density, iceConcDays):
+	""" Output snow model data using xarray: for use with MCMC (only keeping
+	some variables for now; optimizing wrt snow depth, possibly density, iceConc
+	needed for total snow depth masking later)
+
+	Args:
+		reanalysisP (str): Reanalysis snowfall forcing used for this model run
+		Remaining arguments* (vars): Model variables being saved
+
+	Return:
+		xarray data  
+    
+    """
+
+	#precipData = xr.DataArray(precipDays, dims=('time', 'x', 'y'))
+	snowDepthsData = xr.DataArray(snowDepths, dims=('time', 'lyrs',  'x', 'y'))
+	# snowAccData = xr.DataArray(snowAcc, dims=('time', 'x', 'y'))
+	# snowDivData = xr.DataArray(snowDiv, dims=('time', 'x', 'y'))
+	# snowAdvData = xr.DataArray(snowAdv, dims=('time', 'x', 'y'))
+	# snowLeadData = xr.DataArray(snowLead, dims=('time', 'x', 'y'))
+	# snowAtmData = xr.DataArray(snowAtm, dims=('time', 'x', 'y'))
+	# snowWindPackData=xr.DataArray(snowWindPack, dims=('time', 'x', 'y'))
+	# snowOceanData = xr.DataArray(snowOcean, dims=('time', 'x', 'y'))
+	densityData = xr.DataArray(density, dims=('time', 'x', 'y'))
+	iceConcData = xr.DataArray(iceConcDays, dims=('time', 'x', 'y'))
+	# windData = xr.DataArray(windDays, dims=('time', 'x', 'y'))
+
+	# dataSet = xr.Dataset({'Precip': precipData, 'snowDepth': snowDepthsData, 'snowAcc': snowAccData, 'snowDiv': \
+	# 	snowDivData,'snowAdv': snowAdvData, 'snowLead': snowLeadData,'snowAtm': snowAtmData,'snowWindPack': snowWindPackData,'snowOcean': \
+	# 	snowOceanData, 'density': densityData, 'iceConc': iceConcData, 'winds': windData})
+	dataSet = xr.Dataset({'snowDepth': snowDepthsData, 'density': densityData, 'iceConc': iceConcData})
+
+	return dataSet
 
 def plot_budgets_cartopy(lonG, latG, precipDaysT, windDaysT, snowDepthsT, snowOceanT, snowAccT, snowDivT, \
 	snowAdvT, snowLeadT, snowAtmT, snowWindPackT, snowWindPackLossT, snowWindPackGainT, densityT, dateStr, figpath, totalOutStr='test'):

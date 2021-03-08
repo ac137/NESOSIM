@@ -495,7 +495,7 @@ def applyScaling(product,factor,scaling_type='mul'):
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, dynamicsInc=1, leadlossInc=1, 
-	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000,scaleCS=False):
+	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000, scaleCS=False, returnBudget=0):
 	""" 
 
 	Main model function
@@ -659,3 +659,8 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		cF.plot_budgets_cartopy(lonG, latG, precipDayG, windDayG, snowDepths[x+1], snowOcean[x+1], snowAcc[x+1], snowDiv[x+1], \
 		snowAdv[x+1], snowLead[x+1], snowAtm[x+1], snowWindPack[x+1], snowWindPackLoss[x+1], snowWindPackGain[x+1], density[x+1], dates[-1], figpath, totalOutStr=saveStr)
 
+	# another option/arg for main function
+	if (returnBudget==1):
+		budget = cF.ReturnMCMCBudget(snowDepths, density, iceConcDays)
+		# NESOSIM.main returns a value here, now!
+		return budget

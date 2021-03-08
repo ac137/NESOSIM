@@ -16,6 +16,11 @@ import os
 import scipy.stats as st
 
 
+from calendar import monthrange
+
+import NESOSIM
+
+
 from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 
 
@@ -24,18 +29,7 @@ from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 
 # write oib function to get oib data separately
 
-# should this be the log likelihood or just the whole thing...
-
-
-def get_OIB():
-	# load oib data; do this only once!
-	# do gridding separately
-	# just use getOIBNESOSIM for now
-	# 
-	pass
-
-
-def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, days_ds, diff_ds):
+def get_OIB_and_mask(dx, yearT, depthBudget):#, days_ds, diff_ds):
 	"""Grid all the OIB data and correlate"""
 
 	# rewrite this to load the OIB data only once?
@@ -45,10 +39,15 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 	snowDepthMMall=[]
 	snowOIBMall=[]
 
+
+	# nesosim depth which is then indexed per day
+	iceConc = np.array(depthBudget['iceConc'])
+	snowData = (depthBudget['snowDepth'][:, 0] + depthBudget['snowDepth'][:, 1])/iceConc
+	# this is now indexable by day
+	snowData = np.ma.masked_where(iceConc<0.15, snowData)
+
 	# lonG, latG, xptsG, yptsG, nx, ny = cF.getGrid(, dx)
 	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
-
-
 
 
 	dxStr=str(int(dx/1000))+'km'
@@ -56,8 +55,6 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 
 	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
 	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
-
-
 
 	folderPath=forcingPath+'/OIB/{}binned/{}/'.format(dxStr,yearT)
 	days_list = os.listdir(folderPath)
@@ -84,13 +81,8 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 		# 	#beyond May 1st
 		# 	continue
 
-		# snow depth from NESOSIM output (budget)
-		snowDepthM=cF.get_budgets2layers_day(['snowDepthTotalConc'], outPath, folderStr, day_val, totalOutStr)
-		
-		if grid_100:
-			# snow here was loaded as 50x50 (M), grid to 100x100 (G) to compare with OIB
-			snowDepthM = griddata((xptsM.flatten(), yptsM.flatten()), snowDepthM.flatten(), (xptsG, yptsG), method='linear')
-			snowDepthM = ma.masked_invalid(snowDepthM)
+		# snow depth from NESOSIM output (budget); select single day
+		snowDepthM = snowData[day_val]
 
 		# masking
 		maskDay=np.zeros((xptsG.shape[0], xptsG.shape[1]))
@@ -132,13 +124,15 @@ def getOIBNESOSIM(dx, folderStr, totalOutStr, yearT, snowType, reanalysis):#, da
 		snowDepthMMall.extend(snowDepthMM*100.)
 		snowOIBMall.extend(snowDepthOIBM*100.)
 
-	return xptsGMall, yptsGMall, snowOIBMall, snowDepthMMall
+	return snowOIBMall, snowDepthMMall
 
 def calc_loglike(model, obs, uncert):
 	# log likelihood for normal distribution
 	# based on likelihood function exp (0.5*sum((model-obs)^2/uncert^2))
 	return -0.5*np.sum((model - obs)**2/uncert**2)
 
+
+# various model parameters etc.
 precipVar='ERA5'
 reanalysis=precipVar
 CSstr='CSscaled'
@@ -157,10 +151,38 @@ windPackThreshT=5
 #leadLossFactorT=1.16e-6
 leadLossFactorT=2.9e-7
 
+day_start = 1
+month_start = 9
 
-def main(params):
-	windPackFactorT, leadLossFactorT = params
-	folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
+
+def main(params, uncert):
+	'''log-likelihood calculation for NESOSIM vs. OIB
+	steps:
+	- set up date variables
+	- iterate over years:
+		- run nesosim
+		- mask to oib/select days
+		- calculate log-likelihood and other stats
+	params: parameters to be varied; currently just varying lead loss factor
+	(single parameter changes)
+	uncert: obs uncertainty estimate on OIB
+
+	returns:
+	logp: log-likelihood probability for nesosim vs. oib
+	stats: list of [Pearson correlation, RMSE, mean error, standard deviation
+	(OIB vs. NESOSIM), NESOSIM standard deviation, OIB standard deviation]
+	'''
+
+
+	# WPF, LLF = params
+	# just try single parameter for now to test
+	LLF = params[0]
+
+	# keep default wind packing for now
+	WPF = 5.8e-7
+
+	# windPackFactorT, leadLossFactorT = params
+	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
 
 	# run the model here maybe? and then grab the values somehow...
 	startYear=2010
@@ -187,15 +209,41 @@ def main(params):
 
 		# Get time period info
 		_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
-		totalOutStr=''+folderStr+'-'+dateOut
+		#totalOutStr=''+folderStr+'-'+dateOut
+
+		# run nesosim (not sure if all the additional variables are needed)
+
+		budgets = NESOSIM.main(year1=year1, month1=month1, day1=day1, year2=year1+1, month2=month2, day2=day2,
+	    outPathT=model_save_path, 
+	    forcingPathT=forcing_save_path, 
+	    figPathT=figure_path+'Model/',
+	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
+	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
+	    windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF,
+	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, plotBudgets=0, plotdaily=0,
+	    scaleCS=True, dx=100000)
 
 
 		# get depth by year for given product
-		_, _, snowDepthOIByr, snowDepthMMyr= getOIBNESOSIM(dx, folderStr, totalOutStr, year2, 'GSFC', reanalysis, grid_100=True)#, days_y, diff_y)
+		snowDepthOIByr, snowDepthMMyr= get_OIB_and_mask(dx, year2, budgets)
 		snowDepthOIBAll.extend(snowDepthOIByr)
 		snowDepthMMAll.extend(snowDepthMMyr)
 
 	# calculate the log-likelihood
-	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll)
+	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, uncert)
 
-	return log_p
+	# calculate other statistics for reference
+	# linear fit with pearson correlation
+	trend, sig, r_a, intercept = cF.correlateVars(snowDepthMMAll,snowDepthOIBAll)
+	# rmse
+	rmse=np.sqrt(np.mean((np.array(snowDepthMMAll)-np.array(snowDepthOIBAll)**2)))
+	# mean error
+	merr=np.mean(np.array(snowDepthMMAll)-np.array(snowDepthOIBAll))
+	# standard deviation nesosim vs. oib
+	std=np.std(np.array(snowDepthMMAll)-merr-np.array(snowDepthOIBAll))
+	# nesosim standard deviation
+	std_n = np.std(snowDepthMMAll)
+	# oib standard deviation
+	std_o = np.std(snowDepthOIBAll)
+
+	return log_p, [r_a, rmse, merr, std, std_n, std_o]
