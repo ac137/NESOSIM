@@ -18,7 +18,8 @@ PAR_SIGMA = 1 # standard deviation for parameter distribution
 # step size determined based on param uncertainty (one per parameter)
 
 # currently just iterating over lead loss
-par_vals = np.array([2.9e-7])
+# now iterating over WPF
+par_vals = np.array([5.8e-7])
 print('calculating initial log-likelihood')
 p0, stats_0 = loglike.main(par_vals, UNCERT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))

@@ -107,10 +107,11 @@ def get_OIB_and_mask(dx, yearT, depthBudget,date_start):#, days_ds, diff_ds):
 		maskDay[np.where(np.isnan(snowDepthOIB))]=1
 		# maskDay[where(np.isnan(snowDepthOIB))]
 		maskDay[np.where(snowDepthOIB<=0.04)]=1
-		maskDay[np.where(snowDepthM<=0.04)]=1
+		# get rid of masking based on nesosim output; varies per params and affects mcmc optimization
+#		maskDay[np.where(snowDepthM<=0.04)]=1
 
 		maskDay[np.where(snowDepthOIB>0.8)]=1
-		maskDay[np.where(snowDepthM>0.8)]=1
+#		maskDay[np.where(snowDepthM>0.8)]=1
 
 		maskDay[np.where(region_maskG>8.2)]=1
 
@@ -179,10 +180,16 @@ def main(params, uncert):
 
 	# WPF, LLF = params
 	# just try single parameter for now to test
-	LLF = params[0]
+	# swap LLF and WPF now; varying WPF
+#	LLF = params[0]
+	# use new LLF
+#	LLF = 3.96
+	# what about old LLF?
+	LLF = 2.9e-7
 
 	# keep default wind packing for now
-	WPF = 5.8e-7
+#	WPF = 5.8e-7
+	WPF = params[0]
 
 	# windPackFactorT, leadLossFactorT = params
 	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
@@ -241,7 +248,7 @@ def main(params, uncert):
 	# linear fit with pearson correlation
 	trend, sig, r_a, intercept = cF.correlateVars(snowDepthMMAll,snowDepthOIBAll)
 	# rmse
-	rmse=np.sqrt(np.mean((np.array(snowDepthMMAll)-np.array(snowDepthOIBAll)**2)))
+	rmse=np.sqrt(np.mean((np.array(snowDepthMMAll)-np.array(snowDepthOIBAll))**2))
 	# mean error
 	merr=np.mean(np.array(snowDepthMMAll)-np.array(snowDepthOIBAll))
 	# standard deviation nesosim vs. oib
