@@ -8,25 +8,30 @@ np.random.seed(42)
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 2000 # start small
+ITER_MAX = 10 # start small for testing
 UNCERT = 30 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
-PAR_SIGMA = 1 # standard deviation for parameter distribution
+PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separate per param
 # should be multiplied by 1e-7, but can do that after calculating distribution
 
 # step size determined based on param uncertainty (one per parameter)
 
-# currently just iterating over lead loss
-# now iterating over WPF
-par_vals = np.array([5.8e-7])
+
+
+# try over both wpf and lead loss, now
+# order here is [wpf, llf]
+par_vals = np.array([5.8e-7, 2.9e-7])
+
+NPARS = len(par_vals)
+
 print('calculating initial log-likelihood')
 p0, stats_0 = loglike.main(par_vals, UNCERT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
 
-par_list = [par_vals]
+par_list = [par_vals] # now an nx2 list
 loglike_list = [p0]
 stats_list = [stats_0] # collect rmse and r also, etc.
 #var_cond_list=[]
@@ -39,7 +44,8 @@ rejected_stats = []
 # first just try metropolis (don't reject proposed values of params)
 
 # steps to take
-step_vals = np.random.normal(0,PAR_SIGMA,ITER_MAX)*1e-7
+# np.randon.normal(mean, sigma, shape); sigma can be an array
+step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))*1e-7
 # reshape this if the number of params changes
 # reject any new parameter less than 0
 

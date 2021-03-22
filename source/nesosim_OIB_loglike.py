@@ -178,18 +178,12 @@ def main(params, uncert):
 	'''
 
 
-	# WPF, LLF = params
-	# just try single parameter for now to test
-	# swap LLF and WPF now; varying WPF
-#	LLF = params[0]
-	# use new LLF
-#	LLF = 3.96
-	# what about old LLF?
-	LLF = 2.9e-7
+	# default wpf 5.8e-7
+	# default llf 2.9e-7 
 
-	# keep default wind packing for now
-#	WPF = 5.8e-7
+	# passing params as [wpf, llf]
 	WPF = params[0]
+	LLF = params[1]
 
 	# windPackFactorT, leadLossFactorT = params
 	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
