@@ -8,8 +8,8 @@ np.random.seed(42)
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 10 # start small for testing
-UNCERT = 30 # obs uncertainty for log-likelihood (also can be used to tune)
+ITER_MAX = 10# start small for testing
+UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
 PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separate per param

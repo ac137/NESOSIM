@@ -58,7 +58,7 @@ def get_OIB_and_mask(dx, yearT, depthBudget,date_start):#, days_ds, diff_ds):
 	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
 	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
-	folderPath=forcingPath+'/OIB/{}binned/{}/'.format(dxStr,yearT)
+	folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
 	days_list = os.listdir(folderPath)
 	
 	for file_day in days_list:
