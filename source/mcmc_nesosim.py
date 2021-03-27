@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import nesosim_OIB_loglike as loglike
 
 
@@ -22,6 +23,13 @@ PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separ
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
 par_vals = np.array([5.8e-7, 2.9e-7])
+PARS_INIT = par_vals.copy()
+par_names = ['wind packing', 'blowing snow']
+
+metadata_headings = ['N_iter','uncert','prior_p1','prior_p2','sigma_p1','sigma_p2', 'oib_prod']
+metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], PAR_SIGMA[0], PAR_SIGMA[1], 'MEDIAN']]
+meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
+
 
 NPARS = len(par_vals)
 
@@ -102,12 +110,42 @@ for i in range(ITER_MAX):
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
 
-# save like this for now, save more nicely later			
-np.savetxt('par_vals.txt',par_list)
-np.savetxt('log_likelihoods.txt',loglike_list)
-np.savetxt('stat_vals.txt',np.array(stats_list)) 
-#np.savetxt('var_cond.txt',var_cond_list)
-#np.savetxt('diff.txt',diff_list)
-np.savetxt('rejected_pars.txt',rejected_pars)
-np.savetxt('rejected_lls.txt',rejected_lls)
-np.savetxt('rejected_stats.txt',rejected_stats)
+
+# create a pandas dataframe for saving
+
+stat_headings = ['r','rmse','merr','std','std_n','std_o']
+valid_df = pd.DataFrame(np.array(stats_list), columns=stat_headings)
+par_arr = np.array(par_list)
+valid_df[par_names[0]] = par_arr[:,0]
+valid_df[par_names[1]] = par_arr[:,1]
+valid_df['loglike'] = loglike_list
+
+rejected_df = pd.DataFrame(np.array(rejected_stats), columns=stat_headings)
+rej_par_arr = np.array(rejected_pars)
+rejected_df[par_names[0]] = rej_par_arr[:,0]
+rejected_df[par_names[1]] = rej_par_arr[:,1]
+rejected_df['loglike'] = rejected_lls
+
+# data I want to keep track of
+# number of iter (can be inferred)
+# uncert
+# which oib product was used
+# parameter sigmas for priors
+
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,uncert,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+# format exponential to 2 decimal places: {:.2e}, in case I need that later
+valid_df.to_hdf(fname, key='valid')
+rejected_df.to_hdf(fname, key='rejected')
+meta_df.to_hdf(fname, key='meta')
+
+
+
+# # save like this for now, save more nicely later			
+# np.savetxt('par_vals.txt',par_list)
+# np.savetxt('log_likelihoods.txt',loglike_list)
+# np.savetxt('stat_vals.txt',np.array(stats_list)) 
+# #np.savetxt('var_cond.txt',var_cond_list)
+# #np.savetxt('diff.txt',diff_list)
+# np.savetxt('rejected_pars.txt',rejected_pars)
+# np.savetxt('rejected_lls.txt',rejected_lls)
+# np.savetxt('rejected_stats.txt',rejected_stats)
