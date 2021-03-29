@@ -70,7 +70,8 @@ def get_OIB_and_mask(dx, yearT, depthBudget,date_start):#, days_ds, diff_ds):
 			# print(os.path.join(folderPath,file_day))
 			snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
 			# transpose (when using old OIB files)
-			snowDepthOIB = snowDepthOIB.T
+			# don't need transpose for new oib files (median); commenting out
+		#	snowDepthOIB = snowDepthOIB.T
 
 		except:
 			continue
