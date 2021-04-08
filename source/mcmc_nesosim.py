@@ -9,7 +9,7 @@ np.random.seed(42)
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 10# start small for testing
+ITER_MAX = 3000# start small for testing
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -22,7 +22,8 @@ PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separ
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
-par_vals = np.array([5.8e-7, 2.9e-7])
+#par_vals = np.array([5.8e-7, 2.9e-7])
+par_vals = np.array([5.8e-7, 1.45e-6])
 PARS_INIT = par_vals.copy()
 par_names = ['wind packing', 'blowing snow']
 
@@ -132,7 +133,7 @@ rejected_df['loglike'] = rejected_lls
 # which oib product was used
 # parameter sigmas for priors
 
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,uncert,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
 # format exponential to 2 decimal places: {:.2e}, in case I need that later
 valid_df.to_hdf(fname, key='valid')
 rejected_df.to_hdf(fname, key='rejected')
