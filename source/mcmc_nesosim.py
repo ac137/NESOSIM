@@ -3,13 +3,37 @@ import pandas as pd
 import nesosim_OIB_loglike as loglike
 
 
+
+def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls):
+	'''write output with to an hdf file at location fname'''
+	'''note: will overwrite files!'''
+
+	stat_headings = ['r','rmse','merr','std','std_n','std_o']
+	valid_df = pd.DataFrame(np.array(stats_list), columns=stat_headings)
+	par_arr = np.array(par_list)
+	valid_df[par_names[0]] = par_arr[:,0]
+	valid_df[par_names[1]] = par_arr[:,1]
+	valid_df['loglike'] = loglike_list
+
+	rejected_df = pd.DataFrame(np.array(rejected_stats), columns=stat_headings)
+	rej_par_arr = np.array(rejected_pars)
+	rejected_df[par_names[0]] = rej_par_arr[:,0]
+	rejected_df[par_names[1]] = rej_par_arr[:,1]
+	rejected_df['loglike'] = rejected_lls
+
+	valid_df.to_hdf(fname, key='valid')
+	rejected_df.to_hdf(fname, key='rejected')
+	meta_df.to_hdf(fname, key='meta')
+
+
+
 # seed for testing
 np.random.seed(42)
 
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 3000# start small for testing
+ITER_MAX = 10# start small for testing
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -23,7 +47,7 @@ PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separ
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
 #par_vals = np.array([5.8e-7, 2.9e-7])
-par_vals = np.array([5.8e-7, 1.45e-6])
+par_vals = np.array([5.8e-7, 1.45e-7])
 PARS_INIT = par_vals.copy()
 par_names = ['wind packing', 'blowing snow']
 
@@ -54,6 +78,9 @@ rejected_stats = []
 
 # steps to take
 # np.randon.normal(mean, sigma, shape); sigma can be an array
+
+# maybe change this later to not pre-calculate steps so that
+# this doesn't take up space in memory
 step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))*1e-7
 # reshape this if the number of params changes
 # reject any new parameter less than 0
@@ -110,34 +137,46 @@ for i in range(ITER_MAX):
 			rejected_stats.append(stats)
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
+	if i%1000 == 0:
+		# save output every 1k iterations just in case
+		print('Writing output for {} iterations...'.format(i))
+		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
+		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
-# create a pandas dataframe for saving
 
-stat_headings = ['r','rmse','merr','std','std_n','std_o']
-valid_df = pd.DataFrame(np.array(stats_list), columns=stat_headings)
-par_arr = np.array(par_list)
-valid_df[par_names[0]] = par_arr[:,0]
-valid_df[par_names[1]] = par_arr[:,1]
-valid_df['loglike'] = loglike_list
-
-rejected_df = pd.DataFrame(np.array(rejected_stats), columns=stat_headings)
-rej_par_arr = np.array(rejected_pars)
-rejected_df[par_names[0]] = rej_par_arr[:,0]
-rejected_df[par_names[1]] = rej_par_arr[:,1]
-rejected_df['loglike'] = rejected_lls
-
-# data I want to keep track of
-# number of iter (can be inferred)
-# uncert
-# which oib product was used
-# parameter sigmas for priors
-
+# save final output to file
 fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
-# format exponential to 2 decimal places: {:.2e}, in case I need that later
-valid_df.to_hdf(fname, key='valid')
-rejected_df.to_hdf(fname, key='rejected')
-meta_df.to_hdf(fname, key='meta')
+write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
+
+# stat_headings = ['r','rmse','merr','std','std_n','std_o']
+# valid_df = pd.DataFrame(np.array(stats_list), columns=stat_headings)
+# par_arr = np.array(par_list)
+# valid_df[par_names[0]] = par_arr[:,0]
+# valid_df[par_names[1]] = par_arr[:,1]
+# valid_df['loglike'] = loglike_list
+
+# rejected_df = pd.DataFrame(np.array(rejected_stats), columns=stat_headings)
+# rej_par_arr = np.array(rejected_pars)
+# rejected_df[par_names[0]] = rej_par_arr[:,0]
+# rejected_df[par_names[1]] = rej_par_arr[:,1]
+# rejected_df['loglike'] = rejected_lls
+
+# # data I want to keep track of
+# # number of iter (can be inferred)
+# # uncert
+# # which oib product was used
+# # parameter sigmas for priors
+
+# fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+# # format exponential to 2 decimal places: {:.2e}, in case I need that later
+# valid_df.to_hdf(fname, key='valid')
+# rejected_df.to_hdf(fname, key='rejected')
+# meta_df.to_hdf(fname, key='meta')
+
+
+
 
 
 
