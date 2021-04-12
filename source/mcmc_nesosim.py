@@ -28,12 +28,12 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 
 
 # seed for testing
-np.random.seed(42)
+#np.random.seed(42)
 
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 10# start small for testing
+ITER_MAX = 5000# start small for testing
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -141,13 +141,15 @@ for i in range(ITER_MAX):
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
-		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
 
 # save final output to file
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+print(ITER_MAX)
+print(fname)
 write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 # stat_headings = ['r','rmse','merr','std','std_n','std_o']
