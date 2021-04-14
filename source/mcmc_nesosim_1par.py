@@ -32,20 +32,21 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default llf 2.9e-7 ? different default for multiseason
 
 PAR_NAME = 'WPF' # parameter to vary
-ITER_MAX = 10 # start small for testing
-UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
-# par_vals = [1., 1.] #initial parameter values
+ITER_MAX = 3000 # start small for testing
+UNCERT = 30 # obs uncertainty for log-likelihood (also can be used to tune)
 
 PAR_SIGMA = [1] # standard deviation for parameter distribution; can be separate per param
 # should be multiplied by 1e-7, but can do that after calculating distribution
 
 # step size determined based on param uncertainty (one per parameter)
 
-# order here is [wpf, llf]
-#par_vals = np.array([5.8e-7, 2.9e-7])
-par_vals = np.array([5.8e-7])# , 1.45e-7])
+par_vals = np.array([5.8e-7]) #wpf
+
+#par_vals = np.array([2.9e-7])# llf
+#par_vals = np.array([1.45e-7]) # llf default v1.1
 PARS_INIT = par_vals.copy()
 par_names = ['wind packing']#, 'blowing snow']
+#par_names = ['blowing snow']
 
 metadata_headings = ['N_iter','uncert','prior_p1','sigma_p1', 'oib_prod']
 metadata_values = [[ITER_MAX, UNCERT, par_vals[0], PAR_SIGMA[0], 'MEDIAN']]
@@ -133,7 +134,7 @@ for i in range(ITER_MAX):
 			rejected_stats.append(stats)
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
-	if i%1000 == 0:
+	if i>0 and i%1000 == 0:
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)

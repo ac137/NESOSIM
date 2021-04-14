@@ -184,6 +184,8 @@ def main(params, uncert):
 
 	# change here depending on which parameter is the default
 	WPF = params[0]
+#	WPF = 5.8e-7
+#	LLF = params[0]
 	LLF = 2.9e-7 # default llf
 
 	# windPackFactorT, leadLossFactorT = params
