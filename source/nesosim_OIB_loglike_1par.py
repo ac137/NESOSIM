@@ -160,7 +160,7 @@ day_start = 1
 month_start = 9
 
 
-def main(params, uncert):
+def main(params, uncert, parname, p2_val):
 	'''log-likelihood calculation for NESOSIM vs. OIB
 	steps:
 	- set up date variables
@@ -171,6 +171,7 @@ def main(params, uncert):
 	params: parameters to be varied; currently just varying lead loss factor
 	(single parameter changes)
 	uncert: obs uncertainty estimate on OIB
+	parname: one of 'WPF' or 'LLF'
 
 	returns:
 	logp: log-likelihood probability for nesosim vs. oib
@@ -183,10 +184,16 @@ def main(params, uncert):
 	# default llf 2.9e-7 
 
 	# change here depending on which parameter is the default
-	WPF = params[0]
-#	WPF = 5.8e-7
-#	LLF = params[0]
-	LLF = 2.9e-7 # default llf
+	if parname == 'WPF':
+
+		WPF = params[0]
+		# LLF = 2.9e-7 # add setting to change this default? later maybe
+		LLF = p2_val
+	elif parname == 'LLF':
+		# WPF = 5.8e-7
+		WPF = p2_val
+		LLF = params[0]
+#	
 
 	# windPackFactorT, leadLossFactorT = params
 	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr

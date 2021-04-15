@@ -40,23 +40,29 @@ PAR_SIGMA = [1] # standard deviation for parameter distribution; can be separate
 
 # step size determined based on param uncertainty (one per parameter)
 
-par_vals = np.array([5.8e-7]) #wpf
+if PAR_NAME == 'WPF':
+	par_vals = np.array([5.8e-7]) #wpf
+	par_names = ['wind packing']
+	P2_DEFAULT = 1.45e-7 # default for other parameter
+elif PAR_NAME == 'LLF':
+	#par_vals = np.array([2.9e-7])# llf default v1.0
+	par_vals = np.array([1.45e-7]) # llf default v1.1
+	P2_DEFAULT = 5.8e-7
+	par_names = ['blowing snow']
 
-#par_vals = np.array([2.9e-7])# llf
-#par_vals = np.array([1.45e-7]) # llf default v1.1
+
 PARS_INIT = par_vals.copy()
-par_names = ['wind packing']#, 'blowing snow']
-#par_names = ['blowing snow']
 
-metadata_headings = ['N_iter','uncert','prior_p1','sigma_p1', 'oib_prod']
-metadata_values = [[ITER_MAX, UNCERT, par_vals[0], PAR_SIGMA[0], 'MEDIAN']]
+
+metadata_headings = ['N_iter','uncert','prior_p1','p2 value','sigma_p1', 'oib_prod']
+metadata_values = [[ITER_MAX, UNCERT, par_vals[0], P2_DEFAULT, PAR_SIGMA[0], 'MEDIAN']]
 meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
 
 
 NPARS = len(par_vals)
 
 print('calculating initial log-likelihood')
-p0, stats_0 = loglike.main(par_vals, UNCERT) # initial likelihood function
+p0, stats_0 = loglike.main(par_vals, UNCERT, PAR_NAME, P2_DEFAULT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
@@ -105,7 +111,7 @@ for i in range(ITER_MAX):
 	if (par_new < 0).any() == False:
 		print('calculating new log-likelihood')
 		# calculate new log-likelihood
-		p, stats = loglike.main(par_new, UNCERT)
+		p, stats = loglike.main(par_new, UNCERT, PAR_NAME, P2_DEFAULT)
 
 		# accept/reject; double-check this with mcmc code
 		# in log space, p/q becomes p - q, so check difference here
@@ -138,13 +144,13 @@ for i in range(ITER_MAX):
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
-		fname = 'mcmc_output_1par_i{}_u_{}_p0_{}_{}_s0_{}_noseed.h5'.format(i,UNCERT,PAR_NAME, PARS_INIT[0],PAR_SIGMA[0])
+		fname = 'mcmc_output_1par_i{}_u_{}_p0_{}_{}_pd_{}_s0_{}_noseed.h5'.format(i,UNCERT,PAR_NAME, PARS_INIT[0],P2_DEFAULT, PAR_SIGMA[0])
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
 
 # save final output to file
-fname = 'mcmc_output_1par_i{}_u_{}_p0_{}_{}_s0_{}_noseed.h5'.format(ITER_MAX,UNCERT,PAR_NAME,PARS_INIT[0],PAR_SIGMA[0])
+fname = 'mcmc_output_1par_i{}_u_{}_p0_{}_{}_pd_{}_s0_{}_noseed.h5'.format(ITER_MAX,UNCERT,PAR_NAME,PARS_INIT[0],P2_DEFAULT,PAR_SIGMA[0])
 print(ITER_MAX)
 print(fname)
 write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
