@@ -33,7 +33,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 
 PAR_NAME = 'WPF' # parameter to vary
 ITER_MAX = 3000 # start small for testing
-UNCERT = 30 # obs uncertainty for log-likelihood (also can be used to tune)
+UNCERT = 10# obs uncertainty for log-likelihood (also can be used to tune)
 
 PAR_SIGMA = [1] # standard deviation for parameter distribution; can be separate per param
 # should be multiplied by 1e-7, but can do that after calculating distribution
@@ -43,10 +43,12 @@ PAR_SIGMA = [1] # standard deviation for parameter distribution; can be separate
 if PAR_NAME == 'WPF':
 	par_vals = np.array([5.8e-7]) #wpf
 	par_names = ['wind packing']
-	P2_DEFAULT = 1.45e-7 # default for other parameter
+#	P2_DEFAULT = 1.45e-7 # default for other parameter
+#	P2_DEFAULT = 2.9e-7
+	P2_DEFAULT = 1.79e-7 # optimized default
 elif PAR_NAME == 'LLF':
-	#par_vals = np.array([2.9e-7])# llf default v1.0
-	par_vals = np.array([1.45e-7]) # llf default v1.1
+	par_vals = np.array([2.9e-7])# llf default v1.0
+#	par_vals = np.array([1.45e-7]) # llf default v1.1
 	P2_DEFAULT = 5.8e-7
 	par_names = ['blowing snow']
 

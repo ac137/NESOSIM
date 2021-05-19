@@ -571,18 +571,20 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 
 	savePath=outPath+saveFolder+'/'+saveStrNoDate
 # TODO: put these behind an if statement; commenting so that we don't get a bunch of empty dirs for mcmc
+	if saveData==1:
 	# Declare empty arrays for compiling budgets
-#	if not os.path.exists(savePath+'/budgets/'):
-#		os.makedirs(savePath+'/budgets/')
-#	if not os.path.exists(savePath+'/final/'):
-#		os.makedirs(savePath+'/final/')
+		if not os.path.exists(savePath+'/budgets/'):
+			os.makedirs(savePath+'/budgets/')
+		if not os.path.exists(savePath+'/final/'):
+			os.makedirs(savePath+'/final/')
 
 	global figpath
 	figpath=figPathT+'/Diagnostic/'+dxStr+'/'+saveStrNoDate+'/'
-#	if not os.path.exists(figpath):
-#		os.makedirs(figpath)
-#	if not os.path.exists(figpath+'/daily_snow_depths/'):
-#		os.makedirs(figpath+'/daily_snow_depths/')
+	if saveData==1:
+		if not os.path.exists(figpath):
+			os.makedirs(figpath)
+		if not os.path.exists(figpath+'/daily_snow_depths/'):
+			os.makedirs(figpath+'/daily_snow_depths/')
 
 	precipDays, iceConcDays, windDays, tempDays, snowDepths, density, snowDiv, snowAdv, snowAcc, snowOcean, snowWindPack, snowWindPackLoss, snowWindPackGain, snowLead, snowAtm = genEmptyArrays(numDays, nx, ny)
 
