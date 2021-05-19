@@ -1,6 +1,15 @@
 import numpy as np
 import pandas as pd
-import nesosim_OIB_loglike as loglike
+
+
+# use density in mcmc constraints
+USE_DENS = True
+
+# is this sort of control flow for import statements reasonable? hopefully
+if USE_DENS:
+	import nesosim_OIB_loglike_dens as loglike
+else:
+	import nesosim_OIB_loglike as loglike
 
 
 
@@ -42,6 +51,13 @@ PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separ
 
 # step size determined based on param uncertainty (one per parameter)
 
+
+
+
+if USE_DENS:
+	DENS_STR = '_density'
+else:
+	DENS_STR = ''
 
 
 # try over both wpf and lead loss, now
@@ -141,13 +157,13 @@ for i in range(ITER_MAX):
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
-		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
 
 # save final output to file
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
 print(ITER_MAX)
 print(fname)
 write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
