@@ -38,7 +38,7 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start):#, days_ds, diff_ds):
 	yptsGMall=[]
 	snowDepthMMall=[]
 	snowOIBMall=[]
-	densMall = []
+	densMMall = []
 
 
 	# nesosim depth which is then indexed per day

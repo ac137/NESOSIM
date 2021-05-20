@@ -153,7 +153,7 @@ for i in range(ITER_MAX):
 			rejected_stats.append(stats)
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
-	if i%1000 == 0:
+	if i%1000 == 0 and i > 0:
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
