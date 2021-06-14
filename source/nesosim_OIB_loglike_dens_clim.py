@@ -167,7 +167,8 @@ def calc_dens_monthly_means(depthBudget, date_start):
 
 
 def calc_clim(df):
-	'''calculate monthly climatology from dataframe df'''
+	'''calculate monthly climatology from dataframe df
+	outputs months in numerical order'''
 	grp = df.groupby(df.index.month)
 	return grp.mean()#, grp.std()
 
@@ -199,11 +200,6 @@ month_start = 9
 # mind your units; multiply by 1000 to convert from g/cm^3 to kg/m^3
 station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
 station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
-
-#rearrange by index; hardcode for now
-mon_idx = [9,10,11,12,1,2,3,4] # maybe automate this based on start/end later
-station_dens_clim = station_dens_clim.loc[mon_idx]
-station_dens_std = station_dens_std.loc[mon_idx]
 
 def main(params, uncert):
 	'''log-likelihood calculation for NESOSIM vs. OIB
@@ -297,13 +293,17 @@ def main(params, uncert):
 
 	# stitch density dataframes together
 	densMMAll = pd.concat(densMMAll)
-	densMMAll = calc_clim(densMMAll).values
+	clim_dens = calc_clim(densMMAll)
+	densMMAll = clim_dens.values
 	# snow density arrays from station data; DS for 'drifting station'
 
 	# selecting values here is a bit redundant (could just store immediately in these variables)
 	# but I'll leave this for now
-	densDSAll = station_dens_clim.values
-	densUncert = station_dens_std.values
+
+	# grab index directly from calc_clim output before taking values
+	# so that density indices are consistent
+	densDSAll = station_dens_clim.loc[clim_dens.index].values
+	densUncert = station_dens_std.loc[clim_dens.index].values
 
 	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert)
 
