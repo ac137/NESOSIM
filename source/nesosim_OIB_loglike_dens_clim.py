@@ -196,8 +196,8 @@ month_start = 9
 
 #TODO copy files over (these could be saved as csv instead of h5)
 # mind your units; multiply by 1000 to convert from g/cm^3 to kg/m^3
-station_dens_clim = pd.read_hdf('station_dens_clim.h5')*1000
-station_dens_std = pd.read_hdf('station_dens_std.h5')*1000
+station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
+station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
 
 def main(params, uncert):
 	'''log-likelihood calculation for NESOSIM vs. OIB
@@ -294,8 +294,10 @@ def main(params, uncert):
 	densMMAll = calc_clim(densMMAll)
 	# snow density arrays from station data; DS for 'drifting station'
 
-	densDSAll = station_dens_clim['Mean Density'].values
-	densUncert = station_dens_uncert['Mean Density'].values
+	# selecting values here is a bit redundant (could just store immediately in these variables)
+	# but I'll leave this for now
+	densDSAll = station_dens_clim.values
+	densUncert = station_dens_uncert.values
 
 	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert)
 
