@@ -277,7 +277,7 @@ def main(params, uncert):
 
 		snowDepthOIBAll.extend(snowDepthOIByr)
 		snowDepthMMAll.extend(snowDepthMMyr)
-		densMMAll.extend(dens_monthly_mean)
+		densMMAll.append(dens_monthly_mean)
 
 
 
@@ -292,13 +292,13 @@ def main(params, uncert):
 
 	# stitch density dataframes together
 	densMMAll = pd.concat(densMMAll)
-	densMMAll = calc_clim(densMMAll)
+	densMMAll = calc_clim(densMMAll).values
 	# snow density arrays from station data; DS for 'drifting station'
 
 	# selecting values here is a bit redundant (could just store immediately in these variables)
 	# but I'll leave this for now
 	densDSAll = station_dens_clim.values
-	densUncert = station_dens_uncert.values
+	densUncert = station_dens_std.values
 
 	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert)
 
