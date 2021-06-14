@@ -200,6 +200,11 @@ month_start = 9
 station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
 station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
 
+#rearrange by index; hardcode for now
+mon_idx = [9,10,11,12,1,2,3,4] # maybe automate this based on start/end later
+station_dens_clim = station_dens_clim.loc[mon_idx]
+station_dens_std = station_dens_std.loc[mon_idx]
+
 def main(params, uncert):
 	'''log-likelihood calculation for NESOSIM vs. OIB
 	steps:
