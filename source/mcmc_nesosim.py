@@ -3,11 +3,14 @@ import pandas as pd
 
 
 # use density in mcmc constraints
-USE_DENS = True
+USE_DENS = False
+USE_DENS_CLIM = True
 
 # is this sort of control flow for import statements reasonable? hopefully
 if USE_DENS:
 	import nesosim_OIB_loglike_dens as loglike
+elif USE_DENS_CLIM:
+	import nesosim_OIB_loglike_dens_clim as loglike
 else:
 	import nesosim_OIB_loglike as loglike
 
@@ -42,7 +45,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 5000# start small for testing
+ITER_MAX = 5# start small for testing
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -56,6 +59,8 @@ PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separ
 
 if USE_DENS:
 	DENS_STR = '_density'
+elif USE_DENS_CLIM:
+	DENS_STR = '_density_clim'
 else:
 	DENS_STR = ''
 
