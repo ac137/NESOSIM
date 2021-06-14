@@ -145,8 +145,9 @@ def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, unc
 
 
 def calc_dens_monthly_means(depthBudget, date_start):
-	'''monthly mean densities given budget and start date (datetime)
+	'''monthly mean densities given budget (dataarray) and start date (datetime)
 	returns an array of monthly mean densities (single value for each month)
+	as a pandas dataframe
 	'''
 	# be sure to mask with ice concentration!
 	iceConc = depthBudget['iceConc']
@@ -162,7 +163,7 @@ def calc_dens_monthly_means(depthBudget, date_start):
 	# this will be labelled by the last day of the month
 	mon_means = density.resample(time='M').mean()
 
-	return mon_means
+	return mon_means.to_dataframe()
 
 
 def calc_clim(df):
