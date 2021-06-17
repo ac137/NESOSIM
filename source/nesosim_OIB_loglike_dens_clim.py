@@ -135,12 +135,13 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start):#, days_ds, diff_ds):
 # def get_density_clim():
 # 	# calculate density climatology month by month
 
-def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, uncert_dens):
-	# log likelihood for normal distribution
-	# based on likelihood function exp (0.5*sum((model-obs)^2/uncert^2))
-	# calculating for density and depth, now
+def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, uncert_dens, weight_dens=1):
+	'''log likelihood for normal distribution
+	based on likelihood function exp (0.5*sum((model-obs)^2/uncert^2))
+	calculating for density and depth
+	weight_dens: for weighting density by the number of depth observations'''
 	depth_loglike = -0.5*np.sum((model_depth - obs_depth)**2/uncert_depth**2)
-	dens_loglike = -0.5*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
+	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
 	return depth_loglike + dens_loglike
 
 
@@ -272,6 +273,8 @@ def main(params, uncert):
 
 
 		# get depth by year for given product & density
+		# note: snowdepthoibyr/snowdepthmmyr should just be 1-d arrays with
+		# only the valid values at this point, not 2d arrays with nan
 		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start)
 		
 		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
@@ -291,6 +294,11 @@ def main(params, uncert):
 	snowDepthMMAll = np.array(snowDepthMMAll)
 	snowDepthOIBAll = np.array(snowDepthOIBAll)
 
+	# number of obs, for weighting; assume there's no nan since those
+	# are masked out, so can just use len
+	# obs_count = np.count_nonzero(~np.isnan(snowDepthOIBAll))
+	obs_count = len(snowDepthOIBAll)
+
 	# stitch density dataframes together
 	densMMAll = pd.concat(densMMAll)
 	clim_dens = calc_clim(densMMAll)
@@ -305,7 +313,11 @@ def main(params, uncert):
 	densDSAll = station_dens_clim.loc[clim_dens.index].values
 	densUncert = station_dens_std.loc[clim_dens.index].values
 
-	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert)
+	# weight for densities so they have same contribution as depth obs
+	# is equal weighting too much?
+	dens_weight = obs_count/len(densMMAll)
+
+	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert, dens_weight)
 
 	# calculate other statistics for reference
 	# linear fit with pearson correlation
