@@ -298,6 +298,7 @@ def main(params, uncert):
 	# are masked out, so can just use len
 	# obs_count = np.count_nonzero(~np.isnan(snowDepthOIBAll))
 	obs_count = len(snowDepthOIBAll)
+	print('the observation count is {}'.format(obs_count))
 
 	# stitch density dataframes together
 	densMMAll = pd.concat(densMMAll)
@@ -315,7 +316,10 @@ def main(params, uncert):
 
 	# weight for densities so they have same contribution as depth obs
 	# is equal weighting too much?
-	dens_weight = obs_count/len(densMMAll)
+	weight_factor = 0.05 # factor to scale weight down
+	dens_weight = weight_factor*obs_count/len(densMMAll)
+#	dens_weight = 4 # just multiply by 2
+	print('the density weight is {}'.format(dens_weight))
 
 	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert, dens_weight)
 
