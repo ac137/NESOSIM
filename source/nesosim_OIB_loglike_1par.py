@@ -160,7 +160,7 @@ day_start = 1
 month_start = 9
 
 
-def main(params, uncert, parname, p2_val):
+def main(par_mc, uncert, parname, other_pars):
 	'''log-likelihood calculation for NESOSIM vs. OIB
 	steps:
 	- set up date variables
@@ -186,13 +186,19 @@ def main(params, uncert, parname, p2_val):
 	# change here depending on which parameter is the default
 	if parname == 'WPF':
 
-		WPF = params[0]
+		WPF = par_mc[0]
 		# LLF = 2.9e-7 # add setting to change this default? later maybe
-		LLF = p2_val
+		LLF = other_pars[0]
+		WAT = other_pars[1]
 	elif parname == 'LLF':
 		# WPF = 5.8e-7
-		WPF = p2_val
-		LLF = params[0]
+		WPF = other_pars[0]
+		LLF = par_mc[0]
+		WAT = other_pars[1]
+	elif parname == 'WAT':
+		WPF = other_pars[0]
+		LLF = other_pars[1]
+		WAT = par_mc[0]
 #	
 
 	# windPackFactorT, leadLossFactorT = params
@@ -233,7 +239,7 @@ def main(params, uncert, parname, p2_val):
 	    figPathT=figure_path+'Model/',
 	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
 	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
-	    windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF,
+	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
 	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=0, plotBudgets=0, plotdaily=0,
 	    scaleCS=True, dx=dx,returnBudget=1)
 

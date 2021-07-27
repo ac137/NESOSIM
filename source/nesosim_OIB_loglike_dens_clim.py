@@ -210,8 +210,8 @@ def main(params, uncert):
 		- run nesosim
 		- mask to oib/select days
 		- calculate log-likelihood and other stats
-	params: parameters to be varied; currently just varying lead loss factor
-	(single parameter changes)
+	params: parameters (wind packing, blowing snow, and wind action threshold); 
+		may be constant or varying
 	uncert: obs uncertainty estimate on OIB
 
 	returns:
@@ -227,6 +227,7 @@ def main(params, uncert):
 	# passing params as [wpf, llf]
 	WPF = params[0]
 	LLF = params[1]
+	WAT = params[2]
 
 	# windPackFactorT, leadLossFactorT = params
 	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
@@ -267,7 +268,7 @@ def main(params, uncert):
 	    figPathT=figure_path+'Model/',
 	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
 	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
-	    windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF,
+	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
 	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=0, plotBudgets=0, plotdaily=0,
 	    scaleCS=True, dx=dx,returnBudget=1)
 
