@@ -49,7 +49,7 @@ ITER_MAX = 1000# start small for testing
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
-PAR_SIGMA = [1, 1] # standard deviation for parameter distribution; can be separate per param
+PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
 # should be multiplied by 1e-7, but can do that after calculating distribution
 
 # step size determined based on param uncertainty (one per parameter)
@@ -63,18 +63,21 @@ elif USE_DENS_CLIM:
 	DENS_STR = '_density_clim'
 else:
 	DENS_STR = ''
+
+# weighting is now specified by passing argument to loglike main
+# for density clim loglike
 # using half-weighting (cf loglike file) so change filename
-DENS_STR+= '_w0.05'
+# DENS_STR+= '_w0.05'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
 #par_vals = np.array([5.8e-7, 2.9e-7])
-par_vals = np.array([5.8e-7, 1.45e-7])
+par_vals = np.array([5.8e-7, 1.45e-7, 5.])
 PARS_INIT = par_vals.copy()
-par_names = ['wind packing', 'blowing snow']
+par_names = ['wind packing', 'blowing snow','wind action threshold']
 
-metadata_headings = ['N_iter','uncert','prior_p1','prior_p2','sigma_p1','sigma_p2', 'oib_prod']
-metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], PAR_SIGMA[0], PAR_SIGMA[1], 'MEDIAN']]
+metadata_headings = ['N_iter','uncert','prior_p1','prior_p2', 'prior_p3','sigma_p1','sigma_p2', 'sigma_p3','oib_prod']
+metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], par_vals[2],PAR_SIGMA[0], PAR_SIGMA[1], par_SIGMA[2], 'MEDIAN']]
 meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
 
 
@@ -103,7 +106,14 @@ rejected_stats = []
 
 # maybe change this later to not pre-calculate steps so that
 # this doesn't take up space in memory
-step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))*1e-7
+step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))#*1e-7
+
+# scale to appropriate value
+step_vals[:,0] *= 1e-7 # scale wind packing
+step_vals[:,1] *= 1e-7 # scale blowing snow
+# don't scale wind action threshold
+
+
 # reshape this if the number of params changes
 # reject any new parameter less than 0
 
@@ -163,53 +173,15 @@ for i in range(ITER_MAX):
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
-		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
 
+#TODO: more elegant filename formatting (format arrays so I don't have to write strings in)
 # save final output to file
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
 print(ITER_MAX)
 print(fname)
 write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
-# stat_headings = ['r','rmse','merr','std','std_n','std_o']
-# valid_df = pd.DataFrame(np.array(stats_list), columns=stat_headings)
-# par_arr = np.array(par_list)
-# valid_df[par_names[0]] = par_arr[:,0]
-# valid_df[par_names[1]] = par_arr[:,1]
-# valid_df['loglike'] = loglike_list
-
-# rejected_df = pd.DataFrame(np.array(rejected_stats), columns=stat_headings)
-# rej_par_arr = np.array(rejected_pars)
-# rejected_df[par_names[0]] = rej_par_arr[:,0]
-# rejected_df[par_names[1]] = rej_par_arr[:,1]
-# rejected_df['loglike'] = rejected_lls
-
-# # data I want to keep track of
-# # number of iter (can be inferred)
-# # uncert
-# # which oib product was used
-# # parameter sigmas for priors
-
-# fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1])
-# # format exponential to 2 decimal places: {:.2e}, in case I need that later
-# valid_df.to_hdf(fname, key='valid')
-# rejected_df.to_hdf(fname, key='rejected')
-# meta_df.to_hdf(fname, key='meta')
-
-
-
-
-
-
-# # save like this for now, save more nicely later			
-# np.savetxt('par_vals.txt',par_list)
-# np.savetxt('log_likelihoods.txt',loglike_list)
-# np.savetxt('stat_vals.txt',np.array(stats_list)) 
-# #np.savetxt('var_cond.txt',var_cond_list)
-# #np.savetxt('diff.txt',diff_list)
-# np.savetxt('rejected_pars.txt',rejected_pars)
-# np.savetxt('rejected_lls.txt',rejected_lls)
-# np.savetxt('rejected_stats.txt',rejected_stats)

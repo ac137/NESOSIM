@@ -202,7 +202,7 @@ month_start = 9
 station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
 station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
 
-def main(params, uncert):
+def main(params, uncert,weight_factor=None):
 	'''log-likelihood calculation for NESOSIM vs. OIB
 	steps:
 	- set up date variables
@@ -213,6 +213,7 @@ def main(params, uncert):
 	params: parameters (wind packing, blowing snow, and wind action threshold); 
 		may be constant or varying
 	uncert: obs uncertainty estimate on OIB
+	weight_factor: optional: weight in terms of the number of OIB observations
 
 	returns:
 	logp: log-likelihood probability for nesosim vs. oib
@@ -317,8 +318,11 @@ def main(params, uncert):
 
 	# weight for densities so they have same contribution as depth obs
 	# is equal weighting too much?
-	weight_factor = 0.05 # factor to scale weight down
-	dens_weight = weight_factor*obs_count/len(densMMAll)
+	if weight_factor:
+	# weight_factor = 0.05 # factor to scale weight down
+		dens_weight = weight_factor*obs_count/len(densMMAll)
+	else:
+		dens_weight = 1.
 #	dens_weight = 4 # just multiply by 2
 	print('the density weight is {}'.format(dens_weight))
 
