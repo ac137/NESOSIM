@@ -34,7 +34,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default llf 2.9e-7 ? different default for multiseason
 
 PAR_NAME = 'WAT' # parameter to vary
-ITER_MAX = 3000 # start small for testing
+ITER_MAX = 10 # start small for testing
 UNCERT = 10# obs uncertainty for log-likelihood (also can be used to tune)
 
 PAR_SIGMA = [1] # standard deviation for parameter distribution; can be separate per param
@@ -114,7 +114,7 @@ rejected_stats = []
 # maybe change this later to not pre-calculate steps so that
 # this doesn't take up space in memory
 
-if PAR_NAME == WAT:
+if PAR_NAME == 'WAT':
 	# don't multiply by 1e-7 here since the value is O(1e0)
 	step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))
 else:
