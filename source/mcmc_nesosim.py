@@ -45,7 +45,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 1000# start small for testing
+ITER_MAX = 3000# start small for testing
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -68,6 +68,7 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
+DENS_STR += '3par'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
@@ -77,7 +78,7 @@ PARS_INIT = par_vals.copy()
 par_names = ['wind packing', 'blowing snow','wind action threshold']
 
 metadata_headings = ['N_iter','uncert','prior_p1','prior_p2', 'prior_p3','sigma_p1','sigma_p2', 'sigma_p3','oib_prod']
-metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], par_vals[2],PAR_SIGMA[0], PAR_SIGMA[1], par_SIGMA[2], 'MEDIAN']]
+metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], par_vals[2],PAR_SIGMA[0], PAR_SIGMA[1], PAR_SIGMA[2], 'MEDIAN']]
 meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
 
 
