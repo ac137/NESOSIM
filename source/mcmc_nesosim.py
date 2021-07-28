@@ -23,14 +23,16 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 	stat_headings = ['r','rmse','merr','std','std_n','std_o']
 	valid_df = pd.DataFrame(np.array(stats_list), columns=stat_headings)
 	par_arr = np.array(par_list)
-	valid_df[par_names[0]] = par_arr[:,0]
-	valid_df[par_names[1]] = par_arr[:,1]
+	# save all the paramters (iterate over in case of variable length)
+	for i in range(len(par_names)):
+		valid_df[par_names[i]] = par_arr[:,i]
+
 	valid_df['loglike'] = loglike_list
 
 	rejected_df = pd.DataFrame(np.array(rejected_stats), columns=stat_headings)
 	rej_par_arr = np.array(rejected_pars)
-	rejected_df[par_names[0]] = rej_par_arr[:,0]
-	rejected_df[par_names[1]] = rej_par_arr[:,1]
+	for i in range(len(par_names)):
+		rejected_df[par_names[i]] = rej_par_arr[:,i]
 	rejected_df['loglike'] = rejected_lls
 
 	valid_df.to_hdf(fname, key='valid')
@@ -90,7 +92,7 @@ print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
 
-par_list = [par_vals] # now an nx2 list
+par_list = [par_vals] # now an nxm list (m = # of pars)
 loglike_list = [p0]
 stats_list = [stats_0] # collect rmse and r also, etc.
 #var_cond_list=[]
