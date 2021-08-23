@@ -330,4 +330,17 @@ data = read_daily_data_from_memory(yearT, dayT, multiyear_data)
 # output: iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 print(data[4])
 
-# seems to all work well enough! next step: incorporate into NESOSIM
+# seems to all work well enough! 
+
+# next step:
+# alter nesosim to:
+#	- accept the preloaded data as optional input in the main function
+# 	- unpack the preloaded data properly
+# alter mcmc scripts to to:
+# 	- preload the data in the mcmc main function
+# 	- pass the preloaded data to each iteration of the likelihood function
+
+# other things to consider preloading:
+# 	- initial conditions
+# 	- cloudsat scaling
+# 	- masks
