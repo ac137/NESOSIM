@@ -20,14 +20,14 @@ import sys
 from calendar import monthrange
 
 from config import forcing_save_path, model_save_path, figure_path
-print('Forcing file path:' forcing_save_path)
+print('Forcing file path:', forcing_save_path)
 print('Output path:', model_save_path)
 print('Figure save path:', figure_path)
 
 import NESOSIM
 
 
-yearS=2009
+yearS=2018
 yearE=2019
 
 monthS = 8 # August = 7, September = 8
@@ -44,8 +44,8 @@ for y in range(yearS, yearE+1):
 		forcingPathT=forcing_save_path, 
 		figPathT=figure_path+'Model/',
 		precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
-		icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='oct28', IC=2, 
-		windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=1.45e-7,
+		icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
+		windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=2.9e-7,
 		dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, plotBudgets=1, plotdaily=0,
 		scaleCS=True, dx=100000)
 

@@ -26,11 +26,11 @@ print('Forcing file path:', forcing_save_path)
 print('Output path:', model_save_path)
 print('Figure save path:', figure_path)
 
-yearS=2018
+yearS=2010
 monthS=8 # August = 7
 dayS=0
 
-yearE=2019
+yearE=2011
 monthE=3 # April = 7
 dayE=29
 

@@ -47,7 +47,8 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 3000# start small for testing
+ITER_MAX = 10000# start small for testing
+#ITER_MAX = 3
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -75,7 +76,14 @@ DENS_STR += '3par'
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
 #par_vals = np.array([5.8e-7, 2.9e-7])
-par_vals = np.array([5.8e-7, 1.45e-7, 5.])
+#par_vals = np.array([5.8e-7, 1.45e-7, 5.])
+#par_vals = np.array([5.8e-7, 2.9e-7, 5.])
+#continue from previous mcmc with last accepted value
+par_vals = np.array([4.12616198947269e-06, 8.416761649739341e-07, 0.19611063365133324])
+par_vals = np.array([6.220783261481277e-06, 1.2792313785323853e-06, 0.1546572899704643])
+
+
+
 PARS_INIT = par_vals.copy()
 par_names = ['wind packing', 'blowing snow','wind action threshold']
 
