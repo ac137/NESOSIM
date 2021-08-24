@@ -21,25 +21,16 @@ import datetime
 # - better function names
 # - testing
 # - incorporate this into the main model
-
-year = 2019
-day=0
-precipVar='ERA5'
-windVar='ERA5'
-concVar='CDR'
-driftVar='OSISAF'
-dxStr='50km'
-extraStr='v11'
-
-print('running')
-
-forcingPath = '/home/alex/modeldev/NESOSIM/Forcings/'
+# - check for data being None to give exit condition (normally checked by loadData but this isn't being done now)
+# - check leap year compliance?
 
 
-def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr):
+
+
+
+def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
 	""" Load daily forcings
-
-	Temp added transpose to convert grid to proper row/column index. 
+	similar to loadData but added different error handling because this is being used for all days of the year
 
 	"""
 	dayStr='%03d' %dayT
@@ -47,13 +38,16 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 
 	#------- Read in precipitation -----------
 	try:
-		print('Loading gridded snowfall forcing from:', forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
-		
+		# print('Loading gridded snowfall forcing from:', forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		# precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+		precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_1', allow_pickle=True)
+
 	except:
 		if (dayStr=='365'):
 			
-			precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
+			# precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
+			precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr+'_1', allow_pickle=True)
+
 			print('no leap year data, used data from the previous day')
 		else:
 			print('No precip data for {}'.format(dayStr))
@@ -62,7 +56,7 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 	
 	#------- Read in wind magnitude -----------
 	try:
-		print('Loading gridded wind forcing from:', forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		# print('Loading gridded wind forcing from:', forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 		windDayG=np.load(forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
 		
 	except:
@@ -76,13 +70,13 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 
 	#------- Read in ice concentration -----------
 	try:
-		print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+		# print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_n', allow_pickle=True)
 		
 	except:
 		if (dayStr=='365'):
 			print('no leap year data, using data from the previous day')
-			iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
+			iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr+'_n', allow_pickle=True)
 	
 		else:
 			print('No ice conc data for {}'.format(dayStr))
@@ -95,7 +89,7 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 	
 	#------- Read in ice drifts -----------
 	try:
-		print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		# print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 		driftGdayG=np.load(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)	
 
 	except:
@@ -154,7 +148,7 @@ def getDays(year1, month1, day1, year2, month2, day2):
 # would technically be faster to traverse by dataset rather than by day but
 # I'll just go with this for now
 
-def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr):
+def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
 	# load a single year into memory
 
 	# is year2 needed here?
@@ -185,7 +179,7 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 
 		# need some sort of try/except if there's no data because otherwise it exits
 		# I guess I need to write my own load daily data function
-		iceConcDayG, precipDayG, driftGdayG, windDayG =loadDay(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
+		iceConcDayG, precipDayG, driftGdayG, windDayG =loadDay(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 
 		# add values to array
 		iceConcY.append(iceConcDayG)
@@ -196,13 +190,13 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 	return days, currentYears, iceConcY, precipY, driftGY, windY
 
 
-def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr):
+def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
 	
 	year_dict = {} # do a nested dict
 
 	for y in range(yearS,yearE+1):
 		# year_list.append(y)
-		days, currentYears, iceConcY, precipY, driftGY, windY = load_year_into_memory(y, month1, day1, y, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
+		days, currentYears, iceConcY, precipY, driftGY, windY = load_year_into_memory(y, month1, day1, y, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 		# there might be a cleaner way but this'll do for now
 		d = {}
 		d['days']=days 
@@ -276,6 +270,8 @@ def read_daily_data_from_memory(yearT, dayT, year_dict):
 	windDayG = current_data['wind'][day_idx]
 	tempDayG = None # hopefully nothing is expeting anything here!
 
+	# check if any of these are nonetypes? really wish we had case/switch statements
+
 
 
 	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
@@ -295,52 +291,70 @@ def read_daily_data_from_memory(yearT, dayT, year_dict):
 
 # test that loading a year works for a few months (valid and invalid days)
 
-# print('loading years')
-year1 = 2019
-month1 = 0
-day1 = 0
-month2 = 2
-day2 = 2
-year2 = 2019
-# vals_year = load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 
-# print('done loading years')
 
-# returns 	return days, currentYears, iceConcY, precipY, driftGY, windY
+if __name__ == '__main__':
 
-# print(vals_year[5])
 
-# loading years seems to work! extra days just get turned into None
-yearS = 2018
-yearE = 2019
+	year = 2019
+	day=0
+	precipVar='ERA5'
+	windVar='ERA5'
+	concVar='CDR'
+	driftVar='OSISAF'
+	dxStr='50km'
+	extraStr='v11'
 
-print('loading multiyear')
+	print('running')
 
-multiyear_data = load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
+	# pass this as an argument into loadDay?
+	forcingPath = '/home/alex/modeldev/NESOSIM/Forcings/'
+	# print('loading years')
+	year1 = 2019
+	month1 = 0
+	day1 = 0
+	month2 = 2
+	day2 = 2
+	year2 = 2019
+	# vals_year = load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 
-print(multiyear_data[2018]['days'])
+	# print('done loading years')
 
-# seems to also work! just need to be careful with year1/year2
+	# returns 	return days, currentYears, iceConcY, precipY, driftGY, windY
 
-yearT = 2019
-dayT = 3
+	# print(vals_year[5])
 
-data = read_daily_data_from_memory(yearT, dayT, multiyear_data)
+	# loading years seems to work! extra days just get turned into None
+	yearS = 2018
+	yearE = 2019
 
-# output: iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
-print(data[4])
+	print('loading multiyear')
 
-# seems to all work well enough! 
+	multiyear_data = load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 
-# next step:
-# alter nesosim to:
-#	- accept the preloaded data as optional input in the main function
-# 	- unpack the preloaded data properly
-# alter mcmc scripts to to:
-# 	- preload the data in the mcmc main function
-# 	- pass the preloaded data to each iteration of the likelihood function
+	print(multiyear_data[2018]['days'])
 
-# other things to consider preloading:
-# 	- initial conditions
-# 	- cloudsat scaling
-# 	- masks
+	# seems to also work! just need to be careful with year1/year2
+
+	yearT = 2019
+	dayT = 3
+
+	data = read_daily_data_from_memory(yearT, dayT, multiyear_data)
+
+	# output: iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
+	print(data[4])
+
+	# seems to all work well enough! 
+
+	# next step:
+	# alter nesosim to:
+	#	- accept the preloaded data as optional input in the main function
+	# 	- unpack the preloaded data properly
+	# alter mcmc scripts to to:
+	# 	- preload the data in the mcmc main function
+	# 	- pass the preloaded data to each iteration of the likelihood function
+
+	# other things to consider preloading:
+	# 	- initial conditions
+	# 	- cloudsat scaling
+	# 	- masks

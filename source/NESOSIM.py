@@ -420,7 +420,8 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	except:
 		if (dayStr=='365'):
 			print('no leap year data, using data from the previous day')
-			iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
+			# adjusted this from before; wasn't using leap years previously? shouldln't do much though
+			iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr+'_n', allow_pickle=True)
 	
 		else:
 			print('No ice conc data so exiting!')
@@ -454,6 +455,36 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 		#tempDayG=ma.masked_all((iceConcDayG.shape[0], iceConcDayG.shape[1]))
 	
 	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
+
+
+def read_daily_data_from_memory(yearT, dayT, year_dict):
+	''' alternative to loadData for preloaded data
+	presupposes data is loaded into dictionary year_dict
+	where structure is:
+	year
+	-> variable
+	->-> data at index by day (of year, not model day)
+	'''
+
+	# select the current year
+	current_data = year_dict[yearT]
+
+	# find corresponding day index for the given year
+	day_idx = np.where(current_data['days']==dayT)[0][0]
+	print(day_idx)
+
+	iceConcDayG = current_data['iceConc'][day_idx]
+	precipDayG = current_data['precip'][day_idx]
+	driftGdayG = current_data['drift'][day_idx]
+	windDayG = current_data['wind'][day_idx]
+	tempDayG = None # hopefully nothing is expeting anything here!
+
+	# check if any of these are nonetypes? really wish we had case/switch statements
+
+
+
+	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
+
 
 def densityCalc(snowDepthsT, iceConcDayT, region_maskT):
 	"""Assign initial density based on snow depths
@@ -495,7 +526,7 @@ def applyScaling(product,factor,scaling_type='mul'):
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, dynamicsInc=1, leadlossInc=1, 
-	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000, scaleCS=False, returnBudget=0):
+	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000, scaleCS=False, returnBudget=0, forcingVals=None):
 	""" 
 
 	Main model function
@@ -625,8 +656,14 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 #		print ('Day of year:', day)
 #		print ('Date:', dates[x])
 		
-		#-------- Load daily data 
-		iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
+		#-------- Load daily data
+
+		# check if using preloaded files or not
+		if forcingVals:
+			print('using preloaded forcings')
+			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG = read_daily_data_from_memory(yearCurrent, day, forcingVals)
+		else:
+			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 		
 		#-------- Apply CloudSat scaling if used
 		if scaleCS:
