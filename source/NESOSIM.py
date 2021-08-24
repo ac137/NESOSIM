@@ -468,8 +468,12 @@ def read_daily_data_from_memory(yearT, dayT, year_dict):
 
 	# select the current year
 	current_data = year_dict[yearT]
+	print(yearT)
+	print(dayT)
 
 	# find corresponding day index for the given year
+#	print(len(current_data['days']))
+#	print(current_data['days'][-3:])
 	day_idx = np.where(current_data['days']==dayT)[0][0]
 	print(day_idx)
 
@@ -661,6 +665,8 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		# check if using preloaded files or not
 		if forcingVals:
 			print('using preloaded forcings')
+			print(yearCurrent)
+			print(day)
 			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG = read_daily_data_from_memory(yearCurrent, day, forcingVals)
 		else:
 			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)

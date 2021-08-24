@@ -1,4 +1,6 @@
 import numpy as np
+import numpy.ma as ma
+
 import xarray as xr
 import datetime
 # import utils as cF - currently broken on my laptop for some reason
@@ -70,7 +72,7 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr,
 
 	#------- Read in ice concentration -----------
 	try:
-		# print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_n')
 		iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_n', allow_pickle=True)
 		
 	except:
@@ -84,24 +86,24 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr,
 
 	# fill with zero if there's iceconc
 	# can't just say 'if iceConcDayG because that tries to evaluate truth of array'
-	if type(iceConcDayG) == np.ndarray:
+	if type(iceConcDayG) != type(None):
 		iceConcDayG[~np.isfinite(iceConcDayG)]=0.
 	
 	#------- Read in ice drifts -----------
 	try:
-		# print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 		driftGdayG=np.load(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)	
 
 	except:
 		# if no drifts exist for that day then just set drifts to nan array (i.e. no drift).
 		print('No drift data')
-		if type(iceConcDayG) == np.ndarray:
+		if type(iceConcDayG) != type(None):
 			driftGdayG = np.empty((2, iceConcDayG.shape[0], iceConcDayG.shape[1]))
 			driftGdayG[:] = np.nan
 		else:
 			driftGdayG = None
 
-	if type(driftGdayG) == np.ndarray:
+	if type(driftGdayG) != type(None):
 		driftGdayG = ma.filled(driftGdayG, np.nan)
 	#print(driftGdayG)
 
@@ -157,14 +159,14 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 	
 	# iterate over days
 
-	iceConcY, precipY, driftGY, windY = [],[],[],[]
+	iceConcY, precipY, driftGY, windY, days = [],[],[],[],[]
 
 	# array of days
-	days = np.arange(numDays-1)+startDay
+#	days = np.arange(numDays-1)+startDay
 	currentYears = [] # store current year just in case
 	yearCurrent=year1
 
-	for x in range(numDays-1):	
+	for x in range(numDays):	
 		day = x+startDay
 		
 		# if (day>=numDaysYear1):
@@ -186,8 +188,10 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 		precipY.append(precipDayG)
 		driftGY.append(driftGdayG)
 		windY.append(windDayG)
+		# days are off by 1 for some reason?
+		days.append(day)
 
-	return days, currentYears, iceConcY, precipY, driftGY, windY
+	return np.array(days), currentYears, iceConcY, precipY, driftGY, windY
 
 
 def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
