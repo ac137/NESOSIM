@@ -29,7 +29,20 @@ USE_DENS_CLIM = True
 # else:
 # 	import nesosim_OIB_loglike as loglike
 
-def get_OIB_and_mask(dx, yearT, depthBudget, date_start):#, days_ds, diff_ds):
+def get_grids(dx):
+	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
+
+
+	dxStr=str(int(dx/1000))+'km'
+	# region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
+	anc_data_pathT = '../anc_data/'
+	forcingPath = forcing_save_path
+
+	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
+	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
+	return region_maskG, xptsG, yptsG
+
+def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yptsG):#, days_ds, diff_ds):
 	"""Grid all the OIB data and correlate"""
 
 	# rewrite this to load the OIB data only once?
@@ -48,16 +61,16 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start):#, days_ds, diff_ds):
 	snowData = np.ma.masked_where(iceConc<0.15, snowData)
 
 	# lonG, latG, xptsG, yptsG, nx, ny = cF.getGrid(, dx)
-	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
+	# xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 
 
-	dxStr=str(int(dx/1000))+'km'
-	# region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
-	anc_data_pathT = '../anc_data/'
-	forcingPath = forcing_save_path
+	# dxStr=str(int(dx/1000))+'km'
+	# # region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
+	# anc_data_pathT = '../anc_data/'
+	# forcingPath = forcing_save_path
 
-	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
-	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
+	# region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
+	# region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
 	folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
 	days_list = os.listdir(folderPath)
@@ -250,7 +263,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		# get depth by year for given product & density
 		# note: snowdepthoibyr/snowdepthmmyr should just be 1-d arrays with
 		# only the valid values at this point, not 2d arrays with nan
-		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start)
+		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG)
 		
 		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
 
@@ -424,6 +437,12 @@ driftVar='OSISAF'
 dxStr='100km'
 extraStr='v11'
 dx = 100000 # for log-likelihood
+
+
+# get grids (hardcoded variables for now I guess)
+
+region_maskG, xptsG, yptsG = get_grids(dx)
+
 
 # vars for log-likelihood; day and month start for nesosim
 # n.b. loglike references some global vars and his hardcoded
