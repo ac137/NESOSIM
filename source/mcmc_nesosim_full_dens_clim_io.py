@@ -42,7 +42,70 @@ def get_grids(dx):
 	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 	return region_maskG, xptsG, yptsG
 
-def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yptsG):#, days_ds, diff_ds):
+
+def preload_oib(dxStr, startYear, endYear):
+	'''preload operation icebridge data; returns a dict of dict
+	structured as
+	year
+	-> day number/oib data
+	-> -> values for each day
+	'''
+	# starts in 2010, ends in 2015
+
+	year_dict = {}
+
+	for year1 in range(startYear, endYear):
+		# month1=month_start-1 # 8=September
+		# day1=day_start-1
+
+		yearT=year1+1
+
+		folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
+		days_list = os.listdir(folderPath)
+
+		# dictionary for collecting data for a single year
+		d = {}
+
+		# lists to collect days and oib data
+		days = []
+		oibdata = []
+		
+		for file_day in days_list:
+
+	#		print('File:', file_day)
+			day_val = (pd.to_datetime(file_day[:8])-date_start).days
+
+			try:
+				# print(os.path.join(folderPath,file_day))
+				snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
+				# transpose (when using old OIB files)
+				# don't need transpose for new oib files (median); commenting out
+			#	snowDepthOIB = snowDepthOIB.T
+
+			except:
+				continue
+
+	#		print('Num points in day:', np.size(snowDepthOIB))
+			if (np.size(snowDepthOIB)==0):
+				#nodata
+				continue
+
+			# now we have the daily data, append to lists
+			days.append(day_val)
+			oibdata.append(snowDepthOIB)
+
+		# have all daily data, populate sub-dictionary
+		d['days']=days
+		d['OIB']=oibdata
+
+		# put in main dictionary
+		year_dict[yearT] = d
+
+	return year_dict
+
+
+
+def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yptsG, oib_dict):#, days_ds, diff_ds):
 	"""Grid all the OIB data and correlate"""
 
 	# rewrite this to load the OIB data only once?
@@ -67,36 +130,40 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 	# dxStr=str(int(dx/1000))+'km'
 	# # region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
 	# anc_data_pathT = '../anc_data/'
-	# forcingPath = forcing_save_path
+	forcingPath = forcing_save_path
 
 	# region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
 	# region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
-	folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
-	days_list = os.listdir(folderPath)
+	# folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
+	# days_list = os.listdir(folderPath)
+
+	days_list = oib_dict[yearT]['days']
+	oib_list = oib_dict[yearT]['OIB']
 	
-	for file_day in days_list:
+	for i, day_val in enumerate(days_list):
 
 #		print('File:', file_day)
-		day_val = (pd.to_datetime(file_day[:8])-date_start).days
+# 		day_val = (pd.to_datetime(file_day[:8])-date_start).days
 
-		try:
-			# print(os.path.join(folderPath,file_day))
-			snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
-			# transpose (when using old OIB files)
-			# don't need transpose for new oib files (median); commenting out
-		#	snowDepthOIB = snowDepthOIB.T
+# 		try:
+# 			# print(os.path.join(folderPath,file_day))
+# 			snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
+# 			# transpose (when using old OIB files)
+# 			# don't need transpose for new oib files (median); commenting out
+# 		#	snowDepthOIB = snowDepthOIB.T
 
-		except:
-			continue
+# 		except:
+# 			continue
 
-#		print('Num points in day:', np.size(snowDepthOIB))
-		if (np.size(snowDepthOIB)==0):
-			#nodata
-			continue
+# #		print('Num points in day:', np.size(snowDepthOIB))
+# 		if (np.size(snowDepthOIB)==0):
+# 			#nodata
+# 			continue
 		# if (day_val>259):
 		# 	#beyond May 1st
 		# 	continue
+		snowDepthOIB = oib_list[i]
 
 		# snow depth from NESOSIM output (budget); select single day
 		snowDepthM = snowData[day_val]
@@ -263,7 +330,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		# get depth by year for given product & density
 		# note: snowdepthoibyr/snowdepthmmyr should just be 1-d arrays with
 		# only the valid values at this point, not 2d arrays with nan
-		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG)
+		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG, oib_dict)
 		
 		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
 
@@ -443,6 +510,8 @@ dx = 100000 # for log-likelihood
 
 region_maskG, xptsG, yptsG = get_grids(dx)
 
+# preload oib data
+oib_dict = preload_oib(dxStr, yearS, yearE)
 
 # vars for log-likelihood; day and month start for nesosim
 # n.b. loglike references some global vars and his hardcoded
