@@ -152,17 +152,17 @@ def fill_nan_no_negative(arr, region_maskG, negative_to_zero=True):
 
 	# Set infinte snow depths to nan
 	arr[~np.isfinite(arr)]=np.nan
-	arr[~np.isfinite(arr)]=np.nan
+	# arr[~np.isfinite(arr)]=np.nan
 	
 	# Set snow depths over land/coasts to nan (changed from zero)
 	arr[np.where(region_maskG>10)]=np.nan
-	arr[np.where(region_maskG>10)]=np.nan
+	# arr[np.where(region_maskG>10)]=np.nan
 
 	# Set snow depths over lakes (lake sic included in CDR) to nan (changed from zero)
 	arr[np.where(region_maskG<1)]=np.nan
 
 	# Set negative snow to zero.
-	if (negative_to_zero):
+	if negative_to_zero:
 		arr[np.where(arr<0.)]=0.
 	#arr[x+1][np.where(np.isnan(arr[x+1]))]=0.
 
