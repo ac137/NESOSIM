@@ -85,7 +85,7 @@ NESOSIM.main(year1=yearS, month1=monthS, day1=dayS, year2=yearE, month2=monthE, 
 	icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='test_io', IC=2, 
 	windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=2.9e-7,
 	dynamicsInc=1, leadlossInc=1, windpackInc=1,scaleCS=True, dx=100000,
-	plotdaily=1,forcingVals=forcing_dict)
+	plotdaily=0,plotBudgets=0,forcingVals=forcing_dict)
 
 
 

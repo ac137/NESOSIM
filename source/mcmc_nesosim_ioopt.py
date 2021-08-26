@@ -15,7 +15,7 @@ USE_DENS_CLIM = True
 if USE_DENS:
 	import nesosim_OIB_loglike_dens as loglike
 elif USE_DENS_CLIM:
-	import nesosim_OIB_loglike_dens_clim_io as loglike
+	import nesosim_oib_loglike_dens_clim_io as loglike
 else:
 	import nesosim_OIB_loglike as loglike
 
@@ -52,7 +52,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 1000# start small for testing
+ITER_MAX = 10# start small for testing
 #ITER_MAX = 3
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
