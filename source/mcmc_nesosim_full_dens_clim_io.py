@@ -54,11 +54,15 @@ def preload_oib(dxStr, startYear, endYear):
 
 	year_dict = {}
 
+
 	for year1 in range(startYear, endYear):
-		# month1=month_start-1 # 8=September
-		# day1=day_start-1
+		month1=month_start-1 # 8=September
+		day1=day_start-1
+
 
 		yearT=year1+1
+		forcingPath = forcing_save_path
+		date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
 
 		folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
 		days_list = os.listdir(folderPath)
@@ -438,7 +442,7 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 10# start small for testing
+ITER_MAX = 100# start small for testing
 #ITER_MAX = 3
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
@@ -510,15 +514,18 @@ dx = 100000 # for log-likelihood
 
 region_maskG, xptsG, yptsG = get_grids(dx)
 
-# preload oib data
-oib_dict = preload_oib(dxStr, yearS, yearE)
 
 # vars for log-likelihood; day and month start for nesosim
 # n.b. loglike references some global vars and his hardcoded
 # maybe re-work later
+# also hardcoded into oib preload, oops
 day_start = 1
 month_start = 9
 
+
+# preload oib data
+
+oib_dict = preload_oib(dxStr, yearS, yearE)
 
 forcing_io_path=forcing_save_path+dxStr+'/'
 
