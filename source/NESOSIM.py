@@ -530,7 +530,7 @@ def applyScaling(product,factor,scaling_type='mul'):
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, dynamicsInc=1, leadlossInc=1, 
-	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000, scaleCS=False, returnBudget=0, forcingVals=None):
+	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000, scaleCS=False, returnBudget=0, forcingVals=None, ICfactor=1):
 	""" 
 
 	Main model function
@@ -538,6 +538,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	Args:
 		The various model configuration parameters
 
+	ICFactor: factor whilch multiplies initial conditions
 	"""
 
 	#------- Create map projection
@@ -642,9 +643,13 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(year1, startDay, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 		ICSnowDepth[np.where(iceConcDayG<minConc)]=0
 
+		# scale initial conditions by initial condition factor
+		# ICfactor
+		# (mcmc-optimizing over this to see if IC are needed)
+
 		#--------Split the initial snow depth over both layers
-		snowDepths[0, 0]=ICSnowDepth*0.5
-		snowDepths[0, 1]=ICSnowDepth*0.5
+		snowDepths[0, 0]=ICSnowDepth*0.5*ICfactor
+		snowDepths[0, 1]=ICSnowDepth*0.5*ICfactor
 
 	#pF.plotSnow(m, xptsG, yptsG, densityT, date_string=str(startDay-1), out=figpath+'/Snow/2layer/densityD'+driftP+extraStr+reanalysisP+varStr+'_sy'+str(year1)+'d'+str(startDay)+outStr+'T0', units_lab=r'kg/m3', minval=180, maxval=360, base_mask=0, norm=0, cmap_1=cm.viridis)
 
