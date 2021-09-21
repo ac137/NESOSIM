@@ -284,7 +284,8 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	# passing params as [wpf, llf]
 	WPF = params[0]
 	LLF = params[1]
-	WAT = params[2]
+#	WAT = params[2]
+	WAT = 5# 2par use default wat
 
 	# windPackFactorT, leadLossFactorT = params
 	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
@@ -442,16 +443,19 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 100# start small for testing
-#ITER_MAX = 3
+ITER_MAX = 10000# start small for testing
+#ITER_MAX = 5
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
-PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
+#PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
 # should be multiplied by 1e-7, but can do that after calculating distribution
+
+PAR_SIGMA = [1, 1] #no WAT
 
 # step size determined based on param uncertainty (one per parameter)
 
+LOGLIKE_WEIGHT = 0.5
 
 
 
@@ -466,13 +470,14 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '3par_io'
+DENS_STR += '2par_io_w0.5xN_OIB'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
-#par_vals = np.array([5.8e-7, 2.9e-7])
+par_vals = np.array([5.8e-7, 2.9e-7])
 #par_vals = np.array([5.8e-7, 1.45e-7, 5.])
-par_vals = np.array([5.8e-7, 2.9e-7, 5.])
+#par_vals = np.array([5.8e-7, 2.9e-7, 5.])
+
 #continue from previous mcmc with last accepted value
 # par_vals = np.array([4.12616198947269e-06, 8.416761649739341e-07, 0.19611063365133324])
 # par_vals = np.array([6.220783261481277e-06, 1.2792313785323853e-06, 0.1546572899704643])
@@ -480,10 +485,18 @@ par_vals = np.array([5.8e-7, 2.9e-7, 5.])
 
 
 PARS_INIT = par_vals.copy()
-par_names = ['wind packing', 'blowing snow','wind action threshold']
+#par_names = ['wind packing', 'blowing snow','wind action threshold']
 
-metadata_headings = ['N_iter','uncert','prior_p1','prior_p2', 'prior_p3','sigma_p1','sigma_p2', 'sigma_p3','oib_prod']
-metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], par_vals[2],PAR_SIGMA[0], PAR_SIGMA[1], PAR_SIGMA[2], 'MEDIAN']]
+par_names = ['wind packing', 'blowing snow']
+
+#metadata_headings = ['N_iter','uncert','prior_p1','prior_p2', 'prior_p3','sigma_p1','sigma_p2', 'sigma_p3','oib_prod']
+
+metadata_headings = ['N_iter','uncert','prior_p1','prior_p2', 'sigma_p1','sigma_p2', 'oib_prod']
+
+#metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1], par_vals[2],PAR_SIGMA[0], PAR_SIGMA[1], PAR_SIGMA[2], 'MEDIAN']]
+metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1],PAR_SIGMA[0], PAR_SIGMA[1], 'MEDIAN']]
+
+
 meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
 
 
@@ -541,7 +554,7 @@ print('finished loading input')
 
 
 print('calculating initial log-likelihood')
-p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict) # initial likelihood function
+p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict,weight_factor=LOGLIKE_WEIGHT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
@@ -597,7 +610,7 @@ for i in range(ITER_MAX):
 	if (par_new < 0).any() == False:
 		print('calculating new log-likelihood')
 		# calculate new log-likelihood
-		p, stats = loglike(par_new, UNCERT, forcing_dict)
+		p, stats = loglike(par_new, UNCERT, forcing_dict,weight_factor=LOGLIKE_WEIGHT)
 
 		# accept/reject; double-check this with mcmc code
 		# in log space, p/q becomes p - q, so check difference here
@@ -630,14 +643,19 @@ for i in range(ITER_MAX):
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
-		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
-		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
+		#fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
+		#write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
+		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
 #TODO: more elegant filename formatting (format arrays so I don't have to write strings in)
 # save final output to file
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
+#fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
+
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+
 print(ITER_MAX)
 print(fname)
 write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)

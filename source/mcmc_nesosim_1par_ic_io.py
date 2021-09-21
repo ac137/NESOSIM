@@ -450,7 +450,7 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 3# start small for testing
+ITER_MAX = 1000# start small for testing
 #ITER_MAX = 3
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
@@ -474,7 +474,7 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '_3par_ic'
+DENS_STR += '_1par_ic'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
@@ -579,8 +579,8 @@ rejected_stats = []
 step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))#*1e-7
 
 # scale to appropriate value
-step_vals[:,0] *= 1e-7 # scale wind packing
-step_vals[:,1] *= 1e-7 # scale blowing snow
+#step_vals[:,0] *= 1e-7 # scale wind packing
+#step_vals[:,1] *= 1e-7 # scale blowing snow
 # don't scale IC factor
 
 
