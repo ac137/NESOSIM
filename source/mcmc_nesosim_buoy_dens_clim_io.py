@@ -226,7 +226,7 @@ def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, model_depth_clim,
 	weight_dens: for weighting density by the number of depth observations'''
 	depth_loglike = -0.5*np.sum((model_depth - obs_depth)**2/uncert_depth**2)
 	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
-	depth_clim_logike = -0.5*weight_depth*np.sum((model_depth_clim-obs_depth_clim)**2/uncert_depth_clim)
+	depth_clim_loglike = -0.5*weight_depth*np.sum((model_depth_clim-obs_depth_clim)**2/uncert_depth_clim**2)
 	return depth_loglike + dens_loglike + depth_clim_loglike
 
 
@@ -258,9 +258,9 @@ def calc_depth_monthly_means(depthBudget, date_start):
 	'''
 	iceConc = np.array(depthBudget['iceConc'])
 	depth = (depthBudget['snowDepth'][:, 0] + depthBudget['snowDepth'][:, 1])/iceConc
-	depth = np.ma.masked_where(iceConc<0.15, depth)
+	depth = depth.where(iceConc<0.15)
 	# create date range
-	dates = pd.date_range(start=date_start,periods=density.shape[0])
+	dates = pd.date_range(start=date_start,periods=depth.shape[0])
 	# assign as index to depth
 	depth = depth.assign_coords(time=dates)
 	# basin average depth
@@ -474,7 +474,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
 station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
 
-# do I have to convert the units???
+# do I have to convert the units??? these are in m and so is nesosim so prob not
 buoy_depth_clim = pd.read_hdf('buoy_monthly_clim.h5',key='clim')['Snow Depth (m)']
 buoy_depth_std = pd.read_hdf('buoy_monthly_clim.h5',key='std')['Snow Depth (m)']
 
@@ -484,8 +484,8 @@ buoy_depth_std = pd.read_hdf('buoy_monthly_clim.h5',key='std')['Snow Depth (m)']
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 10000# start small for testing
-#ITER_MAX = 5
+#ITER_MAX = 10000# start small for testing
+ITER_MAX = 5
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
