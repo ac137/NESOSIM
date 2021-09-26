@@ -258,13 +258,23 @@ def calc_depth_monthly_means(depthBudget, date_start):
 	'''
 	iceConc = np.array(depthBudget['iceConc'])
 	depth = (depthBudget['snowDepth'][:, 0] + depthBudget['snowDepth'][:, 1])/iceConc
-	depth = depth.where(iceConc<0.15)
+	#print(depth)
+#	depth = depth.where(iceConc<0.15)
+	#print(depth['snowDepth'])
+	depth_vals = np.ma.masked_where(iceConc<0.15, depth)
+	depth.values = depth_vals
+#	depth = depth.where(~np.isinf(depth.values))
+#	depth.where(np.isinf(depth.values))=np.nan
+#	depth[np.isinf(depth.values)]=np.nan
+	#print(depth)
+#	depth.values = 
 	# create date range
 	dates = pd.date_range(start=date_start,periods=depth.shape[0])
 	# assign as index to depth
 	depth = depth.assign_coords(time=dates)
 	# basin average depth
-	depth = depth.mean(axis=(1,2))
+	depth = depth.mean(axis=(1,2),skipna=True)
+	#print(depth)
 	# this will be labelled by the last day of the month
 	mon_means = depth.resample(time='M').mean()
 
@@ -392,7 +402,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	depthMMAll = pd.concat(depthMMAll)
 	clim_depth = calc_clim(depthMMAll)
 	depthMMAll = clim_depth.values
-
+	print(depthMMAll)
 	# snow density arrays from station data; DS for 'drifting station'
 
 	# selecting values here is a bit redundant (could just store immediately in these variables)
@@ -418,7 +428,9 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		dens_weight = 1.
 
 	# just set buoy depth weight to 1 for now
-	depth_weight = 1
+	# trying now with multiples of 4
+	dens_weight = 4
+	depth_weight = 4
 
 #	dens_weight = 4 # just multiply by 2
 	print('the density weight is {}'.format(dens_weight))
@@ -485,7 +497,7 @@ buoy_depth_std = pd.read_hdf('buoy_monthly_clim.h5',key='std')['Snow Depth (m)']
 # default llf 2.9e-7 ? different default for multiseason
 
 #ITER_MAX = 10000# start small for testing
-ITER_MAX = 5
+ITER_MAX = 5000
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -511,7 +523,7 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '2par_io_w0.5xN_OIB_buoy'
+DENS_STR += '2par_io_w4x_default_buoy_v4x_default'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
