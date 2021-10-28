@@ -225,7 +225,9 @@ def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, model_depth_clim,
 	calculating for density and depth
 	weight_dens: for weighting density by the number of depth observations'''
 	depth_loglike = -0.5*np.sum((model_depth - obs_depth)**2/uncert_depth**2)
-	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
+#	depth_loglike = 0
+#	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
+	dens_loglike = 0
 	depth_clim_loglike = -0.5*weight_depth*np.sum((model_depth_clim-obs_depth_clim)**2/uncert_depth_clim**2)
 	return depth_loglike + dens_loglike + depth_clim_loglike
 
@@ -424,13 +426,15 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	if weight_factor:
 	# weight_factor = 0.05 # factor to scale weight down
 		dens_weight = weight_factor*obs_count/len(densMMAll)
+		depth_weight = dens_weight
 	else:
 		dens_weight = 1.
+		depth_weight = dens_weight
 
 	# just set buoy depth weight to 1 for now
 	# trying now with multiples of 4
-	dens_weight = 4
-	depth_weight = 4
+	dens_weight = 1
+	depth_weight = 1
 
 #	dens_weight = 4 # just multiply by 2
 	print('the density weight is {}'.format(dens_weight))
@@ -498,7 +502,7 @@ buoy_depth_std = pd.read_hdf('buoy_monthly_clim.h5',key='std')['Snow Depth (m)']
 
 #ITER_MAX = 10000# start small for testing
 ITER_MAX = 5000
-UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
+UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
 #PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
@@ -508,6 +512,7 @@ PAR_SIGMA = [1, 1] #no WAT
 
 # step size determined based on param uncertainty (one per parameter)
 
+# weighting 1x n_oib for both now
 LOGLIKE_WEIGHT = 0.5
 
 
@@ -523,7 +528,9 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '2par_io_w4x_default_buoy_v4x_default'
+#DENS_STR += '2par_io_w1x_default_buoy_v1x_default'
+# weighting by number of oib obs for both buoy and density to see what happens
+DENS_STR += '2par_io_w_0x_no_station_buoy_v_1x_default'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
@@ -535,7 +542,9 @@ par_vals = np.array([5.8e-7, 2.9e-7])
 # par_vals = np.array([4.12616198947269e-06, 8.416761649739341e-07, 0.19611063365133324])
 # par_vals = np.array([6.220783261481277e-06, 1.2792313785323853e-06, 0.1546572899704643])
 
+#continue from other prev mcmc with last accepted value
 
+#par_vals=np.array([2.2905067632547875e-06,4.300505867586334e-07])
 
 PARS_INIT = par_vals.copy()
 #par_names = ['wind packing', 'blowing snow','wind action threshold']
