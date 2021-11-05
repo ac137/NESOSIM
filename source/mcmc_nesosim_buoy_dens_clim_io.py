@@ -187,6 +187,8 @@ def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, model_depth_clim,
 	based on likelihood function exp (0.5*sum((model-obs)^2/uncert^2))
 	calculating for density and depth
 	weight_dens: for weighting density by the number of depth observations'''
+#	print(model_depth)
+#	print(obs_depth)
 	depth_loglike = -0.5*np.sum((model_depth - obs_depth)**2/uncert_depth**2)
 #	depth_loglike = 0
 	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
@@ -537,7 +539,7 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 # default llf 2.9e-7 ? different default for multiseason
 
 #ITER_MAX = 10000# start small for testing
-ITER_MAX = 5
+ITER_MAX = 5000
 UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
