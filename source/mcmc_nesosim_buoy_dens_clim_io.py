@@ -361,7 +361,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		
 		if CLIM_OIB:
 			# using oib climatology; calculating monthly mean in oib region
-			depth_monthly_mean_oib_region = calc_depth_mean_oib_region(depthBudget, date_start, indices)
+			depth_monthly_mean_oib_region = calc_depth_mean_oib_region(budgets, date_start, indices)
 			depth_mean_oib_region_all.append(depth_monthly_mean_oib_region)
 		else:
 			# not using oib region
@@ -391,7 +391,8 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		print('using oib climatology')
 		# stitch oib-region nesosim depth mean
 		depth_mean_oib_region_all = pd.concat(depth_mean_oib_region_all)
-		clim_depth_nesosim_oib_region = calc_clim(clim_nesosim_depth_oib_region)
+		clim_depth_nesosim_oib_region = calc_clim(depth_mean_oib_region_all)
+		obs_count=2 #just 2 months; putting this in for now but not so necessary; clean up weighting code later?
 
 	else:
 		snowDepthMMAll = np.array(snowDepthMMAll)
@@ -536,7 +537,7 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 # default llf 2.9e-7 ? different default for multiseason
 
 #ITER_MAX = 10000# start small for testing
-ITER_MAX = 5000
+ITER_MAX = 5
 UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
