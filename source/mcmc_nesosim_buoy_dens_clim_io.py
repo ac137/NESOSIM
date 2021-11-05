@@ -363,11 +363,11 @@ def loglike(params, uncert, forcings, weight_factor=None):
 			# using oib climatology; calculating monthly mean in oib region
 			depth_monthly_mean_oib_region = calc_depth_mean_oib_region(budgets, date_start, indices)
 			depth_mean_oib_region_all.append(depth_monthly_mean_oib_region)
-		else:
-			# not using oib region
-			snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG, oib_dict)
-			snowDepthOIBAll.extend(snowDepthOIByr) # nb. extend method is less efficient but I don't think it's the main bottleneck here
-			snowDepthMMAll.extend(snowDepthMMyr)
+		# else:
+		# not using oib region but still want these for stats
+		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG, oib_dict)
+		snowDepthOIBAll.extend(snowDepthOIByr) # nb. extend method is less efficient but I don't think it's the main bottleneck here
+		snowDepthMMAll.extend(snowDepthMMyr)
 
 		# calculate density and depth monthly means for whole region (for station and buoy comparsons, respectively)
 		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
@@ -392,17 +392,17 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		# stitch oib-region nesosim depth mean
 		depth_mean_oib_region_all = pd.concat(depth_mean_oib_region_all)
 		clim_depth_nesosim_oib_region = calc_clim(depth_mean_oib_region_all)
-		obs_count=2 #just 2 months; putting this in for now but not so necessary; clean up weighting code later?
+		# obs_count=2 #just 2 months; putting this in for now but not so necessary; clean up weighting code later?
 
-	else:
-		snowDepthMMAll = np.array(snowDepthMMAll)
-		snowDepthOIBAll = np.array(snowDepthOIBAll)
+	# still want these for stats:
+	snowDepthMMAll = np.array(snowDepthMMAll)
+	snowDepthOIBAll = np.array(snowDepthOIBAll)
 
-		# number of obs, for weighting; assume there's no nan since those
-		# are masked out, so can just use len
-		# obs_count = np.count_nonzero(~np.isnan(snowDepthOIBAll))
-		obs_count = len(snowDepthOIBAll)
-		print('the observation count is {}'.format(obs_count))
+	# number of obs, for weighting; assume there's no nan since those
+	# are masked out, so can just use len
+	# obs_count = np.count_nonzero(~np.isnan(snowDepthOIBAll))
+	obs_count = len(snowDepthOIBAll)
+	print('the oib observation count is {}'.format(obs_count))
 
 
 	# stitch density dataframes together & calculate climatology
@@ -639,11 +639,9 @@ day_start = 1
 month_start = 9
 
 
-# preload oib data
+# preload oib data; either for mcmc or for stats
 
-if not CLIM_OIB:
-
-	oib_dict = preload_oib(dxStr, yearS, yearE)
+oib_dict = preload_oib(dxStr, yearS, yearE)
 
 forcing_io_path=forcing_save_path+dxStr+'/'
 
