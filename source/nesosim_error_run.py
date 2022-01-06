@@ -50,6 +50,10 @@ day1 = 0
 month2 = 11 #is this the indexing used?, ie would this be december
 day2 = 30 # would this be the 31st? I think so
 
+# these are for starting the actual model itself
+day_start = 1 # first day; gets subtracted later for day1
+month_start = 9 # september; gets subtracted later for month1
+
 # model parameters for input
 precipVar='ERA5'
 windVar='ERA5'
