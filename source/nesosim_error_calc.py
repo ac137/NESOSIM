@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import os
+from dask.diagnostics import ProgressBar
+
+OIB_STATUS = 'detailed'
 
 #model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/'.format(OIB_STATUS)
 
@@ -23,7 +26,7 @@ import os
 # if I need to number them, can refer to this:
 # https://stackoverflow.com/questions/42574705/specify-concat-dim-for-xarray-open-mfdataset
 
-model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_detailed/100km/ERA*/final/*.nc',combine='nested',concat_dim='iteration_number')
+model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/ERA*/final/*.nc'.format(OIB_STATUS),combine='nested',concat_dim='iteration_number')
 
 
 
@@ -31,3 +34,16 @@ model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_de
 
 
 print(model_data)
+
+mean_vals = model_data.mean(dim='iteration_number')
+print(mean_vals)
+
+uncert_vals = model_data.std(dim='iteration_number')
+print(uncert_vals)
+
+print('saving data')
+with ProgressBar():
+	mean_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/mean_test.nc'.format(OIB_STATUS))
+	uncert_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/uncert_test.nc'.format(OIB_STATUS))
+
+
