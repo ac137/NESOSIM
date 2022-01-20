@@ -24,15 +24,20 @@ OIB_STATUS = 'averaged'
 if OIB_STATUS == 'detailed':
 #oib no clim
 # oib detailed
+	# 
 	central_wpf = 2.049653558530976e-06
 	central_llf = 4.005362127700446e-07
 	central_wpf_sigma = 2.6e-07
 	central_llf_sigma = 4.9e-08
+
+	# now with added covariance!
+	cov = np.array([[6.71091118e-14, 9.04186813e-15],[9.04186813e-15 2.35878636e-15]])
 	
-	central_wpf = 2.0504155592128743e-06
-	central_llf = 4.0059442776163867e-07
-	central_wpf_sigma = 3.1e-07
-	central_llf_sigma = 5.3e-08
+	# next 100 iterations
+	# central_wpf = 2.0504155592128743e-06
+	# central_llf = 4.0059442776163867e-07
+	# central_wpf_sigma = 3.1e-07
+	# central_llf_sigma = 5.3e-08
 
 elif OIB_STATUS == 'averaged':
 	central_wpf = 1.6321262995790887e-06
@@ -40,18 +45,26 @@ elif OIB_STATUS == 'averaged':
 	central_wpf_sigma = 2.3e-07
 	central_llf_sigma = 5.9e-08
 
+	cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16  3.47444174e-15]])
+
+EXTRA_FMT = '_cov'
 # make this directory if it doesn't exist
-model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/'.format(OIB_STATUS)
+model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/'.format(OIB_STATUS, EXTRA_FMT)
 
 # generate random distributions
 
 # number of iterations/points to generate
 N = 100# going for 100 total initially
 
-wpf_vals = np.random.normal(central_wpf,central_wpf_sigma,N)
-llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
+# wpf_vals = np.random.normal(central_wpf,central_wpf_sigma,N)
+# llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
 
+means = [central_wpf, central_llf]
 
+joint_dist =  np.random.multivariate_normal(means, cov, N)
+
+wpf_vals = joint_dist[:,0]
+llf_vals = joint_dist[:,1]
 
 yearS=2010
 yearE=2011
