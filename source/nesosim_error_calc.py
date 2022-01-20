@@ -9,6 +9,7 @@ import os
 from dask.diagnostics import ProgressBar
 
 OIB_STATUS = 'detailed'
+#OIB_STATUS = 'averaged'
 
 #model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/'.format(OIB_STATUS)
 
@@ -26,7 +27,7 @@ OIB_STATUS = 'detailed'
 # if I need to number them, can refer to this:
 # https://stackoverflow.com/questions/42574705/specify-concat-dim-for-xarray-open-mfdataset
 
-model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/ERA*/final/*.nc'.format(OIB_STATUS),combine='nested',concat_dim='iteration_number')
+model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}_final/100km/ERA*/final/*.nc'.format(OIB_STATUS),combine='nested',concat_dim='iteration_number')
 
 
 
@@ -35,15 +36,20 @@ model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}
 
 print(model_data)
 
-mean_vals = model_data.mean(dim='iteration_number')
-print(mean_vals)
+print('calculating mean')
+with ProgressBar():
+	mean_vals = model_data.mean(dim='iteration_number').compute()
+#print(mean_vals)
 
-uncert_vals = model_data.std(dim='iteration_number')
+print('calculating standard deviation')
+with ProgressBar():
+	uncert_vals = model_data.std(dim='iteration_number').compute()
 print(uncert_vals)
 
+n_iter = 100
+
 print('saving data')
-with ProgressBar():
-	mean_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/mean_test.nc'.format(OIB_STATUS))
-	uncert_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/uncert_test.nc'.format(OIB_STATUS))
+mean_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/mean_{}_iter_final.nc'.format(OIB_STATUS,n_iter))
+uncert_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/uncert_{}_iter_final.nc'.format(OIB_STATUS,n_iter))
 
 

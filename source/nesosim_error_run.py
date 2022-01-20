@@ -19,7 +19,7 @@ WAT = 5# 2par use default wat
 
 # generate arrays of uncertainty 
 
-OIB_STATUS = 'detailed'
+OIB_STATUS = 'averaged'
 
 if OIB_STATUS == 'detailed':
 #oib no clim
@@ -28,6 +28,17 @@ if OIB_STATUS == 'detailed':
 	central_llf = 4.005362127700446e-07
 	central_wpf_sigma = 2.6e-07
 	central_llf_sigma = 4.9e-08
+	
+	central_wpf = 2.0504155592128743e-06
+	central_llf = 4.0059442776163867e-07
+	central_wpf_sigma = 3.1e-07
+	central_llf_sigma = 5.3e-08
+
+elif OIB_STATUS == 'averaged':
+	central_wpf = 1.6321262995790887e-06
+	central_llf = 1.1584399852081886e-07
+	central_wpf_sigma = 2.3e-07
+	central_llf_sigma = 5.9e-08
 
 # make this directory if it doesn't exist
 model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/'.format(OIB_STATUS)
@@ -35,7 +46,7 @@ model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/'.format(OIB
 # generate random distributions
 
 # number of iterations/points to generate
-N = 10 # just do 10 for now
+N = 100# going for 100 total initially
 
 wpf_vals = np.random.normal(central_wpf,central_wpf_sigma,N)
 llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
