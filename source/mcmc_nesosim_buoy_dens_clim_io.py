@@ -553,7 +553,8 @@ PAR_SIGMA = [1, 1] #no WAT
 # weighting 1x n_oib for both now
 LOGLIKE_WEIGHT = 0.5
 
-CLIM_OIB = True # use OIB climatology
+#CLIM_OIB = True # use OIB climatology
+CLIM_OIB = False
 
 if USE_DENS:
 	DENS_STR = '_density'
@@ -570,7 +571,10 @@ else:
 # weighting by number of oib obs for both buoy and density to see what happens
 # DENS_STR += '2par_io_w_0x_no_station_buoy_v_1x_default'
 
-DENS_STR += '2par_io_clim_oib_w_1_default_v_1_default'
+#DENS_STR += '2par_io_clim_oib_w_1_default_v_1_default'
+
+# continuing oib detailed run
+DENS_STR += '2par_io_final_detailed_w1_default_v1_default'
 
 # parameter value array used in mcmc
 # try over both wpf and lead loss, now
@@ -586,6 +590,11 @@ par_vals = np.array([5.8e-7, 2.9e-7])
 #continue from other prev mcmc with last accepted value
 
 #par_vals=np.array([2.2905067632547875e-06,4.300505867586334e-07])
+
+# continue from other prev oib detailed mcmc with last accepted value:
+
+par_vals = np.array([2.2742946288232283e-06, 4.321025235622479e-07])
+
 
 # initial parameter values
 PARS_INIT = par_vals.copy()
