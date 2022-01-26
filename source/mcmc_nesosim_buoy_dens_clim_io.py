@@ -300,7 +300,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 
 	# default wpf 5.8e-7
 	# default llf 2.9e-7 
-	indices = [31,59,21,52] # hardcoding over here for now
+	indices = [31,59,21,52] # oib depth mean region indices; hardcoding over here for now
 
 	# passing params as [wpf, llf]
 	WPF = params[0]
@@ -553,8 +553,8 @@ PAR_SIGMA = [1, 1] #no WAT
 # weighting 1x n_oib for both now
 LOGLIKE_WEIGHT = 0.5
 
-#CLIM_OIB = True # use OIB climatology
-CLIM_OIB = False
+# if true, use OIB climatology; 'averaged oib'
+CLIM_OIB = True
 
 if USE_DENS:
 	DENS_STR = '_density'
@@ -574,7 +574,7 @@ else:
 #DENS_STR += '2par_io_clim_oib_w_1_default_v_1_default'
 
 # continuing oib detailed run
-DENS_STR += '2par_io_final_detailed_w1_default_v1_default'
+DENS_STR += '2par_io_final_averaged_w1_default_v1_default'
 
 # parameter value array used in mcmc
 # try over both wpf and lead loss, now
@@ -593,7 +593,12 @@ par_vals = np.array([5.8e-7, 2.9e-7])
 
 # continue from other prev oib detailed mcmc with last accepted value:
 
-par_vals = np.array([2.2742946288232283e-06, 4.321025235622479e-07])
+# par_vals = np.array([2.2742946288232283e-06, 4.321025235622479e-07])
+
+# continue from other prev oib averaged mcmc with last accepted value:
+
+par_vals = np.array([1.7026104191089884e-06, 1.0808249925065788e-07])
+
 
 
 # initial parameter values
