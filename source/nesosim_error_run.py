@@ -20,6 +20,7 @@ WAT = 5# 2par use default wat
 # generate arrays of uncertainty 
 
 OIB_STATUS = 'averaged'
+OIB_STATUS = 'detailed'
 
 if OIB_STATUS == 'detailed':
 #oib no clim
@@ -31,7 +32,7 @@ if OIB_STATUS == 'detailed':
 	central_llf_sigma = 4.9e-08
 
 	# now with added covariance!
-	cov = np.array([[6.71091118e-14, 9.04186813e-15],[9.04186813e-15 2.35878636e-15]])
+	cov = np.array([[6.71091118e-14, 9.04186813e-15],[9.04186813e-15, 2.35878636e-15]])
 	
 	# next 100 iterations
 	# central_wpf = 2.0504155592128743e-06
@@ -45,7 +46,7 @@ elif OIB_STATUS == 'averaged':
 	central_wpf_sigma = 2.3e-07
 	central_llf_sigma = 5.9e-08
 
-	cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16  3.47444174e-15]])
+	cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16,  3.47444174e-15]])
 
 EXTRA_FMT = '_cov'
 # make this directory if it doesn't exist

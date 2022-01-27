@@ -10,8 +10,8 @@ from dask.diagnostics import ProgressBar
 
 
 EXTRA_FMT = '_cov'
-OIB_STATUS = 'detailed'
-#OIB_STATUS = 'averaged'
+#OIB_STATUS = 'detailed'
+OIB_STATUS = 'averaged'
 
 #model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/'.format(OIB_STATUS)
 
