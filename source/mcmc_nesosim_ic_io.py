@@ -666,7 +666,7 @@ print('finished loading input')
 
 
 print('calculating initial log-likelihood')
-p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict, ,weight_factor=LOGLIKE_WEIGHT) # initial likelihood function
+p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict, weight_factor=LOGLIKE_WEIGHT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
