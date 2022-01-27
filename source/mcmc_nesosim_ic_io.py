@@ -220,14 +220,17 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 # def get_density_clim():
 # 	# calculate density climatology month by month
 
-def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, uncert_dens, weight_dens=1):
+# def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, uncert_dens, weight_dens=1):
+def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, model_depth_clim, obs_depth_clim, uncert_depth, uncert_dens, uncert_depth_clim, weight_dens=1, weight_depth=1):
+	
 	'''log likelihood for normal distribution
 	based on likelihood function exp (0.5*sum((model-obs)^2/uncert^2))
 	calculating for density and depth
 	weight_dens: for weighting density by the number of depth observations'''
 	depth_loglike = -0.5*np.sum((model_depth - obs_depth)**2/uncert_depth**2)
 	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
-	return depth_loglike + dens_loglike
+	depth_clim_loglike = -0.5*weight_depth*np.sum((model_depth_clim-obs_depth_clim)**2/uncert_depth_clim**2)
+	return depth_loglike + dens_loglike + depth_clim_loglike
 
 
 def calc_dens_monthly_means(depthBudget, date_start):
@@ -251,6 +254,53 @@ def calc_dens_monthly_means(depthBudget, date_start):
 
 	return mon_means.to_dataframe()
 
+def calc_depth_monthly_means(depthBudget, date_start):
+	'''monthly mean densities given budget (dataarray) and start date (datetime)
+	returns an array of monthly mean depths (single value for each month)
+	as a pandas dataframe
+	'''
+	iceConc = np.array(depthBudget['iceConc'])
+	depth = (depthBudget['snowDepth'][:, 0] + depthBudget['snowDepth'][:, 1])/iceConc
+	#print(depth)
+#	depth = depth.where(iceConc<0.15)
+	#print(depth['snowDepth'])
+	depth_vals = np.ma.masked_where(iceConc<0.15, depth)
+	depth.values = depth_vals
+#	depth = depth.where(~np.isinf(depth.values))
+#	depth.where(np.isinf(depth.values))=np.nan
+#	depth[np.isinf(depth.values)]=np.nan
+	#print(depth)
+#	depth.values = 
+	# create date range
+	dates = pd.date_range(start=date_start,periods=depth.shape[0])
+	# assign as index to depth
+	depth = depth.assign_coords(time=dates)
+	# basin average depth
+	depth = depth.mean(axis=(1,2),skipna=True)
+	#print(depth)
+	# this will be labelled by the last day of the month
+	mon_means = depth.resample(time='M').mean()
+
+	return mon_means.to_dataframe()
+
+
+def calc_depth_mean_oib_region(depthBudget, date_start, indices):
+	# how is depth budget indexing formatted
+
+	# first select depth by index
+	# indices: axis0 min, max; axis1 min, max
+	
+
+	# more efficient to index first and then calculate depth budget;
+	# also more finicky
+
+	# slice depth budget to region coincident with oib
+	budget_regional = depthBudget.isel(x=slice(indices[0],indices[1]),y=slice(indices[2],indices[3]))
+	# now the budget is sliced, calculate monthly means
+
+	mon_means_regional = calc_depth_monthly_means(depthBudget, date_start)
+
+	return mon_means_regional
 
 def calc_clim(df):
 	'''calculate monthly climatology from dataframe df
@@ -281,6 +331,8 @@ def loglike(params, uncert, forcings, weight_factor=None):
 
 	# default wpf 5.8e-7
 	# default llf 2.9e-7 
+	indices = [31,59,21,52] # oib depth mean region indices; hardcoding over here for now
+
 
 	# passing params as [wpf, llf]
 	WPF = params[0]
@@ -301,6 +353,8 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	snowDepthOIBAll=[]
 	snowDepthMMAll=[]
 	densMMAll = []
+	depthMMAll = [] # depth monthly means
+	depth_mean_oib_region_all = [] #depth monthly means for oib region
 
 	# if I do this for 5 years instead of just one...
 	# this part of the process is quite fast thankfully
@@ -337,14 +391,23 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		# get depth by year for given product & density
 		# note: snowdepthoibyr/snowdepthmmyr should just be 1-d arrays with
 		# only the valid values at this point, not 2d arrays with nan
+
+		if CLIM_OIB:
+			# using oib climatology; calculating monthly mean in oib region
+			depth_monthly_mean_oib_region = calc_depth_mean_oib_region(budgets, date_start, indices)
+			depth_mean_oib_region_all.append(depth_monthly_mean_oib_region)
+		# else:
+		# not using oib region but still want these for stats
+
 		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG, oib_dict)
-		
-		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
-
-		snowDepthOIBAll.extend(snowDepthOIByr)
+		snowDepthOIBAll.extend(snowDepthOIByr) # nb. extend method is less efficient but I don't think it's the main bottleneck here
 		snowDepthMMAll.extend(snowDepthMMyr)
-		densMMAll.append(dens_monthly_mean)
 
+		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
+		depth_monthly_mean = calc_depth_monthly_means(budgets, date_start)
+
+		densMMAll.append(dens_monthly_mean)
+		depthMMAll.append(depth_monthly_mean)
 
 
 	# collect density obs as well
@@ -353,6 +416,15 @@ def loglike(params, uncert, forcings, weight_factor=None):
 
 	# calculate the log-likelihood
 	# convert to arrays
+
+	if CLIM_OIB:
+		print('using oib climatology')
+		# stitch oib-region nesosim depth mean
+		depth_mean_oib_region_all = pd.concat(depth_mean_oib_region_all)
+		clim_depth_nesosim_oib_region = calc_clim(depth_mean_oib_region_all)
+		# obs_count=2 #just 2 months; putting this in for now but not so necessary; clean up weighting code later?
+
+	# still want these for stats:
 	snowDepthMMAll = np.array(snowDepthMMAll)
 	snowDepthOIBAll = np.array(snowDepthOIBAll)
 
@@ -360,12 +432,19 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	# are masked out, so can just use len
 	# obs_count = np.count_nonzero(~np.isnan(snowDepthOIBAll))
 	obs_count = len(snowDepthOIBAll)
-	print('the observation count is {}'.format(obs_count))
+	print('the oib observation count is {}'.format(obs_count))
 
-	# stitch density dataframes together
+	# stitch density dataframes together & calculate climatology
 	densMMAll = pd.concat(densMMAll)
 	clim_dens = calc_clim(densMMAll)
 	densMMAll = clim_dens.values
+
+	# stitch depth dataframes together & calculate NESOSIM depth climatology
+	depthMMAll = pd.concat(depthMMAll)
+	clim_depth = calc_clim(depthMMAll)
+	depthMMAll = clim_depth.values
+	print(depthMMAll)
+
 	# snow density arrays from station data; DS for 'drifting station'
 
 	# selecting values here is a bit redundant (could just store immediately in these variables)
@@ -376,17 +455,45 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	densDSAll = station_dens_clim.loc[clim_dens.index].values
 	densUncert = station_dens_std.loc[clim_dens.index].values
 
+	# also grab the buoy depths here somewhere
+
+	buoyDepthAll = buoy_depth_clim.loc[clim_depth.index].values
+	buoyUncert = buoy_depth_std.loc[clim_depth.index].values
+	# index nesosim depth by oib months
+	# ie subset the nesosim depth clim by the months that the oib
+	# clim exists (because the latter is the limiting factor here)
+	
+	if CLIM_OIB:
+
+		clim_depth_nesosim_oib_region = clim_depth_nesosim_oib_region.loc[oib_depth_clim.index].values
+
+
+
+
 	# weight for densities so they have same contribution as depth obs
 	# is equal weighting too much?
 	if weight_factor:
 	# weight_factor = 0.05 # factor to scale weight down
 		dens_weight = weight_factor*obs_count/len(densMMAll)
+		depth_weight = dens_weight
 	else:
 		dens_weight = 1.
+		depth_weight = dens_weight
 #	dens_weight = 4 # just multiply by 2
-	print('the density weight is {}'.format(dens_weight))
 
-	log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, uncert, densUncert, dens_weight)
+	# just set buoy depth weight to 1 for now
+	# trying now with multiples of 4
+	dens_weight = 1
+	depth_weight = 1
+
+	print('the density weight is {} and the buoy depth weight is {}'.format(dens_weight, depth_weight))
+
+
+	if CLIM_OIB:
+		log_p = calc_loglike(clim_depth_nesosim_oib_region, oib_depth_clim.values, densMMAll, densDSAll, depthMMAll, buoyDepthAll, uncert, densUncert, buoyUncert, dens_weight, depth_weight)
+	else:
+		log_p = calc_loglike(snowDepthMMAll, snowDepthOIBAll, densMMAll, densDSAll, depthMMAll, buoyDepthAll, uncert, densUncert, buoyUncert, dens_weight, depth_weight)
+
 
 	# calculate other statistics for reference
 	# linear fit with pearson correlation
@@ -437,6 +544,14 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
 station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
 
+# do I have to convert the units??? these are in m and so is nesosim so prob not
+buoy_depth_clim = pd.read_hdf('buoy_monthly_clim.h5',key='clim')['Snow Depth (m)']
+buoy_depth_std = pd.read_hdf('buoy_monthly_clim.h5',key='std')['Snow Depth (m)']
+
+# oib clim (just has march and april)
+
+oib_depth_clim = pd.read_hdf('oib_monthly_clim.h5',key='clim')['daily mean']
+oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 
 
 # seed for testing
@@ -446,8 +561,8 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 # default llf 2.9e-7 ? different default for multiseason
 
 ITER_MAX = 10000# start small for testing
-#ITER_MAX = 3
-UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
+ITER_MAX = 5
+UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
 PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
@@ -455,7 +570,12 @@ PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be 
 
 # step size determined based on param uncertainty (one per parameter)
 
+# weighting 1x n_oib for both now
+LOGLIKE_WEIGHT = 1 # this isn't being used for now
 
+
+# if true, use OIB climatology; 'averaged oib'
+CLIM_OIB = True
 
 
 if USE_DENS:
@@ -469,7 +589,7 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '_3par_ic'
+DENS_STR += '_3par_ic_station_buoy_oib_averaged_defaultweights'
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
@@ -546,7 +666,7 @@ print('finished loading input')
 
 
 print('calculating initial log-likelihood')
-p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict) # initial likelihood function
+p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict, ,weight_factor=LOGLIKE_WEIGHT) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
@@ -602,7 +722,7 @@ for i in range(ITER_MAX):
 	if (par_new < 0).any() == False:
 		print('calculating new log-likelihood')
 		# calculate new log-likelihood
-		p, stats = loglike(par_new, UNCERT, forcing_dict)
+		p, stats = loglike(par_new, UNCERT, forcing_dict, weight_factor=LOGLIKE_WEIGHT)
 
 		# accept/reject; double-check this with mcmc code
 		# in log space, p/q becomes p - q, so check difference here
