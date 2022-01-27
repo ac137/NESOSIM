@@ -19,53 +19,105 @@ WAT = 5# 2par use default wat
 
 # generate arrays of uncertainty 
 
-OIB_STATUS = 'averaged'
+# OIB_STATUS = 'averaged'
 OIB_STATUS = 'detailed'
 
-if OIB_STATUS == 'detailed':
-#oib no clim
-# oib detailed
-	# 
-	central_wpf = 2.049653558530976e-06
-	central_llf = 4.005362127700446e-07
-	central_wpf_sigma = 2.6e-07
-	central_llf_sigma = 4.9e-08
+USE_COV = True
 
-	# now with added covariance!
-	cov = np.array([[6.71091118e-14, 9.04186813e-15],[9.04186813e-15, 2.35878636e-15]])
+if OIB_STATUS == 'detailed':
+	# 'detailed' meaning using gridded oib in likelihood function
+	# i.e. comparing each oib grid square to a respective nesosim grid square
+
+	# 
+	# central_wpf = 2.049653558530976e-06
+	# central_llf = 4.005362127700446e-07
+	# central_wpf_sigma = 2.6e-07
+	# central_llf_sigma = 4.9e-08
+
+	# # now with added covariance!
+	# cov = np.array([[6.71091118e-14, 9.04186813e-15],[9.04186813e-15, 2.35878636e-15]])
 	
-	# next 100 iterations
+	# next 5k iterations (last 800 iter avg)
 	# central_wpf = 2.0504155592128743e-06
 	# central_llf = 4.0059442776163867e-07
 	# central_wpf_sigma = 3.1e-07
 	# central_llf_sigma = 5.3e-08
+	# cov = np.array([[9.67094599e-14, 1.37744084e-14], [1.37744084e-14, 2.81528717e-15]])
+	# 
+
+	# last 5k iterations (sigma and cov calculated using all last 5k iterations)
+
+	central_wpf = 2.0504155592128743e-06
+	central_llf = 4.0059442776163867e-07
+	central_wpf_sigma = 2.8e-07
+	central_llf_sigma = 4.9e-08
+
+	cov = np.array([[7.85960133e-14, 1.10931288e-14], [1.10931288e-14, 2.39994177e-15]])
 
 elif OIB_STATUS == 'averaged':
-	central_wpf = 1.6321262995790887e-06
-	central_llf = 1.1584399852081886e-07
-	central_wpf_sigma = 2.3e-07
-	central_llf_sigma = 5.9e-08
+	# 'averaged' meaning using oib climatology in likelihood function
+	# i.e. comparing the oib monthly regionally-averaged climatology to the
+	# nesosim monthly regionally-averaged climatology (over a region spanning
+	# the oib study region)
 
-	cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16,  3.47444174e-15]])
+	# central_wpf = 1.6321262995790887e-06
+	# central_llf = 1.1584399852081886e-07
+	# central_wpf_sigma = 2.3e-07
+	# central_llf_sigma = 5.9e-08
 
-EXTRA_FMT = '_cov'
+	# cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16,  3.47444174e-15]])
+
+	# next 5k iterations (last 800 iter avg)
+
+	# central_wpf = 1.7284668037515452e-06
+	# central_llf = 1.2174787315012357e-07
+	# central_wpf_sigma = 2.7e-07
+	# central_llf_sigma = 6.8e-08
+
+	# cov = np.array([[7.10691349e-14, 1.97960231e-15],[1.97960231e-15, 4.63158306e-15]])
+
+	# parameters from last 5k iterations (sigma and cov calculated using all last 5k iterations)
+	# these should be the final ones used
+	central_wpf = 1.7284668037515452e-06
+	central_llf = 1.2174787315012357e-07
+	central_wpf_sigma = 2.6e-07
+	central_llf_sigma = 6.6e-08
+
+	cov = np.array([[6.84908674e-14, 1.86872558e-16],[1.86872558e-16, 4.39607346e-15]])
+
+
+EXTRA_FMT = 'final_5k'
 # make this directory if it doesn't exist
-model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/'.format(OIB_STATUS, EXTRA_FMT)
 
 # generate random distributions
 
 # number of iterations/points to generate
 N = 100# going for 100 total initially
 
-# wpf_vals = np.random.normal(central_wpf,central_wpf_sigma,N)
-# llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
 
-means = [central_wpf, central_llf]
+if USE_COV:
 
-joint_dist =  np.random.multivariate_normal(means, cov, N)
+	# use covariance; generate distribution from joint distribution
+	means = [central_wpf, central_llf]
 
-wpf_vals = joint_dist[:,0]
-llf_vals = joint_dist[:,1]
+	joint_dist =  np.random.multivariate_normal(means, cov, N)
+
+	wpf_vals = joint_dist[:,0]
+	llf_vals = joint_dist[:,1]
+
+	# append to model save path
+	EXTRA_FMT.append('_cov')
+
+else:
+	# don't use covariance; independent distributions
+
+	wpf_vals = np.random.normal(central_wpf,central_wpf_sigma,N)
+	llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
+
+
+model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/'.format(OIB_STATUS, EXTRA_FMT)
+
+
 
 yearS=2010
 yearE=2011
