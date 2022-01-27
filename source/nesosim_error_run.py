@@ -19,8 +19,8 @@ WAT = 5# 2par use default wat
 
 # generate arrays of uncertainty 
 
-# OIB_STATUS = 'averaged'
-OIB_STATUS = 'detailed'
+OIB_STATUS = 'averaged'
+#OIB_STATUS = 'detailed'
 
 USE_COV = True
 
@@ -106,7 +106,7 @@ if USE_COV:
 	llf_vals = joint_dist[:,1]
 
 	# append to model save path
-	EXTRA_FMT.append('_cov')
+	EXTRA_FMT += '_cov'
 
 else:
 	# don't use covariance; independent distributions
