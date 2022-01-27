@@ -9,7 +9,12 @@ import os
 from dask.diagnostics import ProgressBar
 
 
-EXTRA_FMT = '_cov'
+# EXTRA_FMT = '_cov'
+
+EXTRA_FMT = 'final_5k'
+
+# EXTRA_FMT = 'final_5k_cov'
+
 #OIB_STATUS = 'detailed'
 OIB_STATUS = 'averaged'
 
