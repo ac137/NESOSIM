@@ -233,7 +233,7 @@ def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, model_depth_clim,
 	depth_clim_loglike = -0.5*weight_depth*np.sum((model_depth_clim-obs_depth_clim)**2/uncert_depth_clim**2)
 	
 	day_zero_uncert = default_day_zero_depth*day_zero_uncert_factor
-	day_zero_loglike = =0.5*np.sum((model_day_zero_depth - default_day_zero_depth)**2/day_zero_uncert**2)
+	day_zero_loglike = -0.5*np.sum((model_day_zero_depth - default_day_zero_depth)**2/day_zero_uncert**2)
 
 	# add log-likelihoods together
 	return depth_loglike + dens_loglike + depth_clim_loglike + day_zero_loglike
@@ -606,7 +606,7 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 initial_condition_values = []
 
 for y_current in range(2010,2015): # double-check year range
-	ic_year = np.load(forcing_save_path + 'InitialConditions/ERA5/ICsnow{}-100kmv11'.format(y_current), allow_pickle=True)
+	ic_year = np.load(forcing_save_path + '100km/InitialConditions/ERA5/ICsnow{}-100kmv11'.format(y_current), allow_pickle=True)
 	initial_condition_values.append(ic_year)
 	# do these need scaling for units???
 
@@ -825,7 +825,7 @@ for i in range(ITER_MAX):
 
 #TODO: more elegant filename formatting (format arrays so I don't have to write strings in)
 # save final output to file
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
+fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_{}_s0_{}_{}_{}_{}_with_ic_loglike_noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PARS_INIT[2],PAR_SIGMA[0],PAR_SIGMA[1],PAR_SIGMA[2],DENS_STR)
 print(ITER_MAX)
 print(fname)
 write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
