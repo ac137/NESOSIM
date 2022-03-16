@@ -22,7 +22,8 @@ WAT = 5# 2par use default wat
 OIB_STATUS = 'averaged'
 #OIB_STATUS = 'detailed'
 
-USE_COV = True
+USE_COV = True # use covariance
+USE_IC = True # use initial conditions
 
 if OIB_STATUS == 'detailed':
 	# 'detailed' meaning using gridded oib in likelihood function
@@ -55,38 +56,60 @@ if OIB_STATUS == 'detailed':
 	cov = np.array([[7.85960133e-14, 1.10931288e-14], [1.10931288e-14, 2.39994177e-15]])
 
 elif OIB_STATUS == 'averaged':
+
 	# 'averaged' meaning using oib climatology in likelihood function
 	# i.e. comparing the oib monthly regionally-averaged climatology to the
 	# nesosim monthly regionally-averaged climatology (over a region spanning
 	# the oib study region)
 
-	# central_wpf = 1.6321262995790887e-06
-	# central_llf = 1.1584399852081886e-07
-	# central_wpf_sigma = 2.3e-07
-	# central_llf_sigma = 5.9e-08
+	if USE_IC:
+		# oib averaged and using initial conditions
 
-	# cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16,  3.47444174e-15]])
+		# this is for ic factor in loglike
+		central_wpf = 2.3450925692135826e-06
+		central_llf = 1.5380250062998322e-07
+		central_icf = 0.5312831368932197
+		# central_wpf_sigma =
+		# central_llf_sigma =
+		cov = np.array([[ 2.06599304e-13,  4.84971256e-15, -3.68061026e-09],
+	       [ 4.84971256e-15,  5.16078775e-15,  1.01706829e-10],
+	       [-3.68061026e-09,  1.01706829e-10,  7.66086674e-04]])
+	else:
 
-	# next 5k iterations (last 800 iter avg)
 
-	# central_wpf = 1.7284668037515452e-06
-	# central_llf = 1.2174787315012357e-07
-	# central_wpf_sigma = 2.7e-07
-	# central_llf_sigma = 6.8e-08
+		# central_wpf = 1.6321262995790887e-06
+		# central_llf = 1.1584399852081886e-07
+		# central_wpf_sigma = 2.3e-07
+		# central_llf_sigma = 5.9e-08
 
-	# cov = np.array([[7.10691349e-14, 1.97960231e-15],[1.97960231e-15, 4.63158306e-15]])
+		# cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16,  3.47444174e-15]])
 
-	# parameters from last 5k iterations (sigma and cov calculated using all last 5k iterations)
-	# these should be the final ones used
-	central_wpf = 1.7284668037515452e-06
-	central_llf = 1.2174787315012357e-07
-	central_wpf_sigma = 2.6e-07
-	central_llf_sigma = 6.6e-08
+		# next 5k iterations (last 800 iter avg)
 
-	cov = np.array([[6.84908674e-14, 1.86872558e-16],[1.86872558e-16, 4.39607346e-15]])
+		# central_wpf = 1.7284668037515452e-06
+		# central_llf = 1.2174787315012357e-07
+		# central_wpf_sigma = 2.7e-07
+		# central_llf_sigma = 6.8e-08
+
+		# cov = np.array([[7.10691349e-14, 1.97960231e-15],[1.97960231e-15, 4.63158306e-15]])
+
+		# parameters from last 5k iterations (sigma and cov calculated using all last 5k iterations)
+		# these should be the final ones used
+		central_wpf = 1.7284668037515452e-06
+		central_llf = 1.2174787315012357e-07
+		central_wpf_sigma = 2.6e-07
+		central_llf_sigma = 6.6e-08
+
+		cov = np.array([[6.84908674e-14, 1.86872558e-16],[1.86872558e-16, 4.39607346e-15]])
+
 
 
 EXTRA_FMT = 'final_5k'
+# EXTRA_FMT = 'final_5k_2018_2019'
+if USE_IC:
+	EXTRA_FMT += 'with_ic_loglike'
+
+
 # make this directory if it doesn't exist
 
 # generate random distributions
@@ -98,12 +121,18 @@ N = 100# going for 100 total initially
 if USE_COV:
 
 	# use covariance; generate distribution from joint distribution
-	means = [central_wpf, central_llf]
+	if USE_IC:
+		means = [central_wpf, central_llf, central_icf]
+	else:
+		means = [central_wpf, central_llf]
 
 	joint_dist =  np.random.multivariate_normal(means, cov, N)
 
 	wpf_vals = joint_dist[:,0]
 	llf_vals = joint_dist[:,1]
+
+	if USE_IC:
+		icf_vals = joint_dist[:,2]
 
 	# append to model save path
 	EXTRA_FMT += '_cov'
@@ -165,6 +194,13 @@ for i in range(N):
 	WPF = wpf_vals[i]
 	LLF = llf_vals[i]
 
+	if USE_IC:
+		# select initial condition factor
+		ICF = icf_vals[i]
+	else:
+		# otherwise just use default
+		ICF = 1
+
 	month1=month_start-1 # 8=September
 	day1=day_start-1
 
@@ -191,4 +227,4 @@ for i in range(N):
     icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
     windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
     dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=1, plotBudgets=0, plotdaily=0,
-    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcing_dict)
+    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcing_dict, ICfactor=ICF)
