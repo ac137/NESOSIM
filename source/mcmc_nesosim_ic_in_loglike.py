@@ -269,7 +269,8 @@ def get_depth_day_zero(depthBudget):
 	# select first day
 	budget_day_zero = depthBudget.isel(time=0)
 	iceConc = np.array(budget_day_zero['iceConc'])
-	depth = (budget_day_zero['snowDepth'].isel(lyrs=0) + budget_day_zero['snowDepth'].isel(lyrs=1))/iceConc
+	depth = (budget_day_zero['snowDepth'].isel(lyrs=0) + budget_day_zero['snowDepth'].isel(lyrs=1))#/iceConc
+	# don't need to divide by iceconc here because it's being compared to a quantity that isn't being divided by day 0 
 	#print(depth)
 #	depth = depth.where(iceConc<0.15)
 	#print(depth['snowDepth'])
@@ -624,7 +625,7 @@ initial_condition_uncertainty_factor = 0.5
 # default llf 2.9e-7 ? different default for multiseason
 
 ITER_MAX = 10000# start small for testing
-ITER_MAX = 5
+#ITER_MAX = 5
 UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -638,7 +639,9 @@ LOGLIKE_WEIGHT = 1 # this isn't being used for now
 
 
 # if true, use OIB climatology; 'averaged oib'
+# be sure to also change DENS_STR to match
 CLIM_OIB = True
+#CLIM_OIB = False
 
 
 if USE_DENS:
@@ -652,7 +655,9 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '_3par_ic_station_buoy_oib_averaged_defaultweights'
+DENS_STR += '_3par_fixed_ic_station_buoy_oib_averaged_defaultweights'
+#DENS_STR += '_3par_fixed_ic_station_buoy_oib_detailed_defaultweights'
+
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
