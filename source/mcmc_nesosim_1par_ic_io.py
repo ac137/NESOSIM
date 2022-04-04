@@ -503,12 +503,12 @@ if OPT_PAR_NAME == 'icf':
 	par_names = ['initial condition factor']
 
 elif OPT_PAR_NAME == 'wpf':
-	PAR_VALS = [5.8e-7]
+	par_vals = np.array([5.8e-7])
 	PAR_SIGMA = [0.1]
 	par_names = ['wind packing']
 
 elif OPT_PAR_NAME == 'llf':
-	PAR_VALS = [2.9e-7]
+	par_vals = np.array([2.9e-7])
 	PAR_SIGMA = [0.1]
 	par_names = ['blowing snow']
 
