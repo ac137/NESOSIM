@@ -22,7 +22,7 @@ import NESOSIM
 
 # use density in mcmc constraints
 USE_DENS = False
-USE_DENS_CLIM = True
+USE_DENS_CLIM = False
 
 # # is this sort of control flow for import statements reasonable? hopefully
 # if USE_DENS:
@@ -227,9 +227,11 @@ def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, unc
 	based on likelihood function exp (0.5*sum((model-obs)^2/uncert^2))
 	calculating for density and depth
 	weight_dens: for weighting density by the number of depth observations'''
+
+	# commenting out density part of loglike for now; don't need for this test
 	depth_loglike = -0.5*np.sum((model_depth - obs_depth)**2/uncert_depth**2)
-	dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
-	return depth_loglike + dens_loglike
+	#dens_loglike = -0.5*weight_dens*np.sum((model_dens - obs_dens)**2/uncert_dens**2)
+	return depth_loglike #+ dens_loglike
 
 
 def calc_dens_monthly_means(depthBudget, date_start):
@@ -284,15 +286,19 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	# default wpf 5.8e-7
 	# default llf 2.9e-7 
 
-	# passing params as [wpf, llf]
-	# WPF = params[0]
-	# LLF = params[1]
-
-	WPF=5.8e-7
-	LLF=2.9e-7
-	# WAT = params[2]
+	WPF = 5.8e-7
+	LLF = 2.9e-7
 	WAT = 5 # default wind action threshold
-	ICF = params[0] # initial condition factor
+	ICF = 1 # initial condition factor
+
+	# check which value we're optimizing for
+	if OPT_PAR_NAME == 'wpf':
+		WPF = params[0]
+	elif OPT_PAR_NAME == 'llf':
+		LLF = params[0]
+	elif OPT_PAR_NAME == 'icf':
+		ICF = params[0]
+
 
 	# windPackFactorT, leadLossFactorT = params
 	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
@@ -452,16 +458,15 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 
 ITER_MAX = 1000# start small for testing
 #ITER_MAX = 3
-UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
+UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
 # PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
 # should be multiplied by 1e-7, but can do that after calculating distribution
 
 # step size determined based on param uncertainty (one per parameter)
-PAR_SIGMA=[0.1]
 
-
+OPT_PAR_NAME = 'wpf'
 
 if USE_DENS:
 	DENS_STR = '_density'
@@ -470,11 +475,14 @@ elif USE_DENS_CLIM:
 else:
 	DENS_STR = ''
 
+
+
+
 # weighting is now specified by passing argument to loglike main
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '_1par_ic'
+DENS_STR += '_1par_{}'.format(OPT_PAR_NAME)
 
 # try over both wpf and lead loss, now
 # order here is [wpf, llf]
@@ -488,10 +496,25 @@ DENS_STR += '_1par_ic'
 # wpf, llf, icf (initial condition factor, default is 1)
 # par_vals = np.array([5.8e-7, 2.9e-7, 1.])
 
-par_vals=np.array([1.])
+if OPT_PAR_NAME == 'icf':
+
+	PAR_SIGMA=[0.1]
+	par_vals=np.array([1.])
+	par_names = ['initial condition factor']
+
+elif OPT_PAR_NAME == 'wpf':
+	PAR_VALS = [5.8e-7]
+	PAR_SIGMA = [0.1]
+	par_names = ['wind packing']
+
+elif OPT_PAR_NAME == 'llf':
+	PAR_VALS = [2.9e-7]
+	PAR_SIGMA = [0.1]
+	par_names = ['blowing snow']
 
 PARS_INIT = par_vals.copy()
-par_names = ['initial condition factor']
+
+
 
 
 
@@ -578,10 +601,10 @@ rejected_stats = []
 # this doesn't take up space in memory
 step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))#*1e-7
 
-# scale to appropriate value
-#step_vals[:,0] *= 1e-7 # scale wind packing
-#step_vals[:,1] *= 1e-7 # scale blowing snow
-# don't scale IC factor
+# scale to appropriate value if applicable
+if OPT_PAR_NAME == 'wpf' or OPT_PAR_NAME == 'llf':
+	step_vals *= 1e-7
+
 
 
 # reshape this if the number of params changes
@@ -639,7 +662,7 @@ for i in range(ITER_MAX):
 			rejected_stats.append(stats)
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
-	if i%1000 == 0 and i > 0:
+	if i%100 == 0 and i > 0:
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)
