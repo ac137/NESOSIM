@@ -66,14 +66,14 @@ elif OIB_STATUS == 'averaged':
 		# oib averaged and using initial conditions
 
 		# this is for ic factor in loglike
-		central_wpf = 2.3450925692135826e-06
-		central_llf = 1.5380250062998322e-07
-		central_icf = 0.5312831368932197
+		central_wpf = 1.5898191467069587e-06
+		central_llf = 1.3594432942840895e-07
+		central_icf = 1.002170370370595
 		# central_wpf_sigma =
 		# central_llf_sigma =
-		cov = np.array([[ 2.06599304e-13,  4.84971256e-15, -3.68061026e-09],
-	       [ 4.84971256e-15,  5.16078775e-15,  1.01706829e-10],
-	       [-3.68061026e-09,  1.01706829e-10,  7.66086674e-04]])
+		cov = np.array([[ 1.06153398e-13,  9.80752845e-16, -1.70666012e-10],
+				[ 9.80752845e-16,  4.86539482e-15,  1.15274322e-11],
+				[-1.70666012e-10,  1.15274322e-11,  1.62521203e-04]])
 	else:
 
 
@@ -104,7 +104,7 @@ elif OIB_STATUS == 'averaged':
 
 
 
-EXTRA_FMT = 'final_5k'
+EXTRA_FMT = 'final_5k_fixed'
 # EXTRA_FMT = 'final_5k_2018_2019'
 if USE_IC:
 	EXTRA_FMT += 'with_ic_loglike'

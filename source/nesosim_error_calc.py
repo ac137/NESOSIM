@@ -11,9 +11,14 @@ from dask.diagnostics import ProgressBar
 
 # EXTRA_FMT = '_cov'
 
-EXTRA_FMT = 'final_5k'
+#EXTRA_FMT = 'final_5k'
 
-# EXTRA_FMT = 'final_5k_cov'
+EXTRA_FMT = 'final_5k_2018_2019_cov'
+
+#EXTRA_FMT = 'final_5k_cov'
+#nesosim_uncert_output_oib_averagedfinal_5k_fixedwith_ic_loglike_cov
+
+EXTRA_FMT = 'final_5k_fixedwith_ic_loglike_cov'
 
 #OIB_STATUS = 'detailed'
 OIB_STATUS = 'averaged'
