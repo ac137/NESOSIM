@@ -19,11 +19,11 @@ WAT = 5# 2par use default wat
 
 # generate arrays of uncertainty 
 
-OIB_STATUS = 'averaged'
-#OIB_STATUS = 'detailed'
+# OIB_STATUS = 'averaged'
+OIB_STATUS = 'detailed'
 
 USE_COV = True # use covariance
-USE_IC = True # use initial conditions
+USE_IC = False # use initial conditions
 
 if OIB_STATUS == 'detailed':
 	# 'detailed' meaning using gridded oib in likelihood function
@@ -52,8 +52,10 @@ if OIB_STATUS == 'detailed':
 	central_llf = 4.0059442776163867e-07
 	central_wpf_sigma = 2.8e-07
 	central_llf_sigma = 4.9e-08
-
-	cov = np.array([[7.85960133e-14, 1.10931288e-14], [1.10931288e-14, 2.39994177e-15]])
+	# full covariance
+	# cov = np.array([[7.85960133e-14, 1.10931288e-14], [1.10931288e-14, 2.39994177e-15]])
+	# cov of selected part of array
+	cov = np.array([[9.67094599e-14, 1.37744084e-14], [1.37744084e-14, 2.81528717e-15]])
 
 elif OIB_STATUS == 'averaged':
 
@@ -66,14 +68,14 @@ elif OIB_STATUS == 'averaged':
 		# oib averaged and using initial conditions
 
 		# this is for ic factor in loglike
-		central_wpf = 1.5898191467069587e-06
-		central_llf = 1.3594432942840895e-07
-		central_icf = 1.002170370370595
+		central_wpf = 2.3450925692135826e-06
+		central_llf = 1.5380250062998322e-07
+		central_icf = 0.5312831368932197
 		# central_wpf_sigma =
 		# central_llf_sigma =
-		cov = np.array([[ 1.06153398e-13,  9.80752845e-16, -1.70666012e-10],
-				[ 9.80752845e-16,  4.86539482e-15,  1.15274322e-11],
-				[-1.70666012e-10,  1.15274322e-11,  1.62521203e-04]])
+		cov = np.array([[ 2.06599304e-13,  4.84971256e-15, -3.68061026e-09],
+	       [ 4.84971256e-15,  5.16078775e-15,  1.01706829e-10],
+	       [-3.68061026e-09,  1.01706829e-10,  7.66086674e-04]])
 	else:
 
 
@@ -104,7 +106,7 @@ elif OIB_STATUS == 'averaged':
 
 
 
-EXTRA_FMT = 'final_5k_fixed'
+EXTRA_FMT = '40_years_final_5k'
 # EXTRA_FMT = 'final_5k_2018_2019'
 if USE_IC:
 	EXTRA_FMT += 'with_ic_loglike'
@@ -148,8 +150,8 @@ model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/'.format(O
 
 
 
-yearS=2010
-yearE=2011
+yearS=1980
+yearE=2020
 # these start and end variables are for loading data; load the whole year
 month1 = 0
 day1 = 0
@@ -171,6 +173,9 @@ dx = 100000 # for log-likelihood
 
 
 # load forcings for nesosim
+# will this work with the large amount of data used here?
+# this would be about 5 gb into ram; comment out and use default
+# model config if this is too much
 forcing_io_path=forcing_save_path+dxStr+'/'
 print('loading input data')
 forcing_dict = io.load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcing_io_path)
@@ -179,10 +184,10 @@ print('finished loading input')
 
 # run the model
 
-print('running {} iterations for year {}'.format(N, yearS))
+print('running {} iterations starting at year {}'.format(N, yearS))
 # do a year with coincident ICESat-2 data (later); 
 # for now just go with calibration year
-year1=yearS
+
 
 # if I do this for 5 years instead of just one...
 # this part of the process is quite fast thankfully
@@ -201,30 +206,41 @@ for i in range(N):
 		# otherwise just use default
 		ICF = 1
 
-	month1=month_start-1 # 8=September
-	day1=day_start-1
+	# loop here for multiple years
 
-	year2=year1+1
-	month2=3 # 4=May
-	day2=29
+	for y in range(yearS, yearE+1):
 
-	date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
+		if y == 1987:
+			# skip this year due to missing data
+			continue
+
+		print('year '+ y)
+		year1 = y
+
+		month1=month_start-1 # 8=September
+		day1=day_start-1
+
+		year2=year1+1
+		month2=3 # 4=May
+		day2=29
+
+		date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
 
 
-	# Get time period info
-	_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
-	#totalOutStr=''+folderStr+'-'+dateOut
+		# Get time period info
+		_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
+		#totalOutStr=''+folderStr+'-'+dateOut
 
-	# run nesosim (not sure if all the additional variables are needed)
+		# run nesosim (not sure if all the additional variables are needed)
 
-	# save the data; run saveData=1
-	# lotsa things hardcoded here but this'll do for now
-	budgets = NESOSIM.main(year1=year1, month1=month1, day1=day1, year2=year1+1, month2=month2, day2=day2,
-    outPathT=model_save_path, 
-    forcingPathT=forcing_save_path, 
-    figPathT=figure_path+'Model/',
-    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
-    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
-    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
-    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=1, plotBudgets=0, plotdaily=0,
-    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcing_dict, ICfactor=ICF)
+		# save the data; run saveData=1
+		# lotsa things hardcoded here but this'll do for now
+		budgets = NESOSIM.main(year1=year1, month1=month1, day1=day1, year2=year1+1, month2=month2, day2=day2,
+	    outPathT=model_save_path, 
+	    forcingPathT=forcing_save_path, 
+	    figPathT=figure_path+'Model/',
+	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
+	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
+	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
+	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=1, plotBudgets=0, plotdaily=0,
+	    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcing_dict, ICfactor=ICF)
