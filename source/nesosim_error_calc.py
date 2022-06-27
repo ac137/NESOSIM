@@ -9,60 +9,71 @@ import os
 from dask.diagnostics import ProgressBar
 
 
-# EXTRA_FMT = '_cov'
+years_list = np.arange(1980,2020)
 
-#EXTRA_FMT = 'final_5k'
-
-EXTRA_FMT = 'final_5k_2018_2019_cov'
-
-#EXTRA_FMT = 'final_5k_cov'
-#nesosim_uncert_output_oib_averagedfinal_5k_fixedwith_ic_loglike_cov
-
-EXTRA_FMT = 'final_5k_fixedwith_ic_loglike_cov'
-
-#OIB_STATUS = 'detailed'
-OIB_STATUS = 'averaged'
-
-#model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/'.format(OIB_STATUS)
-
-# typical file format: /users/jk/19/acabaj/nesosim_uncert_output_oib_detailed/100km/ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_AL1_WPF2.2673462045700356e-06_WPT5_LLF4.567476109493221e-07-100kmv11mcmc/final
-
-#dir_list = os.listdir(model_save_path)
-
-# load data
-
-# collect into list because there's 
-
-#final_data = []
-
-# can use xr open_mfdataset with concat_dim
-# if I need to number them, can refer to this:
-# https://stackoverflow.com/questions/42574705/specify-concat-dim-for-xarray-open-mfdataset
-
-# model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}_final/100km/ERA*/final/*.nc'.format(OIB_STATUS),combine='nested',concat_dim='iteration_number')
-
-model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/100km/ERA*/final/*.nc'.format(OIB_STATUS,EXTRA_FMT),combine='nested',concat_dim='iteration_number')
+for current_year in years_list:
+	print(current_year)
 
 
-# calculate mean and uncertainty of snow depth and density
+	# EXTRA_FMT = '_cov'
+
+	#EXTRA_FMT = 'final_5k'
+
+	# EXTRA_FMT = 'final_5k_2018_2019_cov'
+
+	EXTRA_FMT = '40_years_final_5k'
+
+	#EXTRA_FMT = 'final_5k_cov'
+	#nesosim_uncert_output_oib_averagedfinal_5k_fixedwith_ic_loglike_cov
+
+	# EXTRA_FMT = 'final_5k_fixedwith_ic_loglike_cov'
+
+	OIB_STATUS = 'detailed'
+	# OIB_STATUS = 'averaged'
+
+	#model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/'.format(OIB_STATUS)
+
+	# typical file format: /users/jk/19/acabaj/nesosim_uncert_output_oib_detailed/100km/ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_AL1_WPF2.2673462045700356e-06_WPT5_LLF4.567476109493221e-07-100kmv11mcmc/final
+
+	#dir_list = os.listdir(model_save_path)
+
+	# load data
+
+	# collect into list because there's 
+
+	#final_data = []
+
+	# can use xr open_mfdataset with concat_dim
+	# if I need to number them, can refer to this:
+	# https://stackoverflow.com/questions/42574705/specify-concat-dim-for-xarray-open-mfdataset
+
+	# model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}_final/100km/ERA*/final/*.nc'.format(OIB_STATUS),combine='nested',concat_dim='iteration_number')
+
+	# filename final/NESOSIMv11_01091992-30041993.nc
+	# model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/100km/ERA*/final/*.nc'.format(OIB_STATUS,EXTRA_FMT),combine='nested',concat_dim='iteration_number')
+
+	model_data = xr.open_mfdataset('/users/jk/20/acabaj/nesosim_uncert_output_oib_{}{}/100km/ERA*/final/NESOSIMv11_0109{}-3004{}.nc'.format(OIB_STATUS,EXTRA_FMT,current_year,current_year+1),combine='nested',concat_dim='iteration_number')
 
 
-print(model_data)
+	# calculate mean and uncertainty of snow depth and density
 
-print('calculating mean')
-with ProgressBar():
-	mean_vals = model_data.mean(dim='iteration_number').compute()
-#print(mean_vals)
 
-print('calculating standard deviation')
-with ProgressBar():
-	uncert_vals = model_data.std(dim='iteration_number').compute()
-print(uncert_vals)
+	# print(model_data)
 
-n_iter = 100
+	print('calculating mean')
+	with ProgressBar():
+		mean_vals = model_data.mean(dim='iteration_number').compute()
+	#print(mean_vals)
 
-print('saving data')
-mean_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/{}{}mean_{}_iter_final.nc'.format(OIB_STATUS,EXTRA_FMT, OIB_STATUS, EXTRA_FMT,n_iter))
-uncert_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/{}{}uncert_{}_iter_final.nc'.format(OIB_STATUS,EXTRA_FMT, OIB_STATUS, EXTRA_FMT,n_iter))
+	print('calculating standard deviation')
+	with ProgressBar():
+		uncert_vals = model_data.std(dim='iteration_number').compute()
+	# print(uncert_vals)
+
+	n_iter = 100
+
+	print('saving data for {}', current_year)
+	mean_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/{}{}mean_{}_iter_final_{}.nc'.format(OIB_STATUS,EXTRA_FMT, OIB_STATUS, EXTRA_FMT,n_iter, current_year))
+	uncert_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/{}{}uncert_{}_iter_final_{}.nc'.format(OIB_STATUS,EXTRA_FMT, OIB_STATUS, EXTRA_FMT,n_iter, current_year))
 
 
