@@ -13,6 +13,9 @@ import io_helpers as io
 from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 import NESOSIM
 
+forcing_save_path = '/users/jk/18/acabaj/NESOSIM/forcings_full/forcings/'
+
+
 
 WAT = 5# 2par use default wat
 
@@ -146,7 +149,7 @@ else:
 	llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
 
 
-model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/'.format(OIB_STATUS, EXTRA_FMT)
+model_save_path = '/users/jk/20/acabaj/nesosim_uncert_output_oib_{}{}/'.format(OIB_STATUS, EXTRA_FMT)
 
 
 
@@ -166,7 +169,8 @@ month_start = 9 # september; gets subtracted later for month1
 precipVar='ERA5'
 windVar='ERA5'
 concVar='CDR'
-driftVar='OSISAF'
+driftVar='NSIDCv4'
+#driftVar='OSISAF'
 dxStr='100km'
 extraStr='v11'
 dx = 100000 # for log-likelihood
@@ -208,13 +212,13 @@ for i in range(N):
 
 	# loop here for multiple years
 
-	for y in range(yearS, yearE+1):
+	for y in range(yearS, yearE):
 
 		if y == 1987:
 			# skip this year due to missing data
 			continue
 
-		print('year '+ y)
+		print('year {}'.format(y))
 		year1 = y
 
 		month1=month_start-1 # 8=September
@@ -239,7 +243,7 @@ for i in range(N):
 	    outPathT=model_save_path, 
 	    forcingPathT=forcing_save_path, 
 	    figPathT=figure_path+'Model/',
-	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
+	    precipVar='ERA5', windVar='ERA5', driftVar='NSIDCv4', concVar='CDR', 
 	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
 	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
 	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=1, plotBudgets=0, plotdaily=0,
