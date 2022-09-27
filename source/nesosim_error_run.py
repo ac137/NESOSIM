@@ -1,4 +1,9 @@
-# run nesosim multiple times and save output
+# nesosim_error_run.py: Generate a "parameter ensemble" of NESOSIM runs. Given
+# distributions of NESOSIM model free parameters, select n samples of parameters
+# from those distributions and run NESOSIM n times. Model uncertainty due to
+# parameter uncertainty can then be calculated using nesosim_error_calc.py
+
+# by Alex Cabaj; adapted from code by Alek Petty
 
 
 import numpy as np
@@ -13,51 +18,37 @@ import io_helpers as io
 from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 import NESOSIM
 
+
 forcing_save_path = '/users/jk/18/acabaj/NESOSIM/forcings_full/forcings/'
 
 
 
-WAT = 5# 2par use default wat
+WAT = 5 # wind action threshold; default value
 
 
 # generate arrays of uncertainty 
 
+# Select whether to use the OIB-clim ("averaged") or daily-gridded ("detailed")
+# configuration
+
 # OIB_STATUS = 'averaged'
 OIB_STATUS = 'detailed'
 
-USE_COV = True # use covariance
-USE_IC = False # use initial conditions
+USE_COV = True # Use covariance (from covariance matrix of MCMC output)
+USE_IC = False # use initial conditions; for testing initial condition factor
 
 if OIB_STATUS == 'detailed':
 	# 'detailed' meaning using gridded oib in likelihood function
 	# i.e. comparing each oib grid square to a respective nesosim grid square
 
-	# 
-	# central_wpf = 2.049653558530976e-06
-	# central_llf = 4.005362127700446e-07
-	# central_wpf_sigma = 2.6e-07
-	# central_llf_sigma = 4.9e-08
-
-	# # now with added covariance!
-	# cov = np.array([[6.71091118e-14, 9.04186813e-15],[9.04186813e-15, 2.35878636e-15]])
-	
-	# next 5k iterations (last 800 iter avg)
-	# central_wpf = 2.0504155592128743e-06
-	# central_llf = 4.0059442776163867e-07
-	# central_wpf_sigma = 3.1e-07
-	# central_llf_sigma = 5.3e-08
-	# cov = np.array([[9.67094599e-14, 1.37744084e-14], [1.37744084e-14, 2.81528717e-15]])
-	# 
-
-	# last 5k iterations (sigma and cov calculated using all last 5k iterations)
-
+	# example for distributions
 	central_wpf = 2.0504155592128743e-06
 	central_llf = 4.0059442776163867e-07
 	central_wpf_sigma = 2.8e-07
 	central_llf_sigma = 4.9e-08
 	# full covariance
-	# cov = np.array([[7.85960133e-14, 1.10931288e-14], [1.10931288e-14, 2.39994177e-15]])
-	# cov of selected part of array
+
+	# covariance matrix, as used in publication
 	cov = np.array([[9.67094599e-14, 1.37744084e-14], [1.37744084e-14, 2.81528717e-15]])
 
 elif OIB_STATUS == 'averaged':
@@ -68,38 +59,17 @@ elif OIB_STATUS == 'averaged':
 	# the oib study region)
 
 	if USE_IC:
-		# oib averaged and using initial conditions
 
-		# this is for ic factor in loglike
+		# for evaluating initial conditions (i.e. 3 parameter test)
 		central_wpf = 2.3450925692135826e-06
 		central_llf = 1.5380250062998322e-07
 		central_icf = 0.5312831368932197
-		# central_wpf_sigma =
-		# central_llf_sigma =
+
 		cov = np.array([[ 2.06599304e-13,  4.84971256e-15, -3.68061026e-09],
 	       [ 4.84971256e-15,  5.16078775e-15,  1.01706829e-10],
 	       [-3.68061026e-09,  1.01706829e-10,  7.66086674e-04]])
 	else:
 
-
-		# central_wpf = 1.6321262995790887e-06
-		# central_llf = 1.1584399852081886e-07
-		# central_wpf_sigma = 2.3e-07
-		# central_llf_sigma = 5.9e-08
-
-		# cov = np.array([[ 5.16310381e-14, -6.14010167e-16], [-6.14010167e-16,  3.47444174e-15]])
-
-		# next 5k iterations (last 800 iter avg)
-
-		# central_wpf = 1.7284668037515452e-06
-		# central_llf = 1.2174787315012357e-07
-		# central_wpf_sigma = 2.7e-07
-		# central_llf_sigma = 6.8e-08
-
-		# cov = np.array([[7.10691349e-14, 1.97960231e-15],[1.97960231e-15, 4.63158306e-15]])
-
-		# parameters from last 5k iterations (sigma and cov calculated using all last 5k iterations)
-		# these should be the final ones used
 		central_wpf = 1.7284668037515452e-06
 		central_llf = 1.2174787315012357e-07
 		central_wpf_sigma = 2.6e-07
@@ -108,19 +78,16 @@ elif OIB_STATUS == 'averaged':
 		cov = np.array([[6.84908674e-14, 1.86872558e-16],[1.86872558e-16, 4.39607346e-15]])
 
 
-
+# extra string for filename formatting
 EXTRA_FMT = '40_years_final_5k'
 # EXTRA_FMT = 'final_5k_2018_2019'
 if USE_IC:
 	EXTRA_FMT += 'with_ic_loglike'
 
-
-# make this directory if it doesn't exist
-
 # generate random distributions
 
-# number of iterations/points to generate
-N = 100# going for 100 total initially
+# number of iterations/ensemble members to generate
+N = 100
 
 
 if USE_COV:
@@ -149,6 +116,7 @@ else:
 	llf_vals = np.random.normal(central_llf,central_llf_sigma,N)
 
 
+# directory where files are saved: may need creation if it does not exist
 model_save_path = '/users/jk/20/acabaj/nesosim_uncert_output_oib_{}{}/'.format(OIB_STATUS, EXTRA_FMT)
 
 
@@ -158,8 +126,8 @@ yearE=2020
 # these start and end variables are for loading data; load the whole year
 month1 = 0
 day1 = 0
-month2 = 11 #is this the indexing used?, ie would this be december
-day2 = 30 # would this be the 31st? I think so
+month2 = 11 
+day2 = 30 
 
 # these are for starting the actual model itself
 day_start = 1 # first day; gets subtracted later for day1
@@ -177,8 +145,7 @@ dx = 100000 # for log-likelihood
 
 
 # load forcings for nesosim
-# will this work with the large amount of data used here?
-# this would be about 5 gb into ram; comment out and use default
+# for 1980-2020 this would be ~5 gb loaded into ram; comment out and use default
 # model config if this is too much
 forcing_io_path=forcing_save_path+dxStr+'/'
 print('loading input data')
@@ -189,13 +156,7 @@ print('finished loading input')
 # run the model
 
 print('running {} iterations starting at year {}'.format(N, yearS))
-# do a year with coincident ICESat-2 data (later); 
-# for now just go with calibration year
 
-
-# if I do this for 5 years instead of just one...
-# this part of the process is quite fast thankfully
-# but the main model part is slow
 for i in range(N):
 
 	print('iteration ',i)
@@ -233,12 +194,11 @@ for i in range(N):
 
 		# Get time period info
 		_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
-		#totalOutStr=''+folderStr+'-'+dateOut
 
-		# run nesosim (not sure if all the additional variables are needed)
+
+		# run NESOSIM
 
 		# save the data; run saveData=1
-		# lotsa things hardcoded here but this'll do for now
 		budgets = NESOSIM.main(year1=year1, month1=month1, day1=day1, year2=year1+1, month2=month2, day2=day2,
 	    outPathT=model_save_path, 
 	    forcingPathT=forcing_save_path, 

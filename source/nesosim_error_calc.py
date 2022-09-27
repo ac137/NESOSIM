@@ -1,5 +1,11 @@
-# calculate error from output produced by nesosim_error_run.py
-# i.e. from ensemble of nesosim runs, get uncertainty
+# Calculate error statistics from output produced by nesosim_error_run.py;
+# i.e. given an ensemble of NESOSIM runs, calculate the mean and standard 
+# deviation. Produces an estimate of model uncertainty due to parameter
+# uncertainty.
+
+# Note: intput/output file paths are hardcoded; adjust as necessary
+
+# by Alex Cabaj; using output from NESOSIM (A. Petty)
 
 
 import numpy as np
@@ -14,51 +20,21 @@ years_list = np.arange(1988,2020)
 for current_year in years_list:
 	print(current_year)
 
-
-	# EXTRA_FMT = '_cov'
-
-	#EXTRA_FMT = 'final_5k'
-
-	# EXTRA_FMT = 'final_5k_2018_2019_cov'
-
+	# formatting string for filename
 	EXTRA_FMT = '40_years_final_5k_cov'
 
-	#EXTRA_FMT = 'final_5k_cov'
-	#nesosim_uncert_output_oib_averagedfinal_5k_fixedwith_ic_loglike_cov
-
-	# EXTRA_FMT = 'final_5k_fixedwith_ic_loglike_cov'
-
+	# Select whether to use the OIB-clim ("averaged") or daily-gridded ("detailed")
+	# configuration
 	OIB_STATUS = 'detailed'
 	# OIB_STATUS = 'averaged'
 
-	#model_save_path = '/users/jk/19/acabaj/nesosim_uncert_output_oib_{}/100km/'.format(OIB_STATUS)
-
-	# typical file format: /users/jk/19/acabaj/nesosim_uncert_output_oib_detailed/100km/ERA5CSscaledsfERA5windsOSISAFdriftsCDRsicrhovariable_IC2_DYN1_WP1_LL1_AL1_WPF2.2673462045700356e-06_WPT5_LLF4.567476109493221e-07-100kmv11mcmc/final
-
-	#dir_list = os.listdir(model_save_path)
-
-	# load data
-
-	# collect into list because there's 
-
-	#final_data = []
-
-	# can use xr open_mfdataset with concat_dim
-	# if I need to number them, can refer to this:
-	# https://stackoverflow.com/questions/42574705/specify-concat-dim-for-xarray-open-mfdataset
-
-	# model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}_final/100km/ERA*/final/*.nc'.format(OIB_STATUS),combine='nested',concat_dim='iteration_number')
-
-	# filename final/NESOSIMv11_01091992-30041993.nc
-	# model_data = xr.open_mfdataset('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/100km/ERA*/final/*.nc'.format(OIB_STATUS,EXTRA_FMT),combine='nested',concat_dim='iteration_number')
-
+	# load all ensemble data simultaneously; create additional dimension based 
+	# on iteration number
 	model_data = xr.open_mfdataset('/users/jk/20/acabaj/nesosim_uncert_output_oib_{}{}/100km/ERA*/final/NESOSIMv11_0109{}-3004{}.nc'.format(OIB_STATUS,EXTRA_FMT,current_year,current_year+1),combine='nested',concat_dim='iteration_number')
 
 
-	# calculate mean and uncertainty of snow depth and density
+	# calculate mean and standard deviation of snow depth and density
 
-
-	# print(model_data)
 
 	print('calculating mean')
 	with ProgressBar():
@@ -70,7 +46,7 @@ for current_year in years_list:
 		uncert_vals = model_data.std(dim='iteration_number').compute()
 	# print(uncert_vals)
 
-	n_iter = 100
+	n_iter = 100 # number of iterations, actually only needed for file name
 
 	print('saving data for {}', current_year)
 	mean_vals.to_netcdf('/users/jk/19/acabaj/nesosim_uncert_output_oib_{}{}/{}{}mean_{}_iter_final_{}.nc'.format(OIB_STATUS,EXTRA_FMT, OIB_STATUS, EXTRA_FMT,n_iter, current_year))
