@@ -52,7 +52,7 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 10# start small for testing
+ITER_MAX = 100# start small for testing
 #ITER_MAX = 3
 UNCERT = 5 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values

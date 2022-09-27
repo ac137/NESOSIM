@@ -9,7 +9,7 @@ import os
 from dask.diagnostics import ProgressBar
 
 
-years_list = np.arange(1980,2020)
+years_list = np.arange(1988,2020)
 
 for current_year in years_list:
 	print(current_year)
@@ -21,7 +21,7 @@ for current_year in years_list:
 
 	# EXTRA_FMT = 'final_5k_2018_2019_cov'
 
-	EXTRA_FMT = '40_years_final_5k'
+	EXTRA_FMT = '40_years_final_5k_cov'
 
 	#EXTRA_FMT = 'final_5k_cov'
 	#nesosim_uncert_output_oib_averagedfinal_5k_fixedwith_ic_loglike_cov

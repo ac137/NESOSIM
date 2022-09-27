@@ -561,7 +561,7 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 # default llf 2.9e-7 ? different default for multiseason
 
 ITER_MAX = 10000# start small for testing
-ITER_MAX = 5
+#ITER_MAX = 5
 UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
 
@@ -575,6 +575,7 @@ LOGLIKE_WEIGHT = 1 # this isn't being used for now
 
 
 # if true, use OIB climatology; 'averaged oib'
+# if false use daily OIB; 'detailed oib'
 CLIM_OIB = True
 
 
@@ -589,6 +590,8 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
+
+# 3-parameter mcmc including stations and buoys (default weight w=1)
 DENS_STR += '_3par_ic_station_buoy_oib_averaged_defaultweights'
 
 # try over both wpf and lead loss, now

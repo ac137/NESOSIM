@@ -456,7 +456,7 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 # default wpf 5.8e-7
 # default llf 2.9e-7 ? different default for multiseason
 
-ITER_MAX = 1000# start small for testing
+ITER_MAX = 5000# start small for testing
 #ITER_MAX = 3
 UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 # par_vals = [1., 1.] #initial parameter values
@@ -466,7 +466,8 @@ UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
 
 # step size determined based on param uncertainty (one per parameter)
 
-OPT_PAR_NAME = 'wpf'
+#OPT_PAR_NAME = 'wpf'
+OPT_PAR_NAME = 'llf'
 
 if USE_DENS:
 	DENS_STR = '_density'
@@ -662,7 +663,7 @@ for i in range(ITER_MAX):
 			rejected_stats.append(stats)
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
-	if i%100 == 0 and i > 0:
+	if i%1000 == 0 and i > 0:
 		# save output every 1k iterations just in case
 		print('Writing output for {} iterations...'.format(i))
 		# use ITER_MAX to overwrite here, i to create separate files (more disk space but safer)

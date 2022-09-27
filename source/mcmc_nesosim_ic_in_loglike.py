@@ -640,8 +640,8 @@ LOGLIKE_WEIGHT = 1 # this isn't being used for now
 
 # if true, use OIB climatology; 'averaged oib'
 # be sure to also change DENS_STR to match
-CLIM_OIB = True
-#CLIM_OIB = False
+#CLIM_OIB = True
+CLIM_OIB = False
 
 
 if USE_DENS:
@@ -655,8 +655,8 @@ else:
 # for density clim loglike
 # using half-weighting (cf loglike file) so change filename
 # DENS_STR+= '_w0.05'
-DENS_STR += '_3par_fixed_ic_station_buoy_oib_averaged_defaultweights'
-#DENS_STR += '_3par_fixed_ic_station_buoy_oib_detailed_defaultweights'
+#DENS_STR += '_3par_fixed_ic_station_buoy_oib_averaged_defaultweights'
+DENS_STR += '_3par_fixed_ic_station_buoy_oib_detailed_defaultweights'
 
 
 # try over both wpf and lead loss, now
