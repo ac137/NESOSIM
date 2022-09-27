@@ -24,13 +24,7 @@ import NESOSIM
 USE_DENS = False
 USE_DENS_CLIM = False
 
-# # is this sort of control flow for import statements reasonable? hopefully
-# if USE_DENS:
-# 	import nesosim_OIB_loglike_dens as loglike
-# elif USE_DENS_CLIM:
-# 	import nesosim_oib_loglike_dens_clim_io as loglike
-# else:
-# 	import nesosim_OIB_loglike as loglike
+
 
 def get_grids(dx):
 	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
@@ -130,46 +124,16 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 	# this is now indexable by day
 	snowData = np.ma.masked_where(iceConc<0.15, snowData)
 
-	# lonG, latG, xptsG, yptsG, nx, ny = cF.getGrid(, dx)
-	# xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 
-
-	# dxStr=str(int(dx/1000))+'km'
-	# # region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
-	# anc_data_pathT = '../anc_data/'
 	forcingPath = forcing_save_path
 
-	# region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
-	# region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
-
-	# folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
-	# days_list = os.listdir(folderPath)
 
 	days_list = oib_dict[yearT]['days']
 	oib_list = oib_dict[yearT]['OIB']
 	
 	for i, day_val in enumerate(days_list):
 
-#		print('File:', file_day)
-# 		day_val = (pd.to_datetime(file_day[:8])-date_start).days
-
-# 		try:
-# 			# print(os.path.join(folderPath,file_day))
-# 			snowDepthOIB=np.load(os.path.join(folderPath,file_day),allow_pickle=True)
-# 			# transpose (when using old OIB files)
-# 			# don't need transpose for new oib files (median); commenting out
-# 		#	snowDepthOIB = snowDepthOIB.T
-
-# 		except:
-# 			continue
-
-# #		print('Num points in day:', np.size(snowDepthOIB))
-# 		if (np.size(snowDepthOIB)==0):
-# 			#nodata
-# 			continue
-		# if (day_val>259):
-		# 	#beyond May 1st
-		# 	continue
+#		
 		snowDepthOIB = oib_list[i]
 
 		# snow depth from NESOSIM output (budget); select single day
@@ -192,20 +156,17 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 		# maskDay[where(np.isnan(diff_val_day))]=1
 
 		# where difference is greater than 10 cm
-		# maskDay[where(diff_val_day>0.1)]=1
+
 		maskDay[np.where(np.isnan(snowDepthOIB))]=1
-		# maskDay[where(np.isnan(snowDepthOIB))]
+
 		maskDay[np.where(snowDepthOIB<=0.04)]=1
 		# get rid of masking based on nesosim output; varies per params and affects mcmc optimization
-#		maskDay[np.where(snowDepthM<=0.04)]=1
 
 		maskDay[np.where(snowDepthOIB>0.8)]=1
-#		maskDay[np.where(snowDepthM>0.8)]=1
-
 		maskDay[np.where(region_maskG>8.2)]=1
 
 		# apply mask (once calculated)
-		# does this masking mask everything to OIB? -> double-check
+
 		snowDepthMM= snowDepthM[maskDay<1]
 		xptsGM= xptsG[maskDay<1]
 		yptsGM= yptsG[maskDay<1]
@@ -219,8 +180,6 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 
 	return snowOIBMall, snowDepthMMall
 
-# def get_density_clim():
-# 	# calculate density climatology month by month
 
 def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, uncert_depth, uncert_dens, weight_dens=1):
 	'''log likelihood for normal distribution
@@ -300,10 +259,6 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		ICF = params[0]
 
 
-	# windPackFactorT, leadLossFactorT = params
-	# folderStr=precipVar+CSstr+'sf'+windVar+'winds'+driftVar+'drifts'+concVar+'sic'+'rho'+densityTypeT+'_IC'+str(IC)+'_DYN'+str(dynamicsInc)+'_WP'+str(windpackInc)+'_LL'+str(leadlossInc)+'_AL'+str(atmlossInc)+'_WPF'+str(windPackFactorT)+'_WPT'+str(windPackThreshT)+'_LLF'+str(leadLossFactorT)+'-'+dxStr+extraStr+outStr
-
-	# run the model here maybe? and then grab the values somehow...
 	startYear=2010
 	endYear=2015
 	numYears=endYear-startYear+1
@@ -313,9 +268,6 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	snowDepthMMAll=[]
 	densMMAll = []
 
-	# if I do this for 5 years instead of just one...
-	# this part of the process is quite fast thankfully
-	# but the main model part is slow
 	for year1 in range(startYear, endYear):
 		month1=month_start-1 # 8=September
 		day1=day_start-1
@@ -327,13 +279,10 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
 
 
-		# Get time period info
 		_, _, _, dateOut=cF.getDays(year1, month1, day1, year2, month2, day2)
 		#totalOutStr=''+folderStr+'-'+dateOut
 
-		# run nesosim (not sure if all the additional variables are needed)
 
-		# lotsa things hardcoded here but this'll do for now
 		budgets = NESOSIM.main(year1=year1, month1=month1, day1=day1, year2=year1+1, month2=month2, day2=day2,
 	    outPathT=model_save_path, 
 	    forcingPathT=forcing_save_path, 
@@ -345,9 +294,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcings, ICfactor=ICF)
 
 
-		# get depth by year for given product & density
-		# note: snowdepthoibyr/snowdepthmmyr should just be 1-d arrays with
-		# only the valid values at this point, not 2d arrays with nan
+
 		snowDepthOIByr, snowDepthMMyr = get_OIB_and_mask(dx, year2, budgets, date_start, region_maskG, xptsG, yptsG, oib_dict)
 		
 		dens_monthly_mean = calc_dens_monthly_means(budgets, date_start)
@@ -355,11 +302,6 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		snowDepthOIBAll.extend(snowDepthOIByr)
 		snowDepthMMAll.extend(snowDepthMMyr)
 		densMMAll.append(dens_monthly_mean)
-
-
-
-	# collect density obs as well
-
 
 
 	# calculate the log-likelihood
@@ -440,10 +382,6 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 
 
 
-# variables for log-like
-
-# load station density climatologies
-# mind your units; multiply by 1000 to convert from g/cm^3 to kg/m^3
 
 station_dens_clim = pd.read_hdf('drifting_station_monthly_clim.h5',key='clim')['Mean Density']*1000
 station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Mean Density']*1000
@@ -453,22 +391,20 @@ station_dens_std = pd.read_hdf('drifting_station_monthly_clim.h5',key='std')['Me
 # seed for testing
 #np.random.seed(42)
 
-# default wpf 5.8e-7
-# default llf 2.9e-7 ? different default for multiseason
 
 ITER_MAX = 5000# start small for testing
-#ITER_MAX = 3
 UNCERT = 10 # obs uncertainty for log-likelihood (also can be used to tune)
-# par_vals = [1., 1.] #initial parameter values
-
-# PAR_SIGMA = [1, 1, 0.1] # standard deviation for parameter distribution; can be separate per param
-# should be multiplied by 1e-7, but can do that after calculating distribution
 
 # step size determined based on param uncertainty (one per parameter)
+
+
+# parameter to be optimized: 'wpf' for wind packing, 
+# 'llf' for blowing snow factor
 
 #OPT_PAR_NAME = 'wpf'
 OPT_PAR_NAME = 'llf'
 
+# density climatology specifications
 if USE_DENS:
 	DENS_STR = '_density'
 elif USE_DENS_CLIM:
@@ -478,24 +414,8 @@ else:
 
 
 
-
-# weighting is now specified by passing argument to loglike main
-# for density clim loglike
-# using half-weighting (cf loglike file) so change filename
-# DENS_STR+= '_w0.05'
 DENS_STR += '_1par_{}'.format(OPT_PAR_NAME)
 
-# try over both wpf and lead loss, now
-# order here is [wpf, llf]
-#par_vals = np.array([5.8e-7, 2.9e-7])
-#par_vals = np.array([5.8e-7, 1.45e-7, 5.])
-# par_vals = np.array([5.8e-7, 2.9e-7, 5.])
-#continue from previous mcmc with last accepted value
-# par_vals = np.array([4.12616198947269e-06, 8.416761649739341e-07, 0.19611063365133324])
-# par_vals = np.array([6.220783261481277e-06, 1.2792313785323853e-06, 0.1546572899704643])
-
-# wpf, llf, icf (initial condition factor, default is 1)
-# par_vals = np.array([5.8e-7, 2.9e-7, 1.])
 
 if OPT_PAR_NAME == 'icf':
 
@@ -517,8 +437,6 @@ PARS_INIT = par_vals.copy()
 
 
 
-
-
 metadata_headings = ['N_iter','uncert','prior_p1','sigma_p1','oib_prod']
 metadata_values = [[ITER_MAX, UNCERT, par_vals[0],PAR_SIGMA[0], 'MEDIAN']]
 meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
@@ -534,8 +452,8 @@ yearE=2015
 # these start and end variables are for loading data; load the whole year
 month1 = 0
 day1 = 0
-month2 = 11 #is this the indexing used?, ie would this be december
-day2 = 30 # would this be the 31st? I think so
+month2 = 11
+day2 = 30 
 
 # model parameters for input
 precipVar='ERA5'
@@ -553,15 +471,13 @@ region_maskG, xptsG, yptsG = get_grids(dx)
 
 
 # vars for log-likelihood; day and month start for nesosim
-# n.b. loglike references some global vars and his hardcoded
-# maybe re-work later
-# also hardcoded into oib preload, oops
+# n.b. loglike references some global vars are hardcoded
+# also hardcoded into oib preload
 day_start = 1
 month_start = 9
 
 
 # preload oib data
-
 oib_dict = preload_oib(dxStr, yearS, yearE)
 
 forcing_io_path=forcing_save_path+dxStr+'/'
@@ -575,52 +491,41 @@ print('finished loading input')
 
 # pass nesosim input to log-likelihood
 
-
-
 print('calculating initial log-likelihood')
 p0, stats_0 = loglike(par_vals, UNCERT, forcing_dict) # initial likelihood function
 print ('initial setup: params {}, log-likelihood: {}'.format(par_vals, p0))
 print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
 
-par_list = [par_vals] # now an nxm list (m = # of pars)
+par_list = [par_vals] # now an n*m list (m = # of pars)
 loglike_list = [p0]
 stats_list = [stats_0] # collect rmse and r also, etc.
-#var_cond_list=[]
-#diff_list=[]
 rejected_pars = []
 rejected_lls = []
 rejected_stats = []
 
+# metropolis mcmc
 
-# first just try metropolis (don't reject proposed values of params)
+# pre-calculate all the MCMC steps from the prior
+# (since the step isn't adaptive, this can be done all at once)
+# not inputting 1e-7 as values since np.random.normal has difficulty with very
+# large/small values. instead can scale afterwards
+step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))
 
-# steps to take
-# np.randon.normal(mean, sigma, shape); sigma can be an array
-
-# maybe change this later to not pre-calculate steps so that
-# this doesn't take up space in memory
-step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))#*1e-7
-
-# scale to appropriate value if applicable
+# scale to appropriate value if applicable (don't do this for ICF)
 if OPT_PAR_NAME == 'wpf' or OPT_PAR_NAME == 'llf':
 	step_vals *= 1e-7
 
 
-
-# reshape this if the number of params changes
-# reject any new parameter less than 0
-
-
-# open files to store parameters
+# for calculating acceptance rate; may not actually be needed but leaving for now
 acceptance_count = 0
 
 for i in range(ITER_MAX):
 	print('iterating')
-	# random perturbation to step; adjust choice here
+	# select step size corresponding to iteration number (from pre-generated values)
 	rand_val = step_vals[i]
 
-	# adjust parameters (not checking param distribution for now)
+	# update parameters
 	par_new = par_vals + rand_val
 
 	print('new parameter ', par_new)
@@ -628,30 +533,24 @@ for i in range(ITER_MAX):
 	# if any of the parameters are less than zero, don't step there;
 	# conversely, if none of the parameters are less than zero, proceed
 
-	# to check param distribution, check the difference of par_new and par_vals
-	# not doing this for now
 
 	if (par_new < 0).any() == False:
 		print('calculating new log-likelihood')
 		# calculate new log-likelihood
 		p, stats = loglike(par_new, UNCERT, forcing_dict)
 
-		# accept/reject; double-check this with mcmc code
+		# accept/reject
 		# in log space, p/q becomes p - q, so check difference here
 		# checking with respect to uniform distribution
 		var_cond = np.log(np.random.rand())
-#		var_cond_list.append(var_cond)
-#		diff = p-p0
-#		diff_list.append(diff)
+
 		if p-p0 > var_cond:
 			# accept value
 			print('accepted value')
 			acceptance_count += 1
-#			print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
 			par_vals = par_new
 			p0 = p
-			# append to list/ possibly save these to disk so that interrupting the
-			# process doesn't lose all the info?
+
 			print('parameters ', par_vals)
 			par_list.append(par_vals)
 			loglike_list.append(p0)

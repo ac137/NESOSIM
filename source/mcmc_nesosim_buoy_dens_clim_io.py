@@ -1,7 +1,5 @@
 # i/o optimized nesosim mcmc script (n-pars) with log-likelihood
-# in same script (avoid some import overhread?)
-# or would this be less efficient since it's not compiled? 
-# can try and check
+# in same script
 
 
 import numpy as np
@@ -24,6 +22,7 @@ USE_DENS_CLIM = True
 
 
 def get_grids(dx):
+	'''get grid coordinates/mask for NESOSIM'''
 	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 
 
@@ -103,7 +102,7 @@ def preload_oib(dxStr, startYear, endYear):
 
 
 
-def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yptsG, oib_dict):#, days_ds, diff_ds):
+def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yptsG, oib_dict):
 	"""Grid all the OIB data and correlate"""
 
 	# rewrite this to load the OIB data only once?
@@ -121,20 +120,9 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 	# this is now indexable by day
 	snowData = np.ma.masked_where(iceConc<0.15, snowData)
 
-	# lonG, latG, xptsG, yptsG, nx, ny = cF.getGrid(, dx)
-	# xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
-
-
-	# dxStr=str(int(dx/1000))+'km'
-	# # region_maskG=load(forcingPath+'/Grid/regionMaskG'+dxStr)
-	# anc_data_pathT = '../anc_data/'
 	forcingPath = forcing_save_path
 
-	# region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
-	# region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
-	# folderPath=forcingPath+'/OIB/{}binned/{}/MEDIAN/'.format(dxStr,yearT)
-	# days_list = os.listdir(folderPath)
 
 	days_list = oib_dict[yearT]['days']
 	oib_list = oib_dict[yearT]['OIB']
@@ -173,8 +161,6 @@ def get_OIB_and_mask(dx, yearT, depthBudget, date_start, region_maskG, xptsG, yp
 
 	return snowOIBMall, snowDepthMMall
 
-# def get_density_clim():
-# 	# calculate density climatology month by month
 
 def calc_loglike(model_depth, obs_depth, model_dens, obs_dens, model_depth_clim, obs_depth_clim, uncert_depth, uncert_dens, uncert_depth_clim, weight_dens=1, weight_depth=1):
 	'''log likelihood for normal distribution
@@ -219,16 +205,10 @@ def calc_depth_monthly_means(depthBudget, date_start):
 	'''
 	iceConc = np.array(depthBudget['iceConc'])
 	depth = (depthBudget['snowDepth'][:, 0] + depthBudget['snowDepth'][:, 1])/iceConc
-	#print(depth)
-#	depth = depth.where(iceConc<0.15)
-	#print(depth['snowDepth'])
+	
 	depth_vals = np.ma.masked_where(iceConc<0.15, depth)
 	depth.values = depth_vals
-#	depth = depth.where(~np.isinf(depth.values))
-#	depth.where(np.isinf(depth.values))=np.nan
-#	depth[np.isinf(depth.values)]=np.nan
-	#print(depth)
-#	depth.values = 
+
 	# create date range
 	dates = pd.date_range(start=date_start,periods=depth.shape[0])
 	# assign as index to depth
