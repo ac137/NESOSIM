@@ -1,9 +1,8 @@
-# i/o optimized nesosim mcmc script (1-par) with log-likelihood
-# in same script (avoid some import overhread?)
-# or would this be less efficient since it's not compiled? 
-# can try and check
+# Script to run single-parameter Metropolis MCMC optimization for NESOSIM.
 
-# mcmc varying initial conditions, wpf, and llf
+# Written by Alex Cabaj (2022), includes code originally written by Alek Petty. 
+# NESOSIM was originally developed by Alek Petty and is available at
+# https://github.com/akpetty/NESOSIM
 
 import numpy as np
 import numpy.ma as ma
@@ -465,14 +464,14 @@ extraStr='v11'
 dx = 100000 # for log-likelihood
 
 
-# get grids (hardcoded variables for now I guess)
+# get grid coordinates, mask for NESOSIM
 
 region_maskG, xptsG, yptsG = get_grids(dx)
 
 
 # vars for log-likelihood; day and month start for nesosim
-# n.b. loglike references some global vars are hardcoded
-# also hardcoded into oib preload
+# n.b. loglike() references some global variables which are hardcoded
+# also hardcoded into preload_oib() function
 day_start = 1
 month_start = 9
 
@@ -530,9 +529,9 @@ for i in range(ITER_MAX):
 
 	print('new parameter ', par_new)
 
+	# acceptance step;
 	# if any of the parameters are less than zero, don't step there;
 	# conversely, if none of the parameters are less than zero, proceed
-
 
 	if (par_new < 0).any() == False:
 		print('calculating new log-likelihood')

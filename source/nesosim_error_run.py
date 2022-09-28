@@ -3,8 +3,9 @@
 # from those distributions and run NESOSIM n times. Model uncertainty due to
 # parameter uncertainty can then be calculated using nesosim_error_calc.py
 
-# by Alex Cabaj; adapted from code by Alek Petty
-
+# by Alex Cabaj; adapted from code by Alek Petty.
+# NESOSIM was originally developed by Alek Petty and is available at
+# https://github.com/akpetty/NESOSIM
 
 import numpy as np
 import numpy.ma as ma
@@ -28,6 +29,8 @@ WAT = 5 # wind action threshold; default value
 
 # generate arrays of uncertainty 
 
+# note: values are sample values and may not have been used in the publication
+
 # Select whether to use the OIB-clim ("averaged") or daily-gridded ("detailed")
 # configuration
 
@@ -48,7 +51,7 @@ if OIB_STATUS == 'detailed':
 	central_llf_sigma = 4.9e-08
 	# full covariance
 
-	# covariance matrix, as used in publication
+	# covariance matrix
 	cov = np.array([[9.67094599e-14, 1.37744084e-14], [1.37744084e-14, 2.81528717e-15]])
 
 elif OIB_STATUS == 'averaged':

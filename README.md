@@ -121,4 +121,14 @@ Cheers!
 Alek
 
 
+### MCMC optimization (Alex Cabaj et al, 2022)
 
+A few additional files were added to enable model parameter calibration to observations using a Markov Chain Monte Carlo Method. 
+
+mcmc_nesosim_buoy_dens_clim_io.py implements a 2-parameter MCMC calibration with observational constraints from Operation IceBridge snow depth, historical Soviet drifting station snow density, and additional snow depth measurements form CRREL-Dartmouth snow buoys. Outputs an HDF5 file containing accepted and rejected values of parameters, along with some statistics. (Will overwrite existing files unless file output paths are changed.)
+
+mcmc_nesosim_1par_ic_io.py implements the single-parameter version of this calibration, for reference.
+
+io_helpers.py is a script enabling the loading of multiple input files to memory to enable repeated runs of NESOSIM in the MCMC calibration without needing to re-read the same files from disk each time.
+
+NESOSIM.py and utils.py have been slightly modified to work with the MCMC calibration (mainly file I/O).

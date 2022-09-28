@@ -14,6 +14,7 @@
 		03/01/2018: Version 1
 		05/10/2020: Version 1.1: Converted to Python 3
 								Changed name to utils.py
+		Sept. 2022: Added some helper functions for MCMC optimization (Alex Cabaj)
 
 """
 

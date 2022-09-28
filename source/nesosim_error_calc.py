@@ -5,8 +5,9 @@
 
 # Note: intput/output file paths are hardcoded; adjust as necessary
 
-# by Alex Cabaj; using output from NESOSIM (A. Petty)
-
+# by Alex Cabaj; using output from NESOSIM.
+# NESOSIM was originally developed by Alek Petty and is available at
+# https://github.com/akpetty/NESOSIM
 
 import numpy as np
 import pandas as pd

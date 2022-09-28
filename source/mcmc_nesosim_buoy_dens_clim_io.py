@@ -1,5 +1,11 @@
-# i/o optimized nesosim mcmc script (n-pars) with log-likelihood
-# in same script
+# Script to run Metropolis MCMC optimization of wind packing and blowing snow
+# parameters for NESOSIM, with observational constraints from Operation 
+# IceBridge snow depth, Soviet drifting station historical snow density,
+# and CRREL-Dartmouth snow buoy depth measurements. 
+
+# Written by Alex Cabaj (2022), includes code originally written by Alek Petty. 
+# NESOSIM was originally developed by Alek Petty and is available at
+# https://github.com/akpetty/NESOSIM
 
 
 import numpy as np
@@ -15,8 +21,9 @@ from config import forcing_save_path,figure_path,oib_data_path,model_save_path
 import NESOSIM
 
 
-# use density in mcmc constraints; this just impacts the file name currently
-# need to manually adjust calc_loglike
+# use density in mcmc constraints; this just impacts the file name currently.
+# need to manually adjust calc_loglike to include/exclude constraints in
+# log-likelihood function
 USE_DENS = False
 USE_DENS_CLIM = True
 

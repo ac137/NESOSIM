@@ -1,33 +1,12 @@
+# io_helpers.py: functions for loading NESOSIM input into memory to enable
+# more efficient running of NESOSIM-MCMC calibration
+# by Alex Cabaj, includes code adapted from NESOSIM by Alek Petty
+
 import numpy as np
 import numpy.ma as ma
 
 import xarray as xr
 import datetime
-# import utils as cF - currently broken on my laptop for some reason
-# from NESOSIM import loadData
-
-# don't import this file when running the model because that'll probably lead to 
-# some circular imports
-
-# 
-
-
-#ISSUES: years being iterated over; really should just iterate over years instead of 
-# iterating over "NESOSIM days" beause that'll 
-# throw the year dictionary indexing off
-# i.e. loadData expects to see data sorted by calendar years, not by seasons
-
-# fix this later
-
-#TODO: 
-# - better function names
-# - testing
-# - incorporate this into the main model
-# - check for data being None to give exit condition (normally checked by loadData but this isn't being done now)
-# - check leap year compliance?
-
-
-
 
 
 def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
@@ -107,16 +86,6 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr,
 		driftGdayG = ma.filled(driftGdayG, np.nan)
 	#print(driftGdayG)
 
-	#------- Read in temps (not currently used, placeholder) -----------
-	# try:
-	# 	tempDayG=np.load(forcingPath+'Temp/'+precipVar+'/t2m/'+str(yearT)+'/t2m'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
-	# except:
-	# 	# if no drifts exist for that day then just set drifts to masked array (i.e. no drift).
-	# 	#print('No temp data')
-	# 	tempDayG = np.empty((iceConcDayG.shape[0], iceConcDayG.shape[1]))
-	# 	tempDayG[:] = np.nan
-	# 	#tempDayG=ma.masked_all((iceConcDayG.shape[0], iceConcDayG.shape[1]))
-	
 	return iceConcDayG, precipDayG, driftGdayG, windDayG
 
 
@@ -147,40 +116,27 @@ def getDays(year1, month1, day1, year2, month2, day2):
 	return startDayT, numDaysT, numDaysYear1, date1Str+'-'+date2Str
 
 
-# would technically be faster to traverse by dataset rather than by day but
-# I'll just go with this for now
+# would technically be faster to traverse by dataset rather than by day, but
+# this will suffice for now
 
 def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
-	# load a single year into memory
-
-	# is year2 needed here?
+	''' load a single year of NESOSIM input data into memory '''
 
 	startDay, numDays, numDaysYear1, dateOut= getDays(year1, month1, day1, year2, month2, day2)
 	
-	# iterate over days
+	# variables to store values
 
 	iceConcY, precipY, driftGY, windY, days = [],[],[],[],[]
 
-	# array of days
-#	days = np.arange(numDays-1)+startDay
-	currentYears = [] # store current year just in case
+	currentYears = [] # store current year 
 	yearCurrent=year1
 
 	for x in range(numDays):	
 		day = x+startDay
-		
-		# if (day>=numDaysYear1):
-		# 	# If day goes beyond the number of days in initial year, jump to the next year
-		# 	day=day-numDaysYear1
-		# 	yearCurrent=year2
 
 		currentYears.append(yearCurrent)
 
 		# load single day of data
-		# loadData can still do the heavy lifting with filenames
-
-		# need some sort of try/except if there's no data because otherwise it exits
-		# I guess I need to write my own load daily data function
 		iceConcDayG, precipDayG, driftGdayG, windDayG =loadDay(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 
 		# add values to array
@@ -188,20 +144,17 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 		precipY.append(precipDayG)
 		driftGY.append(driftGdayG)
 		windY.append(windDayG)
-		# days are off by 1 for some reason?
 		days.append(day)
 
 	return np.array(days), currentYears, iceConcY, precipY, driftGY, windY
 
 
 def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
-	
-	year_dict = {} # do a nested dict
+	'''Construct a dictionary of data from multiple years'''
+	year_dict = {} # make a nested dictionary by year
 
 	for y in range(yearS,yearE+1):
-		# year_list.append(y)
 		days, currentYears, iceConcY, precipY, driftGY, windY = load_year_into_memory(y, month1, day1, y, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
-		# there might be a cleaner way but this'll do for now
 		d = {}
 		d['days']=days 
 		d['current_years']=currentYears
@@ -210,95 +163,41 @@ def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, win
 		d['drift']=driftGY
 		d['wind']=windY
 
+		# add the sub-dictionary for the given year to the main dictionary
 		year_dict[y] = d
-		# double-check that this doesn't do something weird with the assignment in the next loop
 
 	return year_dict
 
 
 
-# load_multiple_years could still work okay if we start from January 1st and end on December 31st
-
-# yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr
-
-
-# what do the vars mean: 
-# preipVar is eg. 'ERA5'
-# windVar is eg. 'ERA5'
-# concVar is eg. 'CDR'
-# driftVar is eg. 'OSISAF'
-# dxStr is eg. '100km'
-# extrastr is eg. 'v2'
-
-
-
-
-# call with the function and store in variables
-# data_years = load_multiple_years()
-# then afterward call read_data_from_memory
-
+# ended up copying the read_daily_data_from_memory function directly into
+# NESOSIM to avoid import conflicts
 def read_daily_data_from_memory(yearT, dayT, year_dict):
-	# presupposes data is loaded into dictionary year_dict
-	# where structure is:
-	# year
-	# -> variable
-	# ->-> data at index by day (of year, not model day)
-
-
-
-	# is yearT the start year? if it's the current year
-	# then that could cause complications
-	# alternative to loaddata
-	# expet data_years and data_dict_list; output from load_multiple_years
-	# (reads values loaded into memory)
-
-	# this'll reach for specific variables
-
-	# select single year and single day
-
-
-	# find index corresponding to corresponding day; should involve datestart
+	'''Read the daily data from memory. 
+	presupposes data is loaded into dictionary year_dict
+	where the structure (by layer) is:
+	year
+	-> 	variable
+	->	-> 	data at index by day (of year, not model day)
+	'''
 
 	# find index corresponding to year
 	current_data = year_dict[yearT]
-	# ideally you'd want this indexed by day
-
-	# find corresponding day index [double check that dayT corresponds to the
-	# day number and not the index, else this is redundant]
+	# find corresponding day index
 	day_idx = np.where(current_data['days']==dayT)[0][0]
 	print(day_idx)
-
+	# select data
 	iceConcDayG = current_data['iceConc'][day_idx]
 	precipDayG = current_data['precip'][day_idx]
 	driftGdayG = current_data['drift'][day_idx]
 	windDayG = current_data['wind'][day_idx]
-	tempDayG = None # hopefully nothing is expeting anything here!
-
-	# check if any of these are nonetypes? really wish we had case/switch statements
-
-
+	tempDayG = None # placeholder since temp is not needed currently
 
 	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 
 
-
-
-
-
-# test that loadDay works
-
-# vals = loadDay(year, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
-# print(vals)
-
-# passed; only caveat is that it may need additional suffixes etc.
-# depending on what the filenames are formatted as (eg. v11_1 or v11_n etc.)
-
-# test that loading a year works for a few months (valid and invalid days)
-
-
-
 if __name__ == '__main__':
-
+	# code for testing
 
 	year = 2019
 	day=0
@@ -321,15 +220,7 @@ if __name__ == '__main__':
 	month2 = 2
 	day2 = 2
 	year2 = 2019
-	# vals_year = load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
-
-	# print('done loading years')
-
-	# returns 	return days, currentYears, iceConcY, precipY, driftGY, windY
-
-	# print(vals_year[5])
-
-	# loading years seems to work! extra days just get turned into None
+	
 	yearS = 2018
 	yearE = 2019
 
@@ -339,7 +230,6 @@ if __name__ == '__main__':
 
 	print(multiyear_data[2018]['days'])
 
-	# seems to also work! just need to be careful with year1/year2
 
 	yearT = 2019
 	dayT = 3
@@ -349,17 +239,3 @@ if __name__ == '__main__':
 	# output: iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 	print(data[4])
 
-	# seems to all work well enough! 
-
-	# next step:
-	# alter nesosim to:
-	#	- accept the preloaded data as optional input in the main function
-	# 	- unpack the preloaded data properly
-	# alter mcmc scripts to to:
-	# 	- preload the data in the mcmc main function
-	# 	- pass the preloaded data to each iteration of the likelihood function
-
-	# other things to consider preloading:
-	# 	- initial conditions
-	# 	- cloudsat scaling
-	# 	- masks

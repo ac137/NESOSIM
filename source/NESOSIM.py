@@ -29,7 +29,7 @@
 		1st May 2020: Version 1.1 (updated for ICESat-2 processing, new domain using cartopy/pyproj, bug fixes)
 		1st October 2020: Version 1.1 (bug fixes, replace masked array with nan throughout, smoothed dynamics terms)
 		15th October 2020: Version 1.1 (new atmosphere-wind loss term, fix to transposed grids, clean up)
-
+		September 2022: Adapted for MCMC optimization by Alex Cabaj (minor changes to file I/O)
 """
 
 import numpy as np
@@ -461,34 +461,26 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 
 
 def read_daily_data_from_memory(yearT, dayT, year_dict):
-	''' alternative to loadData for preloaded data
+	''' Alternative to loadData for preloaded data for MCMC optimization.
+	Read the daily data into memory.
 	presupposes data is loaded into dictionary year_dict
 	where structure is:
 	year
-	-> variable
-	->-> data at index by day (of year, not model day)
+	-> 	variable
+	->	-> 	data at index by day (of year, not model day)
 	'''
 
 	# select the current year
 	current_data = year_dict[yearT]
-	#print(yearT)
-	#print(dayT)
 
 	# find corresponding day index for the given year
-#	print(len(current_data['days']))
-#	print(current_data['days'][-3:])
 	day_idx = np.where(current_data['days']==dayT)[0][0]
-	#print(day_idx)
 
 	iceConcDayG = current_data['iceConc'][day_idx]
 	precipDayG = current_data['precip'][day_idx]
 	driftGdayG = current_data['drift'][day_idx]
 	windDayG = current_data['wind'][day_idx]
-	tempDayG = None # hopefully nothing is expeting anything here!
-
-	# check if any of these are nonetypes? really wish we had case/switch statements
-
-
+	tempDayG = None # placeholder since temp is not used currently
 
 	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 
@@ -670,7 +662,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		
 		#-------- Load daily data
 
-		# check if using preloaded files or not
+		# check if using preloaded files (MCMC) or not
 		if forcingVals:
 			#print('using preloaded forcings')
 			#print(yearCurrent)
