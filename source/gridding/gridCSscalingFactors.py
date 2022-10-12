@@ -57,9 +57,9 @@ print(latG_centre.shape)
 nx,ny = latG.shape
 nxs,nys = latG_centre.shape
 
-REANs = ['ERAI','ERA5','MERRA_2']
-R_FN = ['EI','E5','M2']
-R_IDX = 1 # which reanalysis product to select
+REANs = ['ERAI','ERA5','MERRA_2','JRA55']
+R_FN = ['EI','E5','M2','J5']
+R_IDX = 3 # which reanalysis product to select
 
 # cloudsat scaling factors (as given in Cabaj et al 2020)
 cs = pd.read_csv('{}weights_{}.csv'.format(ancDataPath,R_FN[R_IDX]),index_col='time',comment='#')
