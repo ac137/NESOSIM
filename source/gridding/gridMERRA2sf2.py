@@ -36,14 +36,14 @@ def get_day_diff(day_wanted, day_start):
 # this will be different because merra-2 files 
 # are saved separately by day
 
-def calc_daily_means_m2_month(year, month, day):
+def calc_daily_means_m2_month(year, month):
 	# calculate daily mean; returns a data array
 	# m2 files look like 
 	# MERRA2_100.tavg1_2d_flx_Nx.19800101.SUB.nc
 	# but '100' increases with each decade;
 	# just use a catchall with mfdataset?
 
-	firstday,lastday = calendar.monthrange(year, month)
+	firstday,lastday = calendar.monthrange(year,int(month))
 	prefix = '/data/kushner_group/MERRA-2/sf/'
 	# may as well just grab the whole month
 	fname = prefix + 'MERRA2_*00.tavg1_2d_flx_Nx.{}{}*.SUB.nc'.format(year,month)
@@ -61,14 +61,14 @@ def calc_daily_means_m2_month(year, month, day):
 	daily_mean = daily_mean.sortby(daily_mean.lat,ascending=False)
 
 
-	return daily_mean
+	return daily_mean*60*60*24 # scale for M2
 
 
 
 # constants
 
 YEAR_START = 1980
-YEAR_END = 1982
+YEAR_END = 2021
 MONTH_START = 9
 MONTH_END = 4
 DAY_START = 1
@@ -78,6 +78,7 @@ MONTHS_ALL = ['01','02','03','04','09','10','11','12']
 
 LOWER_LAT = 30
 dx=100000
+ANC_DATA_PATH = '../../anc_data/'
 
 xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 print(xptsG)
@@ -87,7 +88,7 @@ dxStr=str(int(dx/1000))+'km'
 print(dxStr)
 
 
-region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_path, proj, xypts_return=1)
+region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(ANC_DATA_PATH, proj, xypts_return=1)
 region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
 varStr='sf'
@@ -99,10 +100,13 @@ OUT_PATH = '/users/jk/20/acabaj/m2-forcings/'
 first_iter = True
 
 for year in range(YEAR_START, YEAR_END):
+	year_path = OUT_PATH + str(year)
+	if not os.path.exists(year_path):
+		os.makedirs(year_path)
 	for month in MONTHS_ALL:
 		print('gridding for {}-{}'.format(month,year))
 		# load data
-		daily_mean = calc_daily_means_m2_month(month,year)
+		daily_mean = calc_daily_means_m2_month(year,month)
 		if first_iter:
 			# do gridding with lon/lat (M for model (rean))
 			latsM = daily_mean['lat'].values
@@ -130,5 +134,5 @@ for year in range(YEAR_START, YEAR_END):
 			# returns 0 for first day of year, as we want
 
 			# save data
-			PrecipG.dump(OUT_PATH+str(year)+'/MERRA2'+varStr+dxStr+'-'+str(year)+'_d{:03d}v11_1'.format(day_of_year)
+			PrecipG.dump(OUT_PATH+str(year)+'/MERRA2'+varStr+dxStr+'-'+str(year)+'_d{:03d}v11'.format(day_of_year))
 
