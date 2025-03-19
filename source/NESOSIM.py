@@ -539,6 +539,20 @@ def applyScaling(product,factor,scaling_type='mul'):
 	return product_scaled
 
 
+def updateMeltDayCount(melt_count_array, tempday):
+	# towards doing a melt day count process?
+	# use melt threshold meltThresh
+
+	melt_occurring = tempday >= meltThresh
+
+	# where melt is not occurring, reset to 0
+	melt_count_array[~melt_occurring] = 0
+	melt_count_array[melt_occurring] += 1
+
+	# return melt_count_array # return statement not necessarily needed
+
+
+
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, atmLossFactorT=2.2e-8, meltThreshT=1,meltFactorT=-0.001,dynamicsInc=1, leadlossInc=1, 
@@ -664,6 +678,10 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		snowDepths[0, 1]=ICSnowDepth*0.5
 
 	#pF.plotSnow(m, xptsG, yptsG, densityT, date_string=str(startDay-1), out=figpath+'/Snow/2layer/densityD'+driftP+extraStr+reanalysisP+varStr+'_sy'+str(year1)+'d'+str(startDay)+outStr+'T0', units_lab=r'kg/m3', minval=180, maxval=360, base_mask=0, norm=0, cmap_1=cm.viridis)
+
+
+	# create array to store melt day count. maybe later should have genemptyarrays handle this but just for now
+	meltdaycount = np.zeros(precipDays[0].shape)
 
 	# Loop over days 
 	for x in range(numDays-1):	
