@@ -75,10 +75,15 @@ def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
 		snowDivData,'snowAdv': snowAdvData, 'snowLead': snowLeadData,'snowAtm': snowAtmData,'snowWindPack': snowWindPackData,'snowOcean': \
 		snowOceanData, 'density': densityData, 'iceConc': iceConcData, 'winds': windData})
 
+	# zlib compression to save disk space for output
+	compression_values = {'zlib': True, 'complevel': 5}
+	encoding = {v: compression_values for v in dataSet.data_vars}
+
+
 	# print ('saving to:', savePath+'/budgets/'+saveStr)
 	print('saving to:',os.path.join(savePath,'budgets',saveStr+'.nc'))
 	# print(len(os.path.join(savePath,'budgets',saveStr+'.nc')))
-	dataSet.to_netcdf(os.path.join(savePath,'budgets',saveStr+'.nc'))
+	dataSet.to_netcdf(os.path.join(savePath,'budgets',saveStr+'.nc'), encoding=encoding)
 	# dataSet.to_netcdf(os.path.join(savePath,'budgets','budget1'+'.nc'))
 	# dataSet.to_netcdf(savePath+'/budgets/'+saveStr+'.nc') 
 	# dataSet.to_netcdf('test1budget.nc')
