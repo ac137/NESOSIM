@@ -38,6 +38,7 @@ import matplotlib.cm as cm
 import pandas as pd
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
+import os
 
 
 def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
@@ -74,9 +75,13 @@ def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
 		snowDivData,'snowAdv': snowAdvData, 'snowLead': snowLeadData,'snowAtm': snowAtmData,'snowWindPack': snowWindPackData,'snowOcean': \
 		snowOceanData, 'density': densityData, 'iceConc': iceConcData, 'winds': windData})
 
-	print ('saving to:', savePath+'/budgets/'+saveStr)
-
-	dataSet.to_netcdf(savePath+'/budgets/'+saveStr+'.nc') 
+	# print ('saving to:', savePath+'/budgets/'+saveStr)
+	print('saving to:',os.path.join(savePath,'budgets',saveStr+'.nc'))
+	# print(len(os.path.join(savePath,'budgets',saveStr+'.nc')))
+	dataSet.to_netcdf(os.path.join(savePath,'budgets',saveStr+'.nc'))
+	# dataSet.to_netcdf(os.path.join(savePath,'budgets','budget1'+'.nc'))
+	# dataSet.to_netcdf(savePath+'/budgets/'+saveStr+'.nc') 
+	# dataSet.to_netcdf('test1budget.nc')
 
 
 def OutputSnowModelFinal(savePath, saveStr, lons, lats, xpts, ypts, snowVolT,snowDepthT, densityT, iceConcT, precipT, windsT, tempT, datesT, ice_conc_mask=0.5):
@@ -90,7 +95,8 @@ def OutputSnowModelFinal(savePath, saveStr, lons, lats, xpts, ypts, snowVolT,sno
     
     """
 
-	f = nc4.Dataset(savePath+'/final/'+saveStr+'.nc','w', format='NETCDF4') 
+	# f = nc4.Dataset(savePath+'/final/'+saveStr+'.nc','w', format='NETCDF4') 
+	f = nc4.Dataset(os.path.join(savePath,'final',saveStr+'.nc'),'w', format='NETCDF4') 
 
 	projection = f.createVariable('projection', 'i4')
 	projection.long_name = "WGS 84 / NSIDC Sea Ice Polar Stereographic North (3413)" ;
@@ -1009,7 +1015,7 @@ def plot_gridded_cartopy(lons, lats, var, proj=ccrs.NorthPolarStereo(central_lon
 	fig=plt.figure(figsize=(5, 6))
 	ax = plt.axes(projection = proj)
 	#ax.imshow(data, transform=ccrs.PlateCarree(), zorder=2)
-	cs=ax.pcolormesh(lons, lats, var, vmin=minval, vmax=maxval, transform=ccrs.PlateCarree(), zorder=2)
+	cs=ax.pcolormesh(lons, lats, var[:-1,:-1], vmin=minval, vmax=maxval, transform=ccrs.PlateCarree(), zorder=2,shading='flat')
 	ax.coastlines(zorder=3)
 	ax.gridlines(draw_labels=True,
               linewidth=0.22, color='gray', alpha=0.5, linestyle='--')

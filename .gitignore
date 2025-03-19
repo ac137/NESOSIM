@@ -14,5 +14,6 @@ __pycache__/
 
 *.pyc
 
-/source/__pycache/
-/test_forcings/*
+source/__pycache__/
+test_forcings/*
+forcings_full_year/*
