@@ -222,16 +222,25 @@ def calcDynamics(driftGday, snowDepthsT, dx):
 	return snowAdvAllT, snowDivAllT
 	
 
-def calcMelt(t2m_day):
-	''' if temperature > 1 celsius, subtract an amount of snow linearly dependent on temperature by a melt factor
+def calcMelt(t2m_day, method='linear'):
+	''' np.ndarray, str -> np.ndarray
+	for a given day, given gridded temperature t2m_day (in celsius),
+	calculate and return an array of snow melt (in m) for the snow budget.
+	makes use of global variables: 
+	- meltThresh determines the minimum temperature
+	for melt to occur.
+	- meltFactor is a scaling factor
+	method (str) determines which melt method is applied;
+		- 'constant': melt = meltFactor when t2m_day >= meltThresh
+		- 'linear': melt = meltFactor*t2m_day when t2m_day >= meltThresh
 	'''
-	melt_factor = -0.01 # currently: how much is lost in m per day when above zero 
 	
-	# threshold option
-	# melting_grid_points = (t2m_day >= 1)*melt_factor # threshold: temperature equal or greater to 1 celsius
-	
-	# linear dependence on temperature
-	melting_grid_points = (t2m_day >= 1)*melt_factor*t2m_day 
+	if method=='constant':
+	# constant melt above threshold option
+		melting_grid_points = (t2m_day >= meltThresh)*meltFactor 
+	elif method=='linear':
+	# linear dependence on temperature when above threshold
+		melting_grid_points = (t2m_day >= meltThresh)*meltFactor*t2m_day 
 
 	# don't need to check if snow depth is > 0 here because there's already a function to fix negative values if those happen
 	return melting_grid_points
@@ -240,7 +249,7 @@ def calcMelt(t2m_day):
 def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, windDayT, tempDayT, 
 	density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
 	snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, region_maskG, dx, x, dayT,
-	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,summerlossInc=1):
+	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,meltlossInc=0):
 	""" Snow budget calculations
 
 	Args:
@@ -339,20 +348,15 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 
 	#------------ Update snow depths
 	
-	if summerlossInc==1:
-		
-		snowSummerLossDelta = calcMelt(tempDayT) #check if summer
-		if x>240:
-			print(np.nanmean(tempDayT))
-			print('summer loss')
-			print(np.sum(snowSummerLossDelta))
+	if meltlossInc==1:
+		snowMeltLossDelta = calcMelt(tempDayT)
 	else:
-		snowSummerLossDelta = 0
+		snowMeltLossDelta = 0
 
 	# New (upper) layer
-	snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowSummerLossDelta#+snowRidgeT
+	snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta#+snowRidgeT
 	# Old snow layer
-	snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+snowSummerLossDelta #+ snowDcationT
+	snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+snowMeltLossDelta #+ snowDcationT
 
 	# Fill negatives and set nans
 	fill_nan_no_negative(snowDepths[x+1, 0], region_maskG)
@@ -537,8 +541,8 @@ def applyScaling(product,factor,scaling_type='mul'):
 
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
-	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, atmLossFactorT=2.2e-8, dynamicsInc=1, leadlossInc=1, 
-	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, saveFolder='', dx=50000,scaleCS=False):
+	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, atmLossFactorT=2.2e-8, meltThreshT=1,meltFactorT=-0.001,dynamicsInc=1, leadlossInc=1, 
+	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, meltlossInc=0, saveFolder='', dx=50000,scaleCS=False):
 	""" 
 
 	Main model function
@@ -569,7 +573,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	print('ancDataPath:', ancDataPath)
 
 	# Assign density of the two snow layers
-	global snowDensityFresh, snowDensityOld, minSnowD, minConc, leadLossFactor, atmLossFactor, windPackThresh, windPackFactor, deltaT
+	global snowDensityFresh, snowDensityOld, minSnowD, minConc, leadLossFactor, atmLossFactor, windPackThresh, windPackFactor, deltaT, meltThresh, meltFactor
 	snowDensityFresh=200. # density of fresh snow layer
 	snowDensityOld=350. # density of old snow layer
 	minSnowD=0.02 # minimum snow depth for a density estimate
@@ -584,6 +588,8 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	windPackThresh=windPackThreshT # Minimum winds needed for wind packing
 	windPackFactor=windPackFactorT # Fraction of snow packed into old snow layer
 	atmLossFactor=atmLossFactorT # Snow loss to atmosphere coefficient
+	meltThresh = meltThreshT # threshold at or above which melt occurs
+	meltFactor = meltFactorT # factor controlling melt rate
 
 	#---------- Current year
 	yearCurrent=year1
@@ -686,7 +692,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		calcBudget(xptsG, yptsG, snowDepths, iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG,
 			density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
 			snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, region_maskG, dx, x, day,
-			densityType=densityTypeT, dynamicsInc=dynamicsInc, leadlossInc=leadlossInc, windpackInc=windpackInc, atmlossInc=atmlossInc)
+			densityType=densityTypeT, dynamicsInc=dynamicsInc, leadlossInc=leadlossInc, windpackInc=windpackInc, atmlossInc=atmlossInc, meltlossInc=meltlossInc)
 		
 		if (plotdaily==1):
 			cF.plot_gridded_cartopy(lonG, latG, snowDepths[x+1, 0]+snowDepths[x+1, 1], proj=ccrs.NorthPolarStereo(central_longitude=-45), date_string='', out=figpath+'daily_snow_depths/snowTot_'+saveStrNoDate+str(x), units_lab='m', varStr='Snow depth', minval=0., maxval=0.6)

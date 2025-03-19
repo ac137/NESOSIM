@@ -14,6 +14,11 @@ model_save_path = '../output/'
 figure_path = '../figures/'
 anc_data_path='../anc_data/'
 
+# forcing_save_path = 'test_forcings'
+# model_save_path = 'output'
+# figure_path = 'figures'
+# anc_data_path='anc_data'
+
 # Raw file paths
 nsidc_raw_path = ''
 cdr_raw_path = ''
