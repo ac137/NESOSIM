@@ -222,28 +222,69 @@ def calcDynamics(driftGday, snowDepthsT, dx):
 	return snowAdvAllT, snowDivAllT
 	
 
-def calcMelt(t2m_day, method='linear'):
-	''' np.ndarray, str -> np.ndarray
+def calcMelt(t2m_day, method='linear',density_weight=True):
+	''' np.ndarray, str -> np.ndarray, np.ndarray
 	for a given day, given gridded temperature t2m_day (in celsius),
-	calculate and return an array of snow melt (in m) for the snow budget.
+	calculate and return a arrays of snow melt (in m) for the snow budget,
+	for the upper (0) and lower (1) layers
 	makes use of global variables: 
-	- meltThresh determines the minimum temperature
-	for melt to occur.
+	- meltThresh determines the minimum temperature for melt to occur.
+	- consecutive_melt_day_count for some methods to check how long temperature
+	has been above melt threshold
+	
 	- meltFactor is a scaling factor
 	method (str) determines which melt method is applied;
 		- 'constant': melt = meltFactor when t2m_day >= meltThresh
 		- 'linear': melt = meltFactor*t2m_day when t2m_day >= meltThresh
+		- 'melt_day_constant': as with 'constant' but temperature needs
+		to be above meltThresh for a sufficient number of days
+		- 'melt_day_linear' as with 'linear' but temperature needs to be
+		aboce meltThresh for a sufficient number of days
 	'''
 	
+	# I think python version is too old for match/case statements 
 	if method=='constant':
 	# constant melt above threshold option
 		melting_grid_points = (t2m_day >= meltThresh)*meltFactor 
 	elif method=='linear':
 	# linear dependence on temperature when above threshold
-		melting_grid_points = (t2m_day >= meltThresh)*meltFactor*t2m_day 
+		melting_grid_points = (t2m_day >= meltThresh)*meltFactor*t2m_day
+	elif method=='melt_day_constant':
+		# constant melt after specific number of days above melt threshold
+		# need a threshold for that also but just going for now
+
+		# first update the melt count
+		# consecutive_melt_day_count is a global var; updated in place
+		# maybe not best to use global var from this and pass it between 
+		# functions instead but can think about architecture later
+		updateMeltDayCount(consecutive_melt_day_count, t2m_day)
+
+		# now check if melt day count is greater than count threshold
+		count_threshold = 3 # setting to arbitrary number for now
+		melting_grid_points = (consecutive_melt_day_count > count_threshold)*meltFactor
+	elif method=='melt_day_linear':
+		# linear melt (function of temperature) after specific number of days 
+		# above melt threshold
+		updateMeltDayCount(consecutive_melt_day_count, t2m_day)
+
+		# now check if melt day count is greater than count threshold
+		count_threshold = 3 # setting to arbitrary number for now
+		melting_grid_points = (consecutive_melt_day_count > count_threshold)*meltFactor*t2m_day
+
+
+	# weighting melt by layer density
+	if density_weight:
+		melt_upper_layer = melting_grid_points/snowDensityFresh
+		melt_lower_layer = melting_grid_points/snowDensityOld
+	else:
+	# same melt in each layer 
+	# (maybe adjust to weigh by average density because otherwise 
+	# factors will compare strangely here)
+		melt_upper_layer = melting_grid_points
+		melt_lower_layer = melting_grid_points
 
 	# don't need to check if snow depth is > 0 here because there's already a function to fix negative values if those happen
-	return melting_grid_points
+	return melt_upper_layer, melt_lower_layer
 	
 
 def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, windDayT, tempDayT, 
@@ -349,14 +390,16 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 	#------------ Update snow depths
 	
 	if meltlossInc==1:
+		# calc melt now returns a tuple of (upper layer, lower layer) melt
 		snowMeltLossDelta = calcMelt(tempDayT)
 	else:
-		snowMeltLossDelta = 0
+		# no melt
+		snowMeltLossDelta = (0,0)
 
 	# New (upper) layer
-	snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta#+snowRidgeT
+	snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta[0]#+snowRidgeT
 	# Old snow layer
-	snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+snowMeltLossDelta #+ snowDcationT
+	snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+snowMeltLossDelta[1] #+ snowDcationT
 
 	# Fill negatives and set nans
 	fill_nan_no_negative(snowDepths[x+1, 0], region_maskG)
@@ -542,6 +585,8 @@ def applyScaling(product,factor,scaling_type='mul'):
 def updateMeltDayCount(melt_count_array, tempday):
 	# towards doing a melt day count process?
 	# use melt threshold meltThresh
+	# see if this is a melt day or not and update the consecutive melt
+	# day count array
 
 	melt_occurring = tempday >= meltThresh
 
@@ -681,7 +726,9 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 
 
 	# create array to store melt day count. maybe later should have genemptyarrays handle this but just for now
-	meltdaycount = np.zeros(precipDays[0].shape)
+	# make this a global variable?
+	global consecutive_melt_day_count
+	consecutive_melt_day_count = np.zeros(precipDays[0].shape)
 
 	# Loop over days 
 	for x in range(numDays-1):	
@@ -705,6 +752,8 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 			scalingFactor = monthlyScalingFactors.loc[currentMonth,:,:] # get scaling factor for current month
 			# apply scaling to current day's precipitation
 			precipDayG = applyScaling(precipDayG, scalingFactor,scaling_type='mul').values
+
+
 
 		#-------- Calculate snow budgets
 		calcBudget(xptsG, yptsG, snowDepths, iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG,
