@@ -39,14 +39,21 @@ dayE=30 # end day off by 1
 
 print(yearS, monthS, dayS, yearE, monthE, dayE)
 
+melt_factor = -0.01*100
+melt_threshold = 0
+
+# output_string = 'denswt_lin_mt_{}_mf_0_{}'.format(melt_threshold, str(melt_factor)[3:])
+
+output_string = 'denswt_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
+
 import NESOSIM	
 NESOSIM.main(year1=yearS, month1=monthS, day1=dayS, year2=yearE, month2=monthE, day2=dayE,
 	outPathT=model_save_path, 
 	forcingPathT=forcing_save_path, 
 	figPathT=figure_path,
 	precipVar='ERA5', windVar='ERA5', driftVar='NSIDCv4', concVar='CDR', 
-	icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='test_DISCARD', IC=2, 
-	windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=2.9e-7,
+	icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr=output_string, IC=2, 
+	windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=2.9e-7,meltThreshT=melt_threshold,meltFactorT=melt_factor,
 	dynamicsInc=1, leadlossInc=1, windpackInc=1,atmlossInc=1,meltlossInc=1,scaleCS=True, dx=100000,
 	plotdaily=0)
 
