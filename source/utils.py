@@ -71,7 +71,7 @@ def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
 	densityData = xr.DataArray(density, dims=('time', 'x', 'y'))
 	iceConcData = xr.DataArray(iceConcDays, dims=('time', 'x', 'y'))
 	windData = xr.DataArray(windDays, dims=('time', 'x', 'y'))
-	snowMeltData = xr.DataArray(snowDepths, dims=('time', 'lyrs',  'x', 'y'))
+	snowMeltData = xr.DataArray(snowMelt, dims=('time', 'lyrs',  'x', 'y'))
 
 	dataSet = xr.Dataset({'Precip': precipData, 'snowDepth': snowDepthsData, 'snowAcc': snowAccData, 'snowDiv': \
 		snowDivData,'snowAdv': snowAdvData, 'snowLead': snowLeadData,'snowAtm': snowAtmData,'snowWindPack': snowWindPackData,'snowOcean': \
