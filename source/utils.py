@@ -42,7 +42,8 @@ import os
 
 
 def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
-	precipDays, iceConcDays, windDays, snowAcc, snowOcean, snowAdv, snowDiv, snowLead, snowAtm, snowWindPack):
+	precipDays, iceConcDays, windDays, snowAcc, snowOcean, snowAdv, 
+	snowDiv, snowLead, snowAtm, snowWindPack, snowMelt):
 	""" Output snow model data using xarray
 
 	Args:
@@ -70,10 +71,11 @@ def OutputSnowModelRaw(savePath, saveStr, snowDepths, density, \
 	densityData = xr.DataArray(density, dims=('time', 'x', 'y'))
 	iceConcData = xr.DataArray(iceConcDays, dims=('time', 'x', 'y'))
 	windData = xr.DataArray(windDays, dims=('time', 'x', 'y'))
+	snowMeltData = xr.DataArray(snowDepths, dims=('time', 'lyrs',  'x', 'y'))
 
 	dataSet = xr.Dataset({'Precip': precipData, 'snowDepth': snowDepthsData, 'snowAcc': snowAccData, 'snowDiv': \
 		snowDivData,'snowAdv': snowAdvData, 'snowLead': snowLeadData,'snowAtm': snowAtmData,'snowWindPack': snowWindPackData,'snowOcean': \
-		snowOceanData, 'density': densityData, 'iceConc': iceConcData, 'winds': windData})
+		snowOceanData, 'density': densityData, 'iceConc': iceConcData, 'winds': windData,'snowMelt':snowMeltData})
 
 	# zlib compression to save disk space for output
 	compression_values = {'zlib': True, 'complevel': 5}

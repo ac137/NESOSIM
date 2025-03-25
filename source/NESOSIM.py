@@ -285,11 +285,11 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 
 	# don't need to check if snow depth is > 0 here because there's already a function to fix negative values if those happen
 	return melt_upper_layer, melt_lower_layer
-	
+
 
 def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, windDayT, tempDayT, 
 	density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
-	snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, region_maskG, dx, x, dayT,
+	snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, snowMelt, region_maskG, dx, x, dayT,
 	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,meltlossInc=0):
 	""" Snow budget calculations
 
@@ -387,14 +387,25 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 	snowWindPackGain[x+1]=snowWindPackGain[x]+snowWindPackGainDelta
 	snowWindPack[x+1]=snowWindPack[x]+snowWindPackNetDelta
 
-	#------------ Update snow depths
 	
+	#----------- Snow melt calculation
+
+	# todo: arrays to get the snow melt here
+
 	if meltlossInc==1:
 		# calc melt now returns a tuple of (upper layer, lower layer) melt
 		snowMeltLossDelta = calcMelt(tempDayT)
 	else:
 		# no melt
 		snowMeltLossDelta = (0,0)
+
+	# update snow melt array (for budget)
+	# note; this value is cumulative (as are other budget values)
+	snowMelt[x+1,0] = snowMelt[x,0] + snowMeltLossDelta[0]
+	snowMelt[x+1,1] = snowMelt[x,1] + snowMeltLossDelta[1]
+
+	#------------ Update snow depths
+
 
 	# New (upper) layer
 	snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta[0]#+snowRidgeT
@@ -445,10 +456,11 @@ def genEmptyArrays(numDaysT, nxT, nyT):
 	snowWindPackGain=np.zeros((numDaysT, nxT, nyT))
 	snowLead=np.zeros((numDaysT, nxT, nyT))
 	snowAtm=np.zeros((numDaysT, nxT, nyT))
+	snowMelt = np.zeros((numDaysT, 2, nxT, nyT))
 	
 
 	return precipDays, iceConcDays, windDays, tempDays, snowDepths, density, snowDiv, snowAdv, snowAcc, snowOcean, snowWindPack, \
-	snowWindPackLoss, snowWindPackGain, snowLead, snowAtm
+	snowWindPackLoss, snowWindPackGain, snowLead, snowAtm, snowMelt
 
 
 def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr):
@@ -695,7 +707,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	if not os.path.exists(figpath+'/daily_snow_depths/'):
 		os.makedirs(figpath+'/daily_snow_depths/')
 
-	precipDays, iceConcDays, windDays, tempDays, snowDepths, density, snowDiv, snowAdv, snowAcc, snowOcean, snowWindPack, snowWindPackLoss, snowWindPackGain, snowLead, snowAtm = genEmptyArrays(numDays, nx, ny)
+	precipDays, iceConcDays, windDays, tempDays, snowDepths, density, snowDiv, snowAdv, snowAcc, snowOcean, snowWindPack, snowWindPackLoss, snowWindPackGain, snowLead, snowAtm, snowMelt = genEmptyArrays(numDays, nx, ny)
 
 	print('IC:', IC)
 	if (IC>0):
@@ -758,7 +770,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		#-------- Calculate snow budgets
 		calcBudget(xptsG, yptsG, snowDepths, iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG,
 			density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
-			snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, region_maskG, dx, x, day,
+			snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, snowMelt, region_maskG, dx, x, day,
 			densityType=densityTypeT, dynamicsInc=dynamicsInc, leadlossInc=leadlossInc, windpackInc=windpackInc, atmlossInc=atmlossInc, meltlossInc=meltlossInc)
 		
 		if (plotdaily==1):
@@ -775,7 +787,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	
 	if (saveData==1):
 		# Output snow budget terms to netcdf datafiles
-		cF.OutputSnowModelRaw(savePath, 'NESOSIMv11_budget_'+dateOut, snowDepths, density, precipDays, iceConcDays, windDays, snowAcc, snowOcean, snowAdv, snowDiv, snowLead, snowAtm, snowWindPack)
+		cF.OutputSnowModelRaw(savePath, 'NESOSIMv11_budget_'+dateOut, snowDepths, density, precipDays, iceConcDays, windDays, snowAcc, snowOcean, snowAdv, snowDiv, snowLead, snowAtm, snowWindPack,snowMelt)
 		cF.OutputSnowModelFinal(savePath, 'NESOSIMv11_'+dateOut, lonG, latG, xptsG, yptsG, snowDepths[:, 0]+snowDepths[:, 1], (snowDepths[:, 0]+snowDepths[:, 1])/iceConcDays, density, iceConcDays, precipDays, windDays, tempDays, dates)
 
 	if (plotBudgets==1):
