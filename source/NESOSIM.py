@@ -222,7 +222,7 @@ def calcDynamics(driftGday, snowDepthsT, dx):
 	return snowAdvAllT, snowDivAllT
 	
 
-def calcMelt(t2m_day, method='linear',density_weight=True):
+def calcMelt(t2m_day, method='melt_day_linear',density_weight=True):
 	''' np.ndarray, str -> np.ndarray, np.ndarray
 	for a given day, given gridded temperature t2m_day (in celsius),
 	calculate and return a arrays of snow melt (in m) for the snow budget,

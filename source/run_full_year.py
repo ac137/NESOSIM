@@ -39,12 +39,12 @@ dayE=30 # end day off by 1
 
 print(yearS, monthS, dayS, yearE, monthE, dayE)
 
-melt_factor = -0.01*100
+melt_factor = -0.1*100
 melt_threshold = 0
 
 # output_string = 'denswt_lin_mt_{}_mf_0_{}'.format(melt_threshold, str(melt_factor)[3:])
 
-output_string = 'denswt_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
+output_string = 'denswt_meltday3_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
 
 import NESOSIM	
 NESOSIM.main(year1=yearS, month1=monthS, day1=dayS, year2=yearE, month2=monthE, day2=dayE,

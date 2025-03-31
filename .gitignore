@@ -17,3 +17,5 @@ __pycache__/
 source/__pycache__/
 test_forcings/*
 forcings_full_year/*
+source/.ipynb_checkpoints/
+source/gridding/.ipynb_checkpoints/
