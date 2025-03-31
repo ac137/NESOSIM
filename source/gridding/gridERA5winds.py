@@ -33,15 +33,19 @@ import utils as cF
 import os
 import pyproj
 import cartopy.crs as ccrs
+import xarray as xr
 
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
 
-from config import reanalysis_raw_path, forcing_save_path, figure_path
+#from config import reanalysis_raw_path, forcing_save_path, figure_path
+
+forcing_save_path = '/mnt/ccrp/data1/cabaja/snow_modelling/nesosim_gridded_data/'
+reanalysis_raw_path = '/mnt/ccrp/data1/cabaja/reanalysis_data/ERA5/uv_hourly_nh/'
+figure_path = '/mnt/ccrp/data1/cabaja/snow_modelling/NESOSIM/figures/'
 
 
-
-def main(year, startMonth=0, endMonth=11, dx=100000, extraStr='v11_1', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Winds/ERA5/', fig_path=figure_path+'Winds/ERA5/', anc_data_path='../../anc_data/'):
+def main(year, startMonth=0, endMonth=11, dx=100000, extraStr='v11', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Winds/ERA5/', fig_path=figure_path+'Winds/ERA5/', anc_data_path='../../anc_data/'):
 
 	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
 	print(xptsG)
@@ -79,6 +83,28 @@ def main(year, startMonth=0, endMonth=11, dx=100000, extraStr='v11_1', data_path
 
 	calc_weights = 1 # start as one to calculate weightings then gets set as zero for future files
 
+
+    # reworking because this is being finicky. just load the data all at once initially and then calculate
+    # this only works if doing one month at a time so try that I guess
+	dayStr0='%03d' %startDay
+	month0=np.where(startDay-np.array(monIndex)>=0)[0][-1]
+	monStr0='%02d' %(month0+1)
+
+	print('loading data')
+	f1 = xr.open_dataset('/mnt/ccrp/data1/cabaja/reanalysis_data/ERA5/uv_hourly_nh/e5_u_v_hourly_nh_{}_{}.nc'.format(yearT,monStr0),chunks={'valid_time':24})
+	lon = f1['longitude'][:].values
+	lowerlatlim=30
+	lat = f1['latitude'][:].values
+	freq=6
+	lowerLatidx=int((90-lowerlatlim)/(lat[0]-lat[1]))
+	lonsM=lon
+	latsM=lat[0:lowerLatidx]
+	xptsM, yptsM=proj(*np.meshgrid(lonsM, latsM))
+	u10_main = f1['u10']#.load() # only do this one per month; should be faster hopefully
+	v10_main = f1['v10']#.load() # try not loading and see if chunking makes things work?
+	print('data loaded')
+
+
 	for dayT in range(startDay, endDay):
 	
 		dayStr='%03d' %dayT
@@ -91,7 +117,22 @@ def main(year, startMonth=0, endMonth=11, dx=100000, extraStr='v11_1', data_path
 		print('Wind day:', dayT)
 		
 		#in  kg/m2 per day
-		xptsM, yptsM, lonsM, latsM, WindMag =cF.get_ERA5_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
+
+		# getting bugs when using function in utils so try just doing directly here
+
+		
+		numday=dayinmonth
+		# print(lowerLatidx)
+		
+        # have to use .load for some reason; I think this is memory/time consuming though. but can try I guess
+		u10=u10_main[(numday*24):(numday*24)+24:freq, 0:lowerLatidx, :].astype(np.float16)#.load()
+		v10=v10_main[(numday*24):(numday*24)+24:freq, 0:lowerLatidx, :].astype(np.float16)#.load()
+		WindMag=np.mean(np.sqrt((u10**2)+(v10**2)), axis=0).values
+		# mag = 0
+		# xpts,ypts = 0,0
+		# xptsM, yptsM, lonsM, latsM, WindMag = xpts, ypts, lon, lat, mag
+        
+		# xptsM, yptsM, lonsM, latsM, WindMag =cF.get_ERA5_wind_days_pyproj(proj, data_path, str(yearT), monStr, dayinmonth, lowerlatlim=30)
 		
 		# if it's the first day, calculate weights
 		if calc_weights == 1:
@@ -107,14 +148,20 @@ def main(year, startMonth=0, endMonth=11, dx=100000, extraStr='v11_1', data_path
 		interp = LinearNDInterpolator(tri,WindMag.flatten())
 		windMagG = interp((xptsG,yptsG))
 
-		cF.plot_gridded_cartopy(lonG, latG, windMagG, proj=ccrs.NorthPolarStereo(central_longitude=-45), out=fig_path+'/ERA5winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, date_string=str(yearT), month_string=str(dayT), extra=extraStr, varStr='ERA5 winds ', units_lab=r'kg/m2', minval=0, maxval=10, cmap_1=plt.cm.viridis)
+#		cF.plot_gridded_cartopy(lonG, latG, windMagG, proj=ccrs.NorthPolarStereo(central_longitude=-45), out=fig_path+'/ERA5winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, date_string=str(yearT), month_string=str(dayT), extra=extraStr, varStr='ERA5 winds ', units_lab=r'kg/m2', minval=0, maxval=10, cmap_1=plt.cm.viridis)
 		
 		windMagG.dump(out_path+str(yearT)+'/ERA5winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	for y in range(1984, 2020+1, 1):
 		print (y)
-		main(y, startMonth=0,endMonth=4)
+		main(y, startMonth=4,endMonth=4,data_path=reanalysis_raw_path)
+		main(y, startMonth=5,endMonth=5,data_path=reanalysis_raw_path)
+		main(y, startMonth=6,endMonth=6,data_path=reanalysis_raw_path)
+		main(y, startMonth=7,endMonth=7,data_path=reanalysis_raw_path)
+
+
+
 
 
