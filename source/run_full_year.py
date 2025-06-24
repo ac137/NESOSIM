@@ -37,14 +37,25 @@ yearE=2020
 monthE=7 # April = 7
 dayE=30 # end day off by 1
 
+# default values
+#LLF = 2.9e-7
+#WPF = 5.8e-7
+#ALF = 2.2e-8
+
+
+WPF = 2.0504155592128743e-06
+LLF = 4.0059442776163867e-07
+ALF = LLF*0.15
+
 print(yearS, monthS, dayS, yearE, monthE, dayE)
 
-melt_factor = -0.1*100
+melt_factor = -0.001*10
 melt_threshold = 0
 
-# output_string = 'denswt_lin_mt_{}_mf_0_{}'.format(melt_threshold, str(melt_factor)[3:])
+#output_string = 'denswt_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
+output_string = 'lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
 
-output_string = 'denswt_meltday3_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
+#output_string = 'denswt_meltday3_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
 
 import NESOSIM	
 NESOSIM.main(year1=yearS, month1=monthS, day1=dayS, year2=yearE, month2=monthE, day2=dayE,
@@ -53,7 +64,7 @@ NESOSIM.main(year1=yearS, month1=monthS, day1=dayS, year2=yearE, month2=monthE, 
 	figPathT=figure_path,
 	precipVar='ERA5', windVar='ERA5', driftVar='NSIDCv4', concVar='CDR', 
 	icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr=output_string, IC=2, 
-	windPackFactorT=5.8e-7, windPackThreshT=5, leadLossFactorT=2.9e-7,meltThreshT=melt_threshold,meltFactorT=melt_factor,
+	windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF, atmLossFactorT=ALF, meltThreshT=melt_threshold, meltFactorT=melt_factor,
 	dynamicsInc=1, leadlossInc=1, windpackInc=1,atmlossInc=1,meltlossInc=1,scaleCS=True, dx=100000,
 	plotdaily=0)
 
