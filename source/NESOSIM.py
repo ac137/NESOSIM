@@ -241,23 +241,23 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 		- 'melt_day_linear' as with 'linear' but temperature needs to be
 		aboce meltThresh for a sufficient number of days
 
-    density_weight (bool) determines if the melt is weighted by
-    snow density or not; if True, the upper layer melts at a 
-    faster rate. approximates the effect of snow density on melt
-    rate
+	density_weight (bool) determines if the melt is weighted by
+	snow density or not; if True, the upper layer melts at a 
+	faster rate. approximates the effect of snow density on melt
+	rate
 	'''
 	
 	# I think python version is too old for match/case statements 
 	if method=='constant':
 	# constant melt above threshold option
-        # array to store location of where melt occurs
-        melt_point_array = t2m_day >= meltThresh
+		# array to store location of where melt occurs
+		melt_point_array = t2m_day >= meltThresh
 		melting_grid_points = (melt_point_array)*meltFactor 
 	elif method=='linear':
 	# linear dependence on temperature when above threshold
-    # subtracting meltThresh so zero is at t2m_day==meltThresh
-    # otherwise behaves unusually with negative threshold
-        melt_point_array = t2m_day >= meltThresh
+	# subtracting meltThresh so zero is at t2m_day==meltThresh
+	# otherwise behaves unusually with negative threshold
+		melt_point_array = t2m_day >= meltThresh
 		melting_grid_points = (melt_point_array)*meltFactor*(t2m_day-meltThresh)
 	elif method=='melt_day_constant':
 		# constant melt after specific number of days above melt threshold
@@ -271,7 +271,7 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 
 		# now check if melt day count is greater than count threshold
 		count_threshold = 3 # setting to arbitrary number for now
-        melt_point_array = consecutive_melt_day_count > count_threshold
+		melt_point_array = consecutive_melt_day_count > count_threshold
 		melting_grid_points = (melt_point_array)*meltFactor
 	elif method=='melt_day_linear':
 		# linear melt (function of temperature) after specific number of days 
@@ -280,7 +280,7 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 
 		# now check if melt day count is greater than count threshold
 		count_threshold = 3 # setting to arbitrary number for now
-        melt_point_array = consecutive_melt_day_count > count_threshold
+		melt_point_array = consecutive_melt_day_count > count_threshold
 		melting_grid_points = (melt_point_array)*meltFactor*(t2m_day-meltThresh)
 
 
@@ -406,14 +406,14 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 
 	if meltlossInc==1:
 		# calc melt now returns a tuple of (upper layer, lower layer) melt
-        # melt_method denotes which melt process approach is chosen
-        # if melt_dens_wt == True, melt is weighted by layer density
-        snowMeltLossDelta, melt_location_array = calcMelt(tempDayT,melt_method, melt_dens_wt)
-        # melt_location_array is True if melt is occurring there
+		# melt_method denotes which melt process approach is chosen
+		# if melt_dens_wt == True, melt is weighted by layer density
+		snowMeltLossDelta, melt_location_array = calcMelt(tempDayT,melt_method, melt_dens_wt)
+		# melt_location_array is True if melt is occurring there
 	else:
-        # no melt
-        snowMeltLossDelta = (0,0)
-        melt_location_array = False
+		# no melt
+		snowMeltLossDelta = (0,0)
+		melt_location_array = False
 
 	# update snow melt array (for budget)
 	# note; this value is cumulative (as are other budget values)
@@ -422,8 +422,8 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 
 	#------------ Update snow depths
 
-    # modify accumulation to avoid accumulating where melt is occurring?
-    snowAccDelta = snowAccDelta*(~melt_location_array) # negated; True if melt is not occurring; when multiplied gives 1. 
+	# modify accumulation to avoid accumulating where melt is occurring?
+	snowAccDelta = snowAccDelta*(~melt_location_array) # negated; True if melt is not occurring; when multiplied gives 1. 
 
 
 	# New (upper) layer
@@ -719,7 +719,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		os.makedirs(os.path.join(savePath,'final'))
 
 	global figpath
-    # figpath = os.path.join(figpathT,'Diagnostic',dxStr,saveStrNoDate)
+	# figpath = os.path.join(figpathT,'Diagnostic',dxStr,saveStrNoDate)
 	figpath=figPathT+'/Diagnostic/'+dxStr+'/'+saveStrNoDate+'/'
 	if not os.path.exists(figpath):
 		os.makedirs(figpath)
@@ -791,7 +791,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 			density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
 			snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, snowMelt, region_maskG, dx, x, day,
 			densityType=densityTypeT, dynamicsInc=dynamicsInc, leadlossInc=leadlossInc, windpackInc=windpackInc, atmlossInc=atmlossInc, meltlossInc=meltlossInc,
-            melt_method=melt_method, melt_dens_wt=melt_dens_wt)
+			melt_method=melt_method, melt_dens_wt=melt_dens_wt)
 		
 		if (plotdaily==1):
 			cF.plot_gridded_cartopy(lonG, latG, snowDepths[x+1, 0]+snowDepths[x+1, 1], proj=ccrs.NorthPolarStereo(central_longitude=-45), date_string='', out=figpath+'daily_snow_depths/snowTot_'+saveStrNoDate+str(x), units_lab='m', varStr='Snow depth', minval=0., maxval=0.6)
