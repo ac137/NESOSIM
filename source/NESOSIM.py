@@ -222,7 +222,7 @@ def calcDynamics(driftGday, snowDepthsT, dx):
 	return snowAdvAllT, snowDivAllT
 	
 
-def calcMelt(t2m_day, method='melt_day_linear',density_weight=True):
+def calcMelt(t2m_day, method='linear',density_weight=True):
 	''' np.ndarray, str -> np.ndarray, np.ndarray
 	for a given day, given gridded temperature t2m_day (in celsius),
 	calculate and return a arrays of snow melt (in m) for the snow budget,
@@ -240,6 +240,11 @@ def calcMelt(t2m_day, method='melt_day_linear',density_weight=True):
 		to be above meltThresh for a sufficient number of days
 		- 'melt_day_linear' as with 'linear' but temperature needs to be
 		aboce meltThresh for a sufficient number of days
+
+    density_weight (bool) determines if the melt is weighted by
+    snow density or not; if True, the upper layer melts at a 
+    faster rate. approximates the effect of snow density on melt
+    rate
 	'''
 	
 	# I think python version is too old for match/case statements 
@@ -248,7 +253,9 @@ def calcMelt(t2m_day, method='melt_day_linear',density_weight=True):
 		melting_grid_points = (t2m_day >= meltThresh)*meltFactor 
 	elif method=='linear':
 	# linear dependence on temperature when above threshold
-		melting_grid_points = (t2m_day >= meltThresh)*meltFactor*t2m_day
+    # subtracting meltThresh so zero is at t2m_day==meltThresh
+    # otherwise behaves unusually with negative threshold
+		melting_grid_points = (t2m_day >= meltThresh)*meltFactor*(t2m_day-meltThresh)
 	elif method=='melt_day_constant':
 		# constant melt after specific number of days above melt threshold
 		# need a threshold for that also but just going for now
@@ -269,7 +276,7 @@ def calcMelt(t2m_day, method='melt_day_linear',density_weight=True):
 
 		# now check if melt day count is greater than count threshold
 		count_threshold = 3 # setting to arbitrary number for now
-		melting_grid_points = (consecutive_melt_day_count > count_threshold)*meltFactor*t2m_day
+		melting_grid_points = (consecutive_melt_day_count > count_threshold)*meltFactor*(t2m_day-meltThresh)
 
 
 	# weighting melt by layer density
@@ -290,7 +297,7 @@ def calcMelt(t2m_day, method='melt_day_linear',density_weight=True):
 def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, windDayT, tempDayT, 
 	density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
 	snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, snowMelt, region_maskG, dx, x, dayT,
-	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,meltlossInc=0):
+	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,meltlossInc=0,melt_method='linear',melt_dens_wt=True):
 	""" Snow budget calculations
 
 	Args:
@@ -394,7 +401,9 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 
 	if meltlossInc==1:
 		# calc melt now returns a tuple of (upper layer, lower layer) melt
-		snowMeltLossDelta = calcMelt(tempDayT)
+        # melt_method denotes which melt process approach is chosen
+        # if melt_dens_wt == True, melt is weighted by layer density
+		snowMeltLossDelta = calcMelt(tempDayT,melt_method, melt_dens_wt)
 	else:
 		# no melt
 		snowMeltLossDelta = (0,0)
@@ -613,7 +622,7 @@ def updateMeltDayCount(melt_count_array, tempday):
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, atmLossFactorT=2.2e-8, meltThreshT=1,meltFactorT=-0.001,dynamicsInc=1, leadlossInc=1, 
-	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, meltlossInc=0, saveFolder='', dx=50000,scaleCS=False):
+	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, meltlossInc=0, saveFolder='', dx=50000,scaleCS=False, melt_method='linear', melt_dens_wt=True):
 	""" 
 
 	Main model function
@@ -771,7 +780,8 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		calcBudget(xptsG, yptsG, snowDepths, iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG,
 			density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
 			snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, snowMelt, region_maskG, dx, x, day,
-			densityType=densityTypeT, dynamicsInc=dynamicsInc, leadlossInc=leadlossInc, windpackInc=windpackInc, atmlossInc=atmlossInc, meltlossInc=meltlossInc)
+			densityType=densityTypeT, dynamicsInc=dynamicsInc, leadlossInc=leadlossInc, windpackInc=windpackInc, atmlossInc=atmlossInc, meltlossInc=meltlossInc,
+            melt_method=melt_method, melt_dens_wt=melt_dens_wt)
 		
 		if (plotdaily==1):
 			cF.plot_gridded_cartopy(lonG, latG, snowDepths[x+1, 0]+snowDepths[x+1, 1], proj=ccrs.NorthPolarStereo(central_longitude=-45), date_string='', out=figpath+'daily_snow_depths/snowTot_'+saveStrNoDate+str(x), units_lab='m', varStr='Snow depth', minval=0., maxval=0.6)
