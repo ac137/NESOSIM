@@ -250,12 +250,15 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 	# I think python version is too old for match/case statements 
 	if method=='constant':
 	# constant melt above threshold option
-		melting_grid_points = (t2m_day >= meltThresh)*meltFactor 
+        # array to store location of where melt occurs
+        melt_point_array = t2m_day >= meltThresh
+		melting_grid_points = (melt_point_array)*meltFactor 
 	elif method=='linear':
 	# linear dependence on temperature when above threshold
     # subtracting meltThresh so zero is at t2m_day==meltThresh
     # otherwise behaves unusually with negative threshold
-		melting_grid_points = (t2m_day >= meltThresh)*meltFactor*(t2m_day-meltThresh)
+        melt_point_array = t2m_day >= meltThresh
+		melting_grid_points = (melt_point_array)*meltFactor*(t2m_day-meltThresh)
 	elif method=='melt_day_constant':
 		# constant melt after specific number of days above melt threshold
 		# need a threshold for that also but just going for now
@@ -268,7 +271,8 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 
 		# now check if melt day count is greater than count threshold
 		count_threshold = 3 # setting to arbitrary number for now
-		melting_grid_points = (consecutive_melt_day_count > count_threshold)*meltFactor
+        melt_point_array = consecutive_melt_day_count > count_threshold
+		melting_grid_points = (melt_point_array)*meltFactor
 	elif method=='melt_day_linear':
 		# linear melt (function of temperature) after specific number of days 
 		# above melt threshold
@@ -276,7 +280,8 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 
 		# now check if melt day count is greater than count threshold
 		count_threshold = 3 # setting to arbitrary number for now
-		melting_grid_points = (consecutive_melt_day_count > count_threshold)*meltFactor*(t2m_day-meltThresh)
+        melt_point_array = consecutive_melt_day_count > count_threshold
+		melting_grid_points = (melt_point_array)*meltFactor*(t2m_day-meltThresh)
 
 
 	# weighting melt by layer density
@@ -291,7 +296,7 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 		melt_lower_layer = melting_grid_points
 
 	# don't need to check if snow depth is > 0 here because there's already a function to fix negative values if those happen
-	return melt_upper_layer, melt_lower_layer
+	return [melt_upper_layer, melt_lower_layer], melt_point_array
 
 
 def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, windDayT, tempDayT, 
@@ -403,10 +408,12 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 		# calc melt now returns a tuple of (upper layer, lower layer) melt
         # melt_method denotes which melt process approach is chosen
         # if melt_dens_wt == True, melt is weighted by layer density
-		snowMeltLossDelta = calcMelt(tempDayT,melt_method, melt_dens_wt)
+        snowMeltLossDelta, melt_location_array = calcMelt(tempDayT,melt_method, melt_dens_wt)
+        # melt_location_array is True if melt is occurring there
 	else:
-		# no melt
-		snowMeltLossDelta = (0,0)
+        # no melt
+        snowMeltLossDelta = (0,0)
+        melt_location_array = False
 
 	# update snow melt array (for budget)
 	# note; this value is cumulative (as are other budget values)
@@ -414,6 +421,9 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 	snowMelt[x+1,1] = snowMelt[x,1] + snowMeltLossDelta[1]
 
 	#------------ Update snow depths
+
+    # modify accumulation to avoid accumulating where melt is occurring?
+    snowAccDelta = snowAccDelta*(~melt_location_array) # negated; True if melt is not occurring; when multiplied gives 1. 
 
 
 	# New (upper) layer
