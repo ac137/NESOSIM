@@ -302,7 +302,8 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, windDayT, tempDayT, 
 	density, precipDays, iceConcDays, windDays, tempDays, snowAcc, snowOcean, snowAdv, 
 	snowDiv, snowLead, snowAtm, snowWindPackLoss, snowWindPackGain, snowWindPack, snowMelt, region_maskG, dx, x, dayT,
-	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,meltlossInc=0,melt_method='linear',melt_dens_wt=True):
+	densityType='variable', dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=0,meltlossInc=0,melt_method='linear',
+	melt_dens_wt=True, melt_upper_layer_first=True):
 	""" Snow budget calculations
 
 	Args:
@@ -417,19 +418,76 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 
 	# update snow melt array (for budget)
 	# note; this value is cumulative (as are other budget values)
-	snowMelt[x+1,0] = snowMelt[x,0] + snowMeltLossDelta[0]
-	snowMelt[x+1,1] = snowMelt[x,1] + snowMeltLossDelta[1]
+
+	# this will be different for the melt upper layer first; 
+	
 
 	#------------ Update snow depths
 
 	# modify accumulation to avoid accumulating where melt is occurring?
 	snowAccDelta = snowAccDelta*(~melt_location_array) # negated; True if melt is not occurring; when multiplied gives 1. 
 
+	# melt_upper_layer_first condition; set as a function argument?
+	if melt_upper_layer_first:
+		# budget calculation is more elaborate when melting upper layer first
+
+
+		snow_depth_upper_layer_no_melt = snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] #+snowMeltLossDelta[0]#+snowRidgeT
+		# first filter out the negatives here
+		fill_nan_no_negative(snow_depth_upper_layer_no_melt, region_maskG)
+		# now add melt and check for negative values (exclusively from melt)
+
+		# add upper layer melt
+		snow_depth_upper_layer_with_melt = snow_depth_upper_layer_no_melt + snowMeltLossDelta[0]
+
+		# whatever additional melt exists, transfer that to the lower layer
+
+		# indices where upper layer melted more than its snow depth
+		# (negative snow depth)
+		idx_upper_layer_excess_melt = snow_depth_upper_layer_with_melt < 0
+
+		# lower layer melt is zero unless melt in upper layer "spills over"
+		lower_layer_melt = np.zeros(np.shape(snow_depth_upper_layer_with_melt))
+
+		# where upper layer melted excessively, melt lower layer by that amount
+		lower_layer_melt[idx_upper_layer_excess_melt] = snow_depth_upper_layer_with_melt[idx_upper_layer_excess_melt]
+
+		# update snow melt budget for upper layer (do this before density weighting)
+		snowMelt[x+1,0] = snowMelt[x,0] + snowMeltLossDelta[0] - lower_layer_melt
+
+		if melt_dens_wt:
+			# scale by snow density if applicable
+			lower_layer_melt = lower_layer_melt*snowDensityFresh/snowDensityOld
+
+
+		# update upper layer
+		snowDepths[x+1, 0] = snow_depth_upper_layer_with_melt
+		# update lower layer, melt term just gets added on. fill_nan gets called later
+		snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+lower_layer_melt
+
+
+		# update lower layer melt budget (n.b. currently not accounting for 'overflow' here so may be overestimating)
+		snowMelt[x+1,1] = snowMelt[x,1] + lower_layer_melt
+
+		# update snow depths
+
+
+
+
+	# Old snow layer
+
+
+	if not melt_upper_layer_first:
+
 
 	# New (upper) layer
-	snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta[0]#+snowRidgeT
+		snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta[0]#+snowRidgeT
 	# Old snow layer
-	snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+snowMeltLossDelta[1] #+ snowDcationT
+		snowDepths[x+1, 1]=snowDepths[x, 1] +snowWindPackGainDelta + snowAdvDelta[1] + snowDivDelta[1]+snowMeltLossDelta[1] #+ snowDcationT
+
+		snowMelt[x+1,0] = snowMelt[x,0] + snowMeltLossDelta[0]
+		snowMelt[x+1,1] = snowMelt[x,1] + snowMeltLossDelta[1]
+
 
 	# Fill negatives and set nans
 	fill_nan_no_negative(snowDepths[x+1, 0], region_maskG)
