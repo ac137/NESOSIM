@@ -334,6 +334,14 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 	else:
 		# Two layers so a new snow density and an evolving old snow density
 		snowDensityNew=snowDensityFresh
+
+	#### PRECIP THRESHOLD TEST:
+	precip_threshold = 1 # try 1 mm water equivalent
+
+	# if precip is under threshold then set to zero
+	# probably don't need a separate variable here but leaving for now
+	idx_precip_under_threshold = precipDayT < precip_threshold
+	precipDayT[idx_precip_under_threshold] = 0
 		
 	# Convert precip to m/day
 	precipDayDelta=precipDayT/snowDensityNew
