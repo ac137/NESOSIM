@@ -29,11 +29,12 @@ print('Forcing file path:', forcing_save_path)
 print('Output path:', model_save_path)
 print('Figure save path:', figure_path)
 
-yearS=2019
+yearS=2018
 monthS=8 # August = 7
 dayS=0
 
-yearE=2020
+
+yearE=2019
 monthE=7 # April = 7
 dayE=30 # end day off by 1
 
@@ -49,11 +50,23 @@ ALF = LLF*0.15
 
 print(yearS, monthS, dayS, yearE, monthE, dayE)
 
-melt_factor = -0.001*10
+melt_factor = -1.
 melt_threshold = 0
+melt_method = 'linear'
+weigh_density = True
+
+melt_method_to_str = {'linear':'lin', 'constant':'const','melt_day_constant':'mday_const',
+                      'melt_day_lienar':'mday_lin'}
+
+melt_str = melt_method_to_str[melt_method]
+
+if weigh_density:
+    melt_str = 'denswt_' + melt_str
+
 
 #output_string = 'denswt_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
-output_string = 'lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
+#output_string = 'lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
+output_string = '{}_mt_{}_mf_{}'.format(melt_str, melt_threshold, melt_factor) + '_noacconmelt'+'_upperfirst'+'_precipthresh'
 
 #output_string = 'denswt_meltday3_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
 
@@ -66,7 +79,7 @@ NESOSIM.main(year1=yearS, month1=monthS, day1=dayS, year2=yearE, month2=monthE, 
 	icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr=output_string, IC=2, 
 	windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF, atmLossFactorT=ALF, meltThreshT=melt_threshold, meltFactorT=melt_factor,
 	dynamicsInc=1, leadlossInc=1, windpackInc=1,atmlossInc=1,meltlossInc=1,scaleCS=True, dx=100000,
-	plotdaily=0)
+	plotdaily=0, melt_method=melt_method, melt_dens_wt=weigh_density)
 
 
 
