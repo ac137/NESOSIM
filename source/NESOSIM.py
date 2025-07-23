@@ -282,6 +282,8 @@ def calcMelt(t2m_day, method='linear',density_weight=True):
 		count_threshold = 3 # setting to arbitrary number for now
 		melt_point_array = consecutive_melt_day_count > count_threshold
 		melting_grid_points = (melt_point_array)*meltFactor*(t2m_day-meltThresh)
+	elif method=='no_melt':
+		return [0, 0],0
 
 
 	# weighting melt by layer density
@@ -336,12 +338,18 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 		snowDensityNew=snowDensityFresh
 
 	#### PRECIP THRESHOLD TEST:
-	precip_threshold = 1 # try 1 mm water equivalent
+	# option to exclude precipitation below a given threshold (could mitigate "drizzle")
+	# currently biases values low, leaving out
 
-	# if precip is under threshold then set to zero
-	# probably don't need a separate variable here but leaving for now
-	idx_precip_under_threshold = precipDayT < precip_threshold
-	precipDayT[idx_precip_under_threshold] = 0
+	THRESHOLD_PRECIP = False
+
+	if THRESHOLD_PRECIP:
+		precip_threshold = 1 # try 1 mm water equivalent
+
+		# if precip is under threshold then set to zero
+		# probably don't need a separate variable here but leaving for now
+		idx_precip_under_threshold = precipDayT < precip_threshold
+		precipDayT[idx_precip_under_threshold] = 0
 		
 	# Convert precip to m/day
 	precipDayDelta=precipDayT/snowDensityNew
@@ -411,32 +419,27 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 	
 	#----------- Snow melt calculation
 
-	# todo: arrays to get the snow melt here
-
 	if meltlossInc==1:
 		# calc melt now returns a tuple of (upper layer, lower layer) melt
 		# melt_method denotes which melt process approach is chosen
 		# if melt_dens_wt == True, melt is weighted by layer density
 		snowMeltLossDelta, melt_location_array = calcMelt(tempDayT,melt_method, melt_dens_wt)
 		# melt_location_array is True if melt is occurring there
+		# so ~melt_location_array bool gets cast to 0 in multiplication operation where melt is occurring
+
+		# modify accumulation to avoid accumulating where melt is occurring
+		snowAccDelta = snowAccDelta*(~melt_location_array)
 	else:
 		# no melt
 		snowMeltLossDelta = (0,0)
 		melt_location_array = False
 
-	# update snow melt array (for budget)
-	# note; this value is cumulative (as are other budget values)
-
-	# this will be different for the melt upper layer first; 
-	
 
 	#------------ Update snow depths
 
-	# modify accumulation to avoid accumulating where melt is occurring?
-	snowAccDelta = snowAccDelta*(~melt_location_array) # negated; True if melt is not occurring; when multiplied gives 1. 
-
 	# melt_upper_layer_first condition; set as a function argument?
-	if melt_upper_layer_first:
+	# only run this part if melt is actually occurring
+	if melt_upper_layer_first and meltlossInc==1:
 		# budget calculation is more elaborate when melting upper layer first
 
 
@@ -479,14 +482,10 @@ def calcBudget(xptsG, yptsG, snowDepths, iceConcDayT, precipDayT, driftGdayT, wi
 
 		# update snow depths
 
-
-
-
 	# Old snow layer
 
-
-	if not melt_upper_layer_first:
-
+	else:
+	# either no melt or apply melt evenly across layers
 
 	# New (upper) layer
 		snowDepths[x+1, 0]=snowDepths[x, 0]+snowAccDelta  +snowWindPackLossDelta + snowLeadDelta + snowAtmDelta +snowAdvDelta[0]+snowDivDelta[0] +snowMeltLossDelta[0]#+snowRidgeT
