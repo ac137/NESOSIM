@@ -4,7 +4,7 @@
 
 import numpy as np
 import numpy.ma as ma
-
+import os
 import xarray as xr
 import datetime
 
@@ -18,46 +18,55 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr,
 	# print('Loading gridded snowfall forcing from:', forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
 
 	#------- Read in precipitation -----------
-	try:
-		# print('Loading gridded snowfall forcing from:', forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
-#		precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr+'_1', allow_pickle=True)
 
+	try:
+		# precip_path = forcingPath+'Precip/'+precipVar+'/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
+		precip_path = os.path.join(forcingPath,'Precip',precipVar,str(yearT),precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		print('Loading gridded snowfall forcing from:', precip_path)
+		precipDayG=np.load(precip_path, allow_pickle=True)
+		
 	except:
 		if (dayStr=='365'):
-			
-			precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
-			#precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr+'_1', allow_pickle=True)
-
+			precip_path = os.path.join(forcingPath,'Precip',precipVar,str(yearT),precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr)
+			precipDayG = np.load(precip_path)
+			# precipDayG=np.load(forcingPath+'Precip/'+precipVar+'/sf/'+str(yearT)+'/'+precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
 			print('no leap year data, used data from the previous day')
 		else:
+			precip_path = os.path.join(forcingPath,'Precip',precipVar,str(yearT),precipVar+'sf'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr)
+			print(precip_path)
+
 			print('No precip data for {}'.format(dayStr))
 			precipDayG = None
 			
 	
 	#------- Read in wind magnitude -----------
 	try:
-		# print('Loading gridded wind forcing from:', forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		windDayG=np.load(forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+		# wind_path = forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
+		wind_path = os.path.join(forcingPath,'Winds',windVar,str(yearT),windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		print('Loading gridded wind forcing from:', wind_path)
+		windDayG=np.load(wind_path, allow_pickle=True)
 		
 	except:
 		if (dayStr=='365'):
 			print('no leap year data, using data from the previous day')
-			windDayG=np.load(forcingPath+'Winds/'+windVar+'/'+str(yearT)+'/'+windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
-		
+			wind_path = os.path.join(forcingPath,'Winds',windVar,str(yearT),windVar+'winds'+dxStr+'-'+str(yearT)+'_d'+364+extraStr)
+			windDayG=np.load(wind_path, allow_pickle=True)		
 		else:
-			print('No precip data for {}'.format(dayStr))
+			print('No wind data for {}'.format(dayStr))
 			windDayG = None
 
 	#------- Read in ice concentration -----------
 	try:
-		print('Loading gridded ice conc forcing from:', forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+		# ice_path = forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
+		ice_path = os.path.join(forcingPath,'IceConc',concVar,str(yearT),'iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		print('Loading gridded ice conc forcing from:', ice_path)
+		iceConcDayG=np.load(ice_path, allow_pickle=True)
 		
 	except:
 		if (dayStr=='365'):
+			ice_path = os.path.join(forcingPath,'IceConc',concVar,str(yearT),'iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+364+extraStr)
 			print('no leap year data, using data from the previous day')
-			iceConcDayG=np.load(forcingPath+'IceConc/'+concVar+'/'+str(yearT)+'/iceConcG_'+concVar+dxStr+'-'+str(yearT)+'_d'+'364'+extraStr, allow_pickle=True)
+			iceConcDayG=np.load(ice_path, allow_pickle=True)
 	
 		else:
 			print('No ice conc data for {}'.format(dayStr))
@@ -70,9 +79,10 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr,
 	
 	#------- Read in ice drifts -----------
 	try:
-		print('Loading gridded ice drift forcing from:', forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
-		driftGdayG=np.load(forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)	
-
+		# drift_path = forcingPath+'IceDrift/'+driftVar+'/'+str(yearT)+'/'+driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
+		drift_path = os.path.join(forcingPath,'IceDrift',driftVar,str(yearT),driftVar+'_driftG'+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr)
+		print('Loading gridded ice drift forcing from:', drift_path)
+		driftGdayG=np.load(drift_path, allow_pickle=True)	
 	except:
 		# if no drifts exist for that day then just set drifts to nan array (i.e. no drift).
 		print('No drift data')
@@ -85,8 +95,23 @@ def loadDay(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr,
 	if type(driftGdayG) != type(None):
 		driftGdayG = ma.filled(driftGdayG, np.nan)
 	#print(driftGdayG)
+	#------- Read in temps  -----------
+	temp_type = 't2m_max' # max daily t2m
+#	temp_type = 't2m' # mean daily t2m
+	temp_path = forcingPath+'/Temp/'+precipVar+'/{}/'.format(temp_type)+str(yearT)+'/{}t2m'.format(precipVar)+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
+	print(temp_path)
+	try:
+		print('Loading gridded temperature data')
+		tempDayG=np.load(forcingPath+'/Temp/'+precipVar+'/{}/'.format(temp_type)+str(yearT)+'/{}t2m'.format(precipVar)+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+		print('mean of gridded temperature',np.nanmean(tempDayG))
+	except:
+		# if no temperatures exist just set to nan
+		print('No temp data')
+		tempDayG = np.empty((iceConcDayG.shape[0], iceConcDayG.shape[1]))
+		tempDayG[:] = np.nan
 
-	return iceConcDayG, precipDayG, driftGdayG, windDayG
+        
+	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 
 
 def getLeapYr(year):
@@ -126,7 +151,7 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 	
 	# variables to store values
 
-	iceConcY, precipY, driftGY, windY, days = [],[],[],[],[]
+	iceConcY, precipY, driftGY, windY, tempY, days = [],[],[],[],[],[]
 
 	currentYears = [] # store current year 
 	yearCurrent=year1
@@ -137,16 +162,17 @@ def load_year_into_memory(year1, month1, day1, year2, month2, day2, precipVar, w
 		currentYears.append(yearCurrent)
 
 		# load single day of data
-		iceConcDayG, precipDayG, driftGdayG, windDayG =loadDay(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
+		iceConcDayG, precipDayG, driftGdayG, windDayG, tempG =loadDay(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 
 		# add values to array
 		iceConcY.append(iceConcDayG)
 		precipY.append(precipDayG)
 		driftGY.append(driftGdayG)
 		windY.append(windDayG)
+		tempY.append(tempG)
 		days.append(day)
 
-	return np.array(days), currentYears, iceConcY, precipY, driftGY, windY
+	return np.array(days), currentYears, iceConcY, precipY, driftGY, windY, tempY
 
 
 def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath):
@@ -154,7 +180,7 @@ def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, win
 	year_dict = {} # make a nested dictionary by year
 
 	for y in range(yearS,yearE+1):
-		days, currentYears, iceConcY, precipY, driftGY, windY = load_year_into_memory(y, month1, day1, y, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
+		days, currentYears, iceConcY, precipY, driftGY, windY, tempY = load_year_into_memory(y, month1, day1, y, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 		d = {}
 		d['days']=days 
 		d['current_years']=currentYears
@@ -162,6 +188,7 @@ def load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, win
 		d['precip']=precipY
 		d['drift']=driftGY
 		d['wind']=windY
+		d['t2m']=tempY
 
 		# add the sub-dictionary for the given year to the main dictionary
 		year_dict[y] = d
@@ -191,7 +218,7 @@ def read_daily_data_from_memory(yearT, dayT, year_dict):
 	precipDayG = current_data['precip'][day_idx]
 	driftGdayG = current_data['drift'][day_idx]
 	windDayG = current_data['wind'][day_idx]
-	tempDayG = None # placeholder since temp is not needed currently
+	tempDayG = current_data['t2m'][day_idx] # can now add temperature here
 
 	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 
@@ -206,32 +233,33 @@ if __name__ == '__main__':
 	concVar='CDR'
 	driftVar='NSIDCv4'
 #	driftVar='OSISAF'
-	dxStr='50km'
+	dxStr='100km'
 	extraStr='v11'
 
 	print('running')
 
 	# pass this as an argument into loadDay?
-	forcingPath = '/home/alex/modeldev/NESOSIM/Forcings/'
+	# forcingPath = '/home/alex/modeldev/NESOSIM/Forcings/'
+	forcingPath = '/mnt/ccrp/data1/cabaja/snow_modelling/NESOSIM/forcings_full_year/100km/'
 	# print('loading years')
 	year1 = 2019
 	month1 = 0
 	day1 = 0
 	month2 = 2
 	day2 = 2
-	year2 = 2019
+	year2 = 2020
 	
-	yearS = 2018
-	yearE = 2019
+	yearS = 2019
+	yearE = 2020
 
 	print('loading multiyear')
 
 	multiyear_data = load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcingPath)
 
-	print(multiyear_data[2018]['days'])
+	print(multiyear_data[2019]['days'])
 
 
-	yearT = 2019
+	yearT = 2020
 	dayT = 3
 
 	data = read_daily_data_from_memory(yearT, dayT, multiyear_data)
