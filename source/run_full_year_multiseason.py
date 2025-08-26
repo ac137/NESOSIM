@@ -30,13 +30,18 @@ print('Forcing file path:', forcing_save_path)
 print('Output path:', model_save_path)
 print('Figure save path:', figure_path)
 
-yearS=1980
+#yearS=1980
+#yearS=1992
+yearS=2019
+#yearE=2020
+#yearE=1992
+yearE=2022
+
 monthS=8 # August = 7
 dayS=0
-yearS=2019
+#yearS=2019
 
-yearE=2021
-monthE=7 # April = 7
+monthE=7 # April = 4
 dayE=30 # end day off by 1
 
 # default values
@@ -52,11 +57,13 @@ ALF = LLF*0.15
 print(yearS, monthS, dayS, yearE, monthE, dayE)
 
 #melt_factor = -5.
-melt_factor = -2.0
+melt_factor = -1.0
 melt_threshold = 0
 melt_method = 'linear'
 #melt_method = 'no_melt'
 weigh_density = True
+
+melt_loss_flag=1
 
 melt_method_to_str = {'linear':'lin', 'constant':'const','melt_day_constant':'mday_const',
                       'melt_day_linear':'mday_lin','no_melt':'no_melt'}
@@ -72,6 +79,7 @@ if weigh_density:
 #output_string = '{}_mt_{}_mf_{}'.format(melt_str, melt_threshold, melt_factor) + '_noacconmelt'
 
 output_string = '{}_mt_{}_mf_{}'.format(melt_str, melt_threshold, melt_factor) + '_noacconmelt'+'_upperfirst'#+'_precipthresh'
+output_string += '_t2mmax'# denoting use of max daily t2m
 #output_string = 'no_melt'
 
 #output_string = 'denswt_meltday3_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
@@ -88,7 +96,7 @@ for y in range(yearS, yearE):
 	precipVar='ERA5', windVar='ERA5', driftVar='NSIDCv4', concVar='CDR', 
 	icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr=output_string, IC=2, 
 	windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF, atmLossFactorT=ALF, meltThreshT=melt_threshold, meltFactorT=melt_factor,
-	dynamicsInc=1, leadlossInc=1, windpackInc=1,atmlossInc=1,meltlossInc=1,scaleCS=True, dx=100000,
+	dynamicsInc=1, leadlossInc=1, windpackInc=1,atmlossInc=1,meltlossInc=melt_loss_flag,scaleCS=True, dx=100000,
 	plotdaily=0, melt_method=melt_method, melt_dens_wt=weigh_density)
 
 

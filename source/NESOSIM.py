@@ -626,11 +626,13 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	#print(driftGdayG)
 
 	#------- Read in temps (not currently used, placeholder) -----------
-	temp_path = forcingPath+'/Temp/'+precipVar+'/t2m/'+str(yearT)+'/{}t2m'.format(precipVar)+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
+	temp_type = 't2m_max' # max daily t2m
+#	temp_type = 't2m' # mean daily t2m
+	temp_path = forcingPath+'/Temp/'+precipVar+'/{}/'.format(temp_type)+str(yearT)+'/{}t2m'.format(precipVar)+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr
 	print(temp_path)
 	try:
 		print('Loading gridded temperature data')
-		tempDayG=np.load(forcingPath+'/Temp/'+precipVar+'/t2m/'+str(yearT)+'/{}t2m'.format(precipVar)+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
+		tempDayG=np.load(forcingPath+'/Temp/'+precipVar+'/{}/'.format(temp_type)+str(yearT)+'/{}t2m'.format(precipVar)+dxStr+'-'+str(yearT)+'_d'+dayStr+extraStr, allow_pickle=True)
 		print('mean of gridded temperature',np.nanmean(tempDayG))
 	except:
 		# if no temperatures exist just set to nan
