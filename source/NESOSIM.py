@@ -152,11 +152,11 @@ def fill_nan_no_negative(arr, region_maskG, negative_to_zero=True):
 
 	# Set infinte snow depths to nan
 	arr[~np.isfinite(arr)]=np.nan
-	arr[~np.isfinite(arr)]=np.nan
+#	arr[~np.isfinite(arr)]=np.nan
 	
 	# Set snow depths over land/coasts to nan (changed from zero)
 	arr[np.where(region_maskG>10)]=np.nan
-	arr[np.where(region_maskG>10)]=np.nan
+#	arr[np.where(region_maskG>10)]=np.nan
 
 	# Set snow depths over lakes (lake sic included in CDR) to nan (changed from zero)
 	arr[np.where(region_maskG<1)]=np.nan
@@ -643,6 +643,32 @@ def loadData(yearT, dayT, precipVar, windVar, concVar, driftVar, dxStr, extraStr
 	
 	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
 
+
+def read_daily_data_from_memory(yearT, dayT, year_dict):
+	''' Alternative to loadData for preloaded data for MCMC optimization.
+	Read the daily data into memory.
+	presupposes data is loaded into dictionary year_dict
+	where structure is:
+	year
+	-> 	variable
+	->	-> 	data at index by day (of year, not model day)
+	'''
+
+	# select the current year
+	current_data = year_dict[yearT]
+
+	# find corresponding day index for the given year
+	day_idx = np.where(current_data['days']==dayT)[0][0]
+
+	iceConcDayG = current_data['iceConc'][day_idx]
+	precipDayG = current_data['precip'][day_idx]
+	driftGdayG = current_data['drift'][day_idx]
+	windDayG = current_data['wind'][day_idx]
+	tempDayG = current_data['t2m'][day_idx] # added temp
+
+	return iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG
+
+
 def densityCalc(snowDepthsT, iceConcDayT, region_maskT):
 	"""Assign initial density based on snow depths
 
@@ -699,7 +725,8 @@ def updateMeltDayCount(melt_count_array, tempday):
 def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.', anc_data_pathT='../anc_data/', figPathT='../Figures/', 
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, atmLossFactorT=2.2e-8, meltThreshT=1,meltFactorT=-0.001,dynamicsInc=1, leadlossInc=1, 
-	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, meltlossInc=0, saveFolder='', dx=50000,scaleCS=False, melt_method='linear', melt_dens_wt=True):
+	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, meltlossInc=0, saveFolder='', dx=50000,scaleCS=False, melt_method='linear', melt_dens_wt=True, 
+	returnBudget=0, forcingVals=None):
 	""" 
 
 	Main model function
@@ -779,19 +806,22 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 
 	# savePath=outPath+saveFolder+'/'+saveStrNoDate
 	savePath = os.path.join(outPath,saveFolder,saveStrNoDate)
+	if saveData==1:
+
 	# Declare empty arrays for compiling budgets
-	if not os.path.exists(os.path.join(savePath,'budgets')):
-		os.makedirs(os.path.join(savePath,'budgets'))
-	if not os.path.exists(os.path.join(savePath,'final')):
-		os.makedirs(os.path.join(savePath,'final'))
+		if not os.path.exists(os.path.join(savePath,'budgets')):
+			os.makedirs(os.path.join(savePath,'budgets'))
+		if not os.path.exists(os.path.join(savePath,'final')):
+			os.makedirs(os.path.join(savePath,'final'))
 
 	global figpath
 	# figpath = os.path.join(figpathT,'Diagnostic',dxStr,saveStrNoDate)
 	figpath=figPathT+'/Diagnostic/'+dxStr+'/'+saveStrNoDate+'/'
-	if not os.path.exists(figpath):
-		os.makedirs(figpath)
-	if not os.path.exists(figpath+'/daily_snow_depths/'):
-		os.makedirs(figpath+'/daily_snow_depths/')
+	if saveData==1:
+		if not os.path.exists(figpath):
+			os.makedirs(figpath)
+		if not os.path.exists(figpath+'/daily_snow_depths/'):
+			os.makedirs(figpath+'/daily_snow_depths/')
 
 	precipDays, iceConcDays, windDays, tempDays, snowDepths, density, snowDiv, snowAdv, snowAcc, snowOcean, snowWindPack, snowWindPackLoss, snowWindPackGain, snowLead, snowAtm, snowMelt = genEmptyArrays(numDays, nx, ny)
 
@@ -841,7 +871,15 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		print ('Date:', dates[x])
 		
 		#-------- Load daily data 
-		iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
+
+		# check if using preloaded files (MCMC) or not
+		if forcingVals:
+			#print('using preloaded forcings')
+			#print(yearCurrent)
+			#print(day)	
+			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG = read_daily_data_from_memory(yearCurrent, day, forcingVals)
+		else:
+			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
 		print('temperature data', np.mean(tempDayG))
 		
 		#-------- Apply CloudSat scaling if used
