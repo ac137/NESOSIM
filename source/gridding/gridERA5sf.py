@@ -36,12 +36,14 @@ import cartopy.crs as ccrs
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
 
-from config import reanalysis_raw_path, forcing_save_path, figure_path
+# from config import reanalysis_raw_path, forcing_save_path, figure_path
 
 
+reanalysis_raw_path = '/mnt/ccrp/data1/cabaja/reanalysis_data/ERA5/sf_hourly_nh/'
+forcing_save_path = '/mnt/ccrp/data1/cabaja/snow_modelling/nesosim_gridded_data/'
+figure_path = '/mnt/ccrp/data1/cabaja/snow_modelling/NESOSIM/figures/'
 
-
-def main(year, startMonth=8, endMonth=11, dx=100000, extraStr='v11_1', data_path=reanalysis_raw_path+'ERA5/', out_path=forcing_save_path+'Precip/ERA5/', fig_path=figure_path+'Precip/ERA5/', anc_data_path='../../anc_data/'):
+def main(year, startMonth=8, endMonth=11, dx=100000, extraStr='v11', data_path=reanalysis_raw_path, out_path=forcing_save_path+'Precip/ERA5/', fig_path=figure_path+'Precip/ERA5/', anc_data_path='../../anc_data/'):
 
 
 	xptsG, yptsG, latG, lonG, proj = cF.create_grid(dxRes=dx)
@@ -111,8 +113,8 @@ def main(year, startMonth=8, endMonth=11, dx=100000, extraStr='v11_1', data_path
 
 #-- run main program
 if __name__ == '__main__':
-	for y in range(2019, 2020+1, 1):
+	for y in range(2008, 2020+1, 1):
 		print (y)
-		main(y)
+		main(y,startMonth=4, endMonth=7)
 
 

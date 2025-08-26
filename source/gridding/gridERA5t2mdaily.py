@@ -41,12 +41,15 @@ from config import figure_path
 #reanalysis_raw_path = '/data/kushner_group/ERA/t2m_uv_pr/'
 #reanalysis_raw_path = '/data/kushner_group/acabaj/e5-daily/'
 reanalysis_raw_path = '/users/jk/21/acabaj/e5_t2m_daily/'# for 2020
+reanalysis_raw_path = '/mnt/ccrp/data1/cabaja/reanalysis_data/ERA5/t2m_hourly_nh/'
 forcing_save_path = '/users/jk/21/acabaj/e5_t2m_for_nesosim/'
 #forcing_save_path = '/users/jk/18/acabaj/NESOSIM/forcing_2020_23/'
+forcing_save_path = '/mnt/ccrp/data1/cabaja/snow_modelling/nesosim_gridded_data/TempMax/'
+
 
 print(forcing_save_path)
-print(figure_path)
-figure_path = '/users/jk/18/acabaj/NESOSIM/figures/'
+#print(figure_path)
+#figure_path = '/users/jk/18/acabaj/NESOSIM/figures/'
 
 
 def get_day_diff(day_wanted, day_start):
@@ -62,7 +65,8 @@ def get_ERA5_temps(data_pathT, yearT):
 	# daily eg.  e5_t2m_uv_pr_daily_2018.nc
 #	tempdata=xr.open_mfdataset(data_pathT+'/e5_t2m_uv_pr_daily_{}.nc'.format(yearT))
 #	tempdata=xr.open_mfdataset(data_pathT+'/e5_t2m_daily_{}*.nc'.format(yearT))
-	tempdata=xr.open_mfdataset(data_pathT+'/e5_t2m_daily_nh_{}*.nc'.format(yearT))
+#	tempdata=xr.open_mfdataset(data_pathT+'/e5_t2m_daily_nh_{}*.nc'.format(yearT))
+	tempdata = xr.open_mfdataset(data_pathT+'/e5_t2m_daily_max_nh_{}*.nc'.format(yearT))
 		
 #	numDaysYearT=np.size(tempdata['time'][:])
 	numDaysYearT=np.size(tempdata['valid_time'][:])
@@ -102,15 +106,15 @@ def get_ERA5_temps(data_pathT, yearT):
 
 #	return xpts, ypts, tempdata_daily
 
-YEAR_START = 2020
-YEAR_END = 2021
+YEAR_START = 2019
+YEAR_END = 2025
 MONTH_START = 1
 MONTH_END = 12
 DAY_START = 0
 DAY_END = 30
 
 MONTHS_ALL = ['01','02','03','04','09','10','11','12']
-MONTHS_ALL = ['05','06','07','08']
+MONTHS_ALL += ['05','06','07','08']
 #MONTHS_ALL = ['01']
 
 LOWER_LAT = 30
@@ -125,7 +129,7 @@ dxStr=str(int(dx/1000))+'km'
 print(dxStr)
 
 
-region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(ANC_DATA_PATH, proj, xypts_return=1)
+region_mask, xptsI, yptsI, _, _ = cF.get_region_mask_pyproj(ANC_DATA_PATH, proj, xypts_return=1)
 region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 
 varStr='t2m'

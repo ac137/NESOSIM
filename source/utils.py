@@ -822,7 +822,8 @@ def get_ERA5_precip_days_pyproj(proj, era5_data_path, yearStr, monStr, numday, l
 
 	print(yearStr, monStr, numday)
 
-	f1 = Dataset(era5_data_path+'/ERA5_'+varStr+'_'+yearStr+monStr+'cds.nc', 'r')
+	# f1 = Dataset(era5_data_path+'/ERA5_'+varStr+'_'+yearStr+monStr+'cds.nc', 'r')
+	f1 = Dataset(era5_data_path+'/e5_sf_hourly_nh_{}_{}.nc'.format(yearStr,monStr),'r')
 
 	# Units given in m of freshwater in the previous 1 hour period. 
 	# So to convert to kg/m2/s multiply by den
