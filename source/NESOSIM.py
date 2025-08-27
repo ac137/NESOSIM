@@ -919,4 +919,9 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 		# Plot final snow budget terms 
 		cF.plot_budgets_cartopy(lonG, latG, precipDayG, windDayG, snowDepths[x+1], snowOcean[x+1], snowAcc[x+1], snowDiv[x+1], \
 		snowAdv[x+1], snowLead[x+1], snowAtm[x+1], snowWindPack[x+1], snowWindPackLoss[x+1], snowWindPackGain[x+1], density[x+1], dates[-1], figpath, totalOutStr='budgetplot')
+	# another option/arg for main function
+    if (returnBudget==1):
+		budget = cF.ReturnMCMCBudget(snowDepths, density, iceConcDays)
+		# NESOSIM.main returns a value here, now!
+		return budget
 
