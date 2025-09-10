@@ -27,6 +27,7 @@ import NESOSIM
 USE_DENS = False
 USE_DENS_CLIM = True
 
+forcing_save_path = '../forcings_full_year/'
 
 def get_grids(dx):
 	'''get grid coordinates/mask for NESOSIM'''
@@ -38,7 +39,7 @@ def get_grids(dx):
 	anc_data_pathT = '../anc_data/'
 	forcingPath = forcing_save_path
 
-	region_mask, xptsI, yptsI = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
+	region_mask, xptsI, yptsI, _, _ = cF.get_region_mask_pyproj(anc_data_pathT, proj, xypts_return=1)
 	region_maskG = griddata((xptsI.flatten(), yptsI.flatten()), region_mask.flatten(), (xptsG, yptsG), method='nearest')
 	return region_maskG, xptsG, yptsG
 
@@ -288,6 +289,8 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	LLF = params[1]
 #	WAT = params[2]
 	WAT = 5# 2par use default wat
+	melt_threshold=0
+	melt_factor=-1.
 
 	# variables for mcmc model run; the constants could be moved outside the 
 	# function (so as not to hardcode) but leaving them here for now
@@ -304,12 +307,20 @@ def loglike(params, uncert, forcings, weight_factor=None):
 
 	# loop over years to run NESOSIM
 	for year1 in range(startYear, endYear):
+		
 		month1=month_start-1 # 8=September
 		day1=day_start-1
 
 		year2=year1+1
-		month2=3 # 4=May
-		day2=29
+		# for ending on April 30th
+		# month2=3 # 4=May
+		# day2=29
+		# for ending on August 31st
+		month2 = 7
+		day2 = 30
+		# atmosphere loss factor
+		ALF=LLF*0.15 # change later or make calibratable? leaving like this for now though
+
 
 		date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
 
@@ -323,11 +334,15 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	    outPathT=model_save_path, 
 	    forcingPathT=forcing_save_path, 
 	    figPathT=figure_path+'Model/',
-	    precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', 
+							   # modifying to run with NSIDCv4 drift here instead of OSISAF
+	    precipVar='ERA5', windVar='ERA5', driftVar='NSIDCv4', concVar='CDR', 
 	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
-	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF,
-	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, saveData=0, plotBudgets=0, plotdaily=0,
-	    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcings)
+	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF, atmLossFactorT=ALF,
+		meltThreshT=melt_threshold, meltFactorT=melt_factor,
+	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, meltlossInc=1,
+		saveData=0, plotBudgets=0, plotdaily=0,
+	    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcings,
+		melt_method='linear',melt_dens_wt=True)
 
 
 		# get depth by year for given product & density
@@ -377,9 +392,17 @@ def loglike(params, uncert, forcings, weight_factor=None):
 
 
 	# concatenate density dataframes together & calculate climatology
+
+	# model mean density
 	densMMAll = pd.concat(densMMAll)
 	clim_dens = calc_clim(densMMAll)
+	# remove month index of 7 in clim_dens since station density climatology is missing that value
+	clim_dens = clim_dens[clim_dens.index!=7]
+
+	
 	densMMAll = clim_dens.values
+
+	
 
 	# concatenate depth dataframes together & calculate NESOSIM depth climatology
 	depthMMAll = pd.concat(depthMMAll)
@@ -497,11 +520,13 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 
 
 # maximum number of iterations, start small for testing
-ITER_MAX = 5000
+# ITER_MAX = 5000
+ITER_MAX = 3 # testing
 UNCERT = 10 # obs uncertainty for log-likelihood (10 cm for OIB)
 
 
 # prior parameter standard deviation; will be scaled down later
+# i.e. if this is equal to 1, then for wind packing this is 1e-7; etc
 PAR_SIGMA = [1, 1] # 2 parameters
 
 # step size determined based on param standard deviation (one per parameter)
@@ -511,7 +536,7 @@ PAR_SIGMA = [1, 1] # 2 parameters
 LOGLIKE_WEIGHT = 1
 
 # if true, use OIB climatology; 'OIB-clim'/'oib-averaged'
-CLIM_OIB = True
+CLIM_OIB = False # established that we want to use OIB-daily-gridded in general
 
 # leftover adjustments to filename
 if USE_DENS:
@@ -520,8 +545,6 @@ elif USE_DENS_CLIM:
 	DENS_STR = '_density_clim'
 else:
 	DENS_STR = ''
-
-
 
 # string added to filename to specify configuration
 DENS_STR += '2par_io_final_averaged_w1_default_v1_default'
@@ -557,10 +580,10 @@ NPARS = len(par_vals)
 yearS=2010
 yearE=2015
 # these start and end variables are for loading data; load the whole year
-month1 = 0
-day1 = 0
-month2 = 11 #is this the indexing used?, ie would this be december
-day2 = 30 # would this be the 31st? I think so
+month1_forcing = 0
+day1_forcing = 0
+month2_forcing = 11 #is this the indexing used?, ie would this be december
+day2_forcing = 30 # would this be the 31st? I think so
 
 # model parameters for input, also referenced by loglike()
 precipVar='ERA5'
@@ -581,8 +604,8 @@ region_maskG, xptsG, yptsG = get_grids(dx)
 # variables without them being explicitly passed to the function. take caution
 # when naming variables
 
-day_start = 1
-month_start = 9
+day_start = 1 # start day for running the model itself (1 = 1st day of month)
+month_start = 9 # start month for running the model itself (9= september)
 
 # preload oib data; either for log-likelihood or for stats
 oib_dict = preload_oib(dxStr, yearS, yearE)
@@ -590,7 +613,7 @@ forcing_io_path=forcing_save_path+dxStr+'/'
 
 # load NESOSIM input data
 print('loading input data')
-forcing_dict = io.load_multiple_years(yearS, yearE, month1, day1, month2, day2, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcing_io_path)
+forcing_dict = io.load_multiple_years(yearS, yearE, month1_forcing, day1_forcing, month2_forcing, day2_forcing, precipVar, windVar, concVar, driftVar, dxStr, extraStr, forcing_io_path)
 print('finished loading input')
 
 
@@ -603,18 +626,25 @@ print('r, rmse, merr, std, std_n, std_o')
 print(stats_0)
 
 # lists for collecting MCMC values/stats
+
+# list of (accepted) parameter values
 par_list = [par_vals] # will become an n*m list of accepted parameters (m = # of pars)
+# list of calculated log-likelihoods (accepted)
 loglike_list = [p0]
-stats_list = [stats_0] # collect rmse and r also, etc.
+# list of statistics (RMSE, correlation, etc) for accepted parameters
+stats_list = [stats_0] 
+# rejected parameters
 rejected_pars = []
+# log-likelihoods for rejected parameters
 rejected_lls = []
+# statistics for rejected parameters
 rejected_stats = []
 
 
 # metropolis mcmc
 
-# pre-calculate all the MCMC steps from the prior
-# (since the step isn't adaptive, this can be done all at once)
+# pre-calculate all the MCMC step sizes from the prior
+# (since the step size isn't adaptive, this can be done all at once)
 # not inputting 1e-7 as values since np.random.normal has difficulty with very
 # large/small values. instead can scale afterwards
 step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))
@@ -632,7 +662,7 @@ for i in range(ITER_MAX):
 	# select step size corresponding to iteration number (from pre-generated values)
 	rand_val = step_vals[i]
 
-	# update parameters
+	# update parameters (add step to parameter value)
 	par_new = par_vals + rand_val
 
 	print('new parameter ', par_new)
@@ -672,14 +702,16 @@ for i in range(ITER_MAX):
 	if i%1000 == 0 and i > 0:
 		# save intermediate output every 1k iterations just in case 
 		print('Writing output for {} iterations...'.format(i))
-		fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+		# save in folder called mcmc_output_intermediate
+		fname = 'mcmc_output_intermediate/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
 #TODO: more elegant filename formatting (format arrays so I don't have to write strings in)
 # save final output to file
 
-fname = 'mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+# put in subfolder called 'mcmc_output'
+fname = 'mcmc_output/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
 
 print(ITER_MAX)
 print(fname)
