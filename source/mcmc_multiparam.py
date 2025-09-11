@@ -520,8 +520,8 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 
 
 # maximum number of iterations, start small for testing
-# ITER_MAX = 5000
-ITER_MAX = 3 # testing
+ITER_MAX = 5000
+#ITER_MAX = 100 # testing
 UNCERT = 10 # obs uncertainty for log-likelihood (10 cm for OIB)
 
 
@@ -538,21 +538,17 @@ LOGLIKE_WEIGHT = 1
 # if true, use OIB climatology; 'OIB-clim'/'oib-averaged'
 CLIM_OIB = False # established that we want to use OIB-daily-gridded in general
 
-# leftover adjustments to filename
-if USE_DENS:
-	DENS_STR = '_density'
-elif USE_DENS_CLIM:
-	DENS_STR = '_density_clim'
-else:
-	DENS_STR = ''
+# extra string for filenames
+EXTRA_STR = ''
 
 # string added to filename to specify configuration
-DENS_STR += '2par_io_final_averaged_w1_default_v1_default'
+#DENS_STR += '2par_io_final_averaged_w1_default_v1_default'
 
 # parameter value array used in mcmc (this array is updated)
 # try over both wind packing factor and blowing snow factor, now
 # order here is [WP, BS]
-par_vals = np.array([5.8e-7, 2.9e-7]) # prior values
+#par_vals = np.array([5.8e-7, 2.9e-7]) # prior values
+par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values from MCMC calibration
 
 #can also continue from previous mcmc with last accepted value
 
@@ -703,7 +699,7 @@ for i in range(ITER_MAX):
 		# save intermediate output every 1k iterations just in case 
 		print('Writing output for {} iterations...'.format(i))
 		# save in folder called mcmc_output_intermediate
-		fname = 'mcmc_output_intermediate/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+		fname = 'mcmc_output_intermediate/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],EXTRA_STR)
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
 
 
@@ -711,7 +707,7 @@ for i in range(ITER_MAX):
 # save final output to file
 
 # put in subfolder called 'mcmc_output'
-fname = 'mcmc_output/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}noseed.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],DENS_STR)
+fname = 'mcmc_output/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],EXTRA_STR)
 
 print(ITER_MAX)
 print(fname)

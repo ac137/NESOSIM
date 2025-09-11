@@ -867,8 +867,9 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 			day=day-numDaysYear1
 			yearCurrent=year2
 		
-		print ('Day of year:', day)
-		print ('Date:', dates[x])
+#		print output day of year if applicable
+#		print ('Day of year:', day)
+#		print ('Date:', dates[x])
 		
 		#-------- Load daily data 
 
@@ -880,7 +881,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG = read_daily_data_from_memory(yearCurrent, day, forcingVals)
 		else:
 			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG =loadData(yearCurrent, day, precipVar, windVar, concVar, driftVar, dxStr, extraStr)
-		print('temperature data', np.mean(tempDayG))
+#		print('temperature data', np.mean(tempDayG))
 		
 		#-------- Apply CloudSat scaling if used
 		if scaleCS:
