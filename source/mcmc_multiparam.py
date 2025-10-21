@@ -472,7 +472,7 @@ def loglike(params, uncert, forcings, weight_factor=None):
 
 	return log_p, [r_a, rmse, merr, std, std_n, std_o]
 
-def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls):
+def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls, trace_data):
 	'''write MCMC output (accepted and rejected parameters with statistics)
 	  to an hdf file at location fname.
 	  note: will overwrite existing files!'''
@@ -492,9 +492,18 @@ def write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected
 		rejected_df[par_names[i]] = rej_par_arr[:,i]
 	rejected_df['loglike'] = rejected_lls
 
+	# trace_data is a list consisting of trace_pars, trace_lls, trace_stats
+
+	trace_df = pd.DataFrame(np.array(trace_data[2]), columns=stat_headings)
+	trace_par_arr = np.array(trace_data[0])
+	for i in range(len(par_names)):
+		trace_df[par_names[i]] = trace_par_arr[:,i]
+	trace_df['loglike'] = trace_data[1]
+
 	valid_df.to_hdf(fname, key='valid')
 	rejected_df.to_hdf(fname, key='rejected')
 	meta_df.to_hdf(fname, key='meta')
+	trace_df.to_hdf(fname, key='trace')
 
 
 
@@ -521,7 +530,7 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 
 # maximum number of iterations, start small for testing
 ITER_MAX = 5000
-#ITER_MAX = 100 # testing
+# ITER_MAX = 100 # testing
 UNCERT = 10 # obs uncertainty for log-likelihood (10 cm for OIB)
 
 
@@ -547,12 +556,16 @@ EXTRA_STR = ''
 # parameter value array used in mcmc (this array is updated)
 # try over both wind packing factor and blowing snow factor, now
 # order here is [WP, BS]
-#par_vals = np.array([5.8e-7, 2.9e-7]) # prior values
-par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values from MCMC calibration
+#par_vals = np.array([5.8e-7, 2.9e-7]) # prior/initial values
+# par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values from MCMC calibration from previous work
+
 
 #can also continue from previous mcmc with last accepted value
 
-# par_vals = np.array([1.7026104191089884e-06, 1.0808249925065788e-07])
+# par_vals = np.array([1.1291036008519384e-06,2.5738983627997567e-07])
+# par_vals = np.array([1.0467016765954184e-06,2.2428061497527156e-07])
+
+par_vals = np.array([1.5709136754892937e-06, 3.0436526641925934e-07])
 
 # initial (prior) parameter values
 PARS_INIT = par_vals.copy()
@@ -636,6 +649,12 @@ rejected_lls = []
 # statistics for rejected parameters
 rejected_stats = []
 
+# values for collecting mcmc trace
+# keep accepted values when accepted or rejected; constant if proposed value is rejected
+
+trace_pars = [par_vals]
+trace_lls = [p0]
+trace_stats = [stats_0]
 
 # metropolis mcmc
 
@@ -688,11 +707,18 @@ for i in range(ITER_MAX):
 			par_list.append(par_vals)
 			loglike_list.append(p0)
 			stats_list.append(stats)
+			
+
 		else:
 			print('rejected value')
 			rejected_pars.append(par_new)
 			rejected_lls.append(p)
 			rejected_stats.append(stats)
+
+		# accumulate values into trace (most recent accepted value, repeats with iterations)
+		trace_pars.append(par_vals)
+		trace_lls.append(p0)
+		trace_stats.append(stats)
 
 		print('acceptance rate: {}/{} = {}'.format(acceptance_count,i+1,acceptance_count/float(i+1)))
 	if i%1000 == 0 and i > 0:
@@ -700,7 +726,9 @@ for i in range(ITER_MAX):
 		print('Writing output for {} iterations...'.format(i))
 		# save in folder called mcmc_output_intermediate
 		fname = 'mcmc_output_intermediate/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],EXTRA_STR)
-		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
+
+		# include trace data also
+		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls, [trace_pars, trace_lls, trace_stats])
 
 
 #TODO: more elegant filename formatting (format arrays so I don't have to write strings in)
@@ -711,5 +739,5 @@ fname = 'mcmc_output/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}.h5'.format(ITER_M
 
 print(ITER_MAX)
 print(fname)
-write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls)
+write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls, [trace_pars, trace_lls, trace_stats])
 
