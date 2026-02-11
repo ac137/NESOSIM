@@ -529,7 +529,8 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 
 
 # maximum number of iterations, start small for testing
-ITER_MAX = 5000
+#ITER_MAX = 5000
+ITER_MAX = 20000
 # ITER_MAX = 100 # testing
 UNCERT = 10 # obs uncertainty for log-likelihood (10 cm for OIB)
 
@@ -557,7 +558,7 @@ EXTRA_STR = ''
 # try over both wind packing factor and blowing snow factor, now
 # order here is [WP, BS]
 #par_vals = np.array([5.8e-7, 2.9e-7]) # prior/initial values
-# par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values from MCMC calibration from previous work
+par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values from MCMC calibration from previous work
 
 
 #can also continue from previous mcmc with last accepted value
@@ -565,7 +566,7 @@ EXTRA_STR = ''
 # par_vals = np.array([1.1291036008519384e-06,2.5738983627997567e-07])
 # par_vals = np.array([1.0467016765954184e-06,2.2428061497527156e-07])
 
-par_vals = np.array([1.5709136754892937e-06, 3.0436526641925934e-07])
+#par_vals = np.array([1.5709136754892937e-06, 3.0436526641925934e-07])
 
 # initial (prior) parameter values
 PARS_INIT = par_vals.copy()
