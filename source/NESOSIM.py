@@ -742,7 +742,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	precipVar='ERA5', windVar='ERA5', driftVar='OSISAF', concVar='CDR', icVar='ERAI', densityTypeT='variable', 
 	outStr='', extraStr='', IC=2, windPackFactorT=0.1, windPackThreshT=5., leadLossFactorT=0.1, atmLossFactorT=2.2e-8, meltThreshT=1,meltFactorT=-0.001,dynamicsInc=1, leadlossInc=1, 
 	windpackInc=1, atmlossInc=0, saveData=1, plotBudgets=1, plotdaily=1, meltlossInc=0, saveFolder='', dx=50000,scaleCS=False, melt_method='linear', melt_dens_wt=True, 
-	returnBudget=0, forcingVals=None, prev_year_budget = None):
+	returnBudget=0, forcingVals=None, prev_year_sd = None):
 	""" 
 
 	Main model function
@@ -750,6 +750,59 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	Args:
 		The various model configuration parameters
 
+
+	year1 (int) :start year of model
+	month1 (int): start month of model (january = 0)
+	day1 (int): start day of model (first day of month = 0)
+	year2 (int): end year of run
+	month2(int): end month of run (january = 0)
+	day2 (int): end day of run (first day of month = 0)
+	outPathT (str): path for saving output 
+	forcingPathT (str): path for loading forcings 
+	anc_data_pathT (str): path for loading ancillary data 
+	figPathT (str): path for saving figures
+
+	precipVar (str): string denoting precipitation product
+	windVar (str): string denoting wind product
+	driftVar (str): string denoting ice drift product
+	concVar (str): string denoting ice concentration product
+	icVar (str): string denoting initial condition product
+	
+	densityTypeT (str): denotes snow density used in budget calculations
+	outStr (str): string appended to output path
+	extraStr (str): string appended to output path
+	
+	IC (int): specifies initial conditions
+
+	windPackFactorT (float): wind packing factor (controls strength of wind packing process)
+	windPackThreshT (float): wind action threshold (m/s, threshold speed for wind processes to occur)
+	leadLossFactorT (float): blowing snow loss to open water factor (controls strength of blowing snow loss to atmosphere)
+	atmLossFactorT (float): blowing snow loss to atmosphere factor (controls strength of blowing snow loss to atmosphere)
+	meltThreshT (float): melt threshold temperature (degrees C; threshold above which melt occurs)
+	meltFactorT (float): melt factor (controls melt loss rate)
+	
+	dynamicsInc (int): toggles ice dynamics (convergence & divergence) process (1 = True, 0 = False)
+	leadlossInc (int): toggles blowing snow loss to open water process
+	windpackInc (int): toggles wind packing process
+	atmlossInc (int): toggles blowing snow loss to atmosphere process
+	saveData (int): toggles whether or not output data is saved to disk
+	plotBudgets (int): toggles plotting of budgets
+	plotdaily (int): toggles daily plotting of output
+	meltlossInc (int): toggles melt loss process
+	
+	saveFolder (str): name of folder to save output in (in addition to outPathT)
+
+	dx (int): grid cell spacing, in metres (default 100000, i.e. 100 km)
+
+	scaleCS (bool): if True, use CloudSat scaling of reanalysis input data (available for ERA5, MERRA-2, JRA-55)
+	melt_method (str): specify which melt process is used
+	melt_dens_wt (bool): if True, scale melt rate in each layer by layer snow density
+
+	returnBudget (int): toggles whether or not main() returns some values from the model budget
+		(used for MCMC and continuous runs)
+	forcingVals (dict of np.ndarray): preloaded forcing data (loaded using io_helpers.load_multiple_years)
+	prev_year_sd (xarray.dataarray): snow depth for 2 layers from last day of previous year budget for 
+		initial conditions for continuous run (IC=3); pass as budget['snowDepth'][-1,:,:,:]
 	"""
 
 	#------- Create map projection
@@ -844,20 +897,23 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 	print('IC:', IC)
 	if (IC>0):
 		if IC == 3:
-			# continuous model run; need to pass prev_year_budget to main function
+			# continuous model run; need to pass prev_year_sd to main function
 			# and make sure that returnBudget=1
 			print('Continuous run using previous year initial conditions')
-			if type(prev_year_budget) != type(None): # check if previous year budget exists first
+			if type(prev_year_sd) != type(None): # check if previous year budget exists first
 				# grab budget values here
 				print('using previous year value for IC')
-				# prev_year_budget['snowDepth'] has dims [time, layers, x, y]
+				# prev_year_sd has dims [layers, x, y]
+				# from returned value pass budget['snowDepth'][-1,:,:,:] to NESOSIM main function as prev_year_sd
 				# take last time value (-1), layer by index, and all x and y
-				snowDepths[0, 0] = prev_year_budget['snowDepth'][-1,0,:,:] # grab last value
-				snowDepths[0, 1] = prev_year_budget['snowDepth'][-1,1,:,:] # grab last value
+				snowDepths[0, 0] = prev_year_sd[0,:,:] # layer 0
+				snowDepths[0, 1] = prev_year_sd[1,:,:] # layer 1
 				
 			else:
 				print('No budget from previous year, using prescribed IC')
 				IC = 2 # proceed as if IC = 2
+				# n.b. this doesn't change the save file string
+				# if the previous year budget isn't passed properly then it may run as if IC=2 while saving under IC=3
 
 		
 		if (IC==1):
@@ -914,7 +970,7 @@ def main(year1, month1, day1, year2, month2, day2, outPathT='.', forcingPathT='.
 
 		# check if using preloaded files (MCMC) or not
 		if forcingVals:
-			#print('using preloaded forcings')
+			print('using preloaded forcings')
 			#print(yearCurrent)
 			#print(day)	
 			iceConcDayG, precipDayG, driftGdayG, windDayG, tempDayG = read_daily_data_from_memory(yearCurrent, day, forcingVals)

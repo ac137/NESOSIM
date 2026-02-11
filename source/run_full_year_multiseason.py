@@ -31,12 +31,13 @@ print('Output path:', model_save_path)
 print('Figure save path:', figure_path)
 
 yearS=1980
+yearE=1983
 #yearS=1992
 # yearS=1980
 # yearS=2012
 #yearE=2020
 #yearE=1992
-yearE=2023 # year of end date (i.e. ends at e.g. august 2020 if set to 2020 here, 2020 will not run unless set to 2021 here
+# yearE=2023 # year of end date (i.e. ends at e.g. august 2020 if set to 2020 here, 2020 will not run unless set to 2021 here
 
 monthS=8 # August = 7
 dayS=0
@@ -94,7 +95,7 @@ cs_scaling = True
 output_string = '{}_mt_{}_mf_{}'.format(melt_str, melt_threshold, melt_factor) + '_noacconmelt'+'_upperfirst'#+'warmprecipthresh'#+'_precipthresh50'
 output_string += '_t2mmax' #+ 'test'# denoting use of max daily t2m
 #output_string = 'no_melt'
-output_string+='_continuoustest'
+
 
 # 
 if melt_loss_flag ==0:
@@ -105,15 +106,16 @@ if melt_loss_flag ==0:
 #output_string = 'denswt_meltday3_lin_mt_{}_mf_{}'.format(melt_threshold, melt_factor)
 
 IC = 3 # initial conditions
-budget_prev = None
-
+budget_sd = None
+if IC==3:
+	output_string+='_continuoustest2'
 
 for y in range(yearS, yearE):
     # if y == 1987:
     #     continue
     
 
-    budget_prev = NESOSIM.main(year1=y, month1=monthS, day1=dayS, year2=y+1, month2=monthE, day2=dayE,
+    budget_all = NESOSIM.main(year1=y, month1=monthS, day1=dayS, year2=y+1, month2=monthE, day2=dayE,
 	outPathT=model_save_path, 
 	forcingPathT=forcing_save_path, 
 	figPathT=figure_path,
@@ -122,8 +124,8 @@ for y in range(yearS, yearE):
 	windPackFactorT=WPF, windPackThreshT=5, leadLossFactorT=LLF, atmLossFactorT=ALF, meltThreshT=melt_threshold, meltFactorT=melt_factor,
 	dynamicsInc=1, leadlossInc=1, windpackInc=1,atmlossInc=1,meltlossInc=melt_loss_flag,scaleCS=cs_scaling, dx=100000,
 	plotdaily=0, melt_method=melt_method, melt_dens_wt=weigh_density,
-							   returnBudget=1, prev_year_budget = budget_prev)
-
+							   returnBudget=1, prev_year_sd = budget_sd)
+    budget_sd = budget_all['snowDepth'][-1,:,:,:]
 # print(budget_prev['snowDepth'][4,0,:,:])
 
 
