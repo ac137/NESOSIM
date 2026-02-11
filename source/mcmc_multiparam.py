@@ -7,6 +7,7 @@
 # NESOSIM was originally developed by Alek Petty and is available at
 # https://github.com/akpetty/NESOSIM
 
+# MCMC calibration for blowing snow to atmosphere and open water separately
 
 import numpy as np
 import numpy.ma as ma
@@ -284,13 +285,21 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	# default llf 2.9e-7 
 	indices = [31,59,21,52] # oib depth mean region indices; hardcoding over here for now
 
-	# passing params as [wpf, llf]
-	WPF = params[0]
-	LLF = params[1]
-#	WAT = params[2]
-	WAT = 5# 2par use default wat
+	# passing params as [wpf, llf, alf]
+
+	# for single parameter calibration
+	# could probably use if statements or something to disambiguate the variable assignment for runs some other time
+	WPF, LLF, ALF = 2.0504155592128743e-06, 4.0059442776163867e-07, 4.0059442776163867e-07*0.15
+	melt_factor = params[0]*-1
+
+	# this needs to be changed if the parameter set is changed
+	# WPF = params[0]
+	# LLF = params[1]
+	# ALF = params[2]
+	# melt_factor = params[3]*-1 # melt factor has a negative sign in front of it
+	WAT = 5#  use default wat
 	melt_threshold=0
-	melt_factor=-1.
+	# melt_factor=-1.
 
 	# variables for mcmc model run; the constants could be moved outside the 
 	# function (so as not to hardcode) but leaving them here for now
@@ -305,6 +314,13 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	depthMMAll = [] # depth monthly means
 	depth_mean_oib_region_all = [] #depth monthly means for oib region
 
+	if CONTINUOUS_RUN:
+		model_ic = 3
+		
+	else:
+		model_ic = 2
+	# initialize with no budget
+	prev_year_snow_depth=None
 	# loop over years to run NESOSIM
 	for year1 in range(startYear, endYear):
 		
@@ -315,11 +331,11 @@ def loglike(params, uncert, forcings, weight_factor=None):
 		# for ending on April 30th
 		# month2=3 # 4=May
 		# day2=29
-		# for ending on August 31st
+		# for ending on August 31st; month2 = 7, day2 = 30
 		month2 = 7
 		day2 = 30
-		# atmosphere loss factor
-		ALF=LLF*0.15 # change later or make calibratable? leaving like this for now though
+
+		
 
 
 		date_start = pd.to_datetime('{}{:02d}{:02d}'.format(year1,month1+1,day1+1))
@@ -336,13 +352,16 @@ def loglike(params, uncert, forcings, weight_factor=None):
 	    figPathT=figure_path+'Model/',
 							   # modifying to run with NSIDCv4 drift here instead of OSISAF
 	    precipVar='ERA5', windVar='ERA5', driftVar='NSIDCv4', concVar='CDR', 
-	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=2, 
+	    icVar='ERA5', densityTypeT='variable', extraStr='v11', outStr='mcmc', IC=model_ic, 
 	    windPackFactorT=WPF, windPackThreshT=WAT, leadLossFactorT=LLF, atmLossFactorT=ALF,
 		meltThreshT=melt_threshold, meltFactorT=melt_factor,
 	    dynamicsInc=1, leadlossInc=1, windpackInc=1, atmlossInc=1, meltlossInc=1,
 		saveData=0, plotBudgets=0, plotdaily=0,
 	    scaleCS=True, dx=dx,returnBudget=1, forcingVals=forcings,
-		melt_method='linear',melt_dens_wt=True)
+		melt_method='linear',melt_dens_wt=True,
+							   prev_year_sd=prev_year_snow_depth)
+		# )
+		prev_year_snow_depth = budgets['snowDepth'][-1,:,:,:] # this'll get passed on at next year
 
 
 		# get depth by year for given product & density
@@ -527,18 +546,20 @@ oib_depth_std = pd.read_hdf('oib_monthly_clim.h5',key='std')['daily mean']
 # seed for testing
 #np.random.seed(42)
 
-
+############ MODEL PARAMETERS ETC 
 # maximum number of iterations, start small for testing
-#ITER_MAX = 5000
-ITER_MAX = 20000
-# ITER_MAX = 100 # testing
+ITER_MAX = 5000
+# ITER_MAX = 20000
+# ITER_MAX = 1000
+# ITER_MAX = 10 # testing
 UNCERT = 10 # obs uncertainty for log-likelihood (10 cm for OIB)
 
 
 # prior parameter standard deviation; will be scaled down later
 # i.e. if this is equal to 1, then for wind packing this is 1e-7; etc
-PAR_SIGMA = [1, 1] # 2 parameters
+# PAR_SIGMA = [1, 1, 1, 1] # corresponding to number of parameters
 
+PAR_SIGMA = [1]
 # step size determined based on param standard deviation (one per parameter)
 
 # weight for different terms in log-likelihood; currently hardcoded to 1 in
@@ -546,10 +567,11 @@ PAR_SIGMA = [1, 1] # 2 parameters
 LOGLIKE_WEIGHT = 1
 
 # if true, use OIB climatology; 'OIB-clim'/'oib-averaged'
-CLIM_OIB = False # established that we want to use OIB-daily-gridded in general
+CLIM_OIB = False # established that we want to use OIB-daily-gridded in general, leave as False
+CONTINUOUS_RUN = True # continuous multi-year run of model
 
-# extra string for filenames
-EXTRA_STR = ''
+# extra string for calib output filenames
+EXTRA_STR = 'calib-melt-only-oibdaily-continuousrun'
 
 # string added to filename to specify configuration
 #DENS_STR += '2par_io_final_averaged_w1_default_v1_default'
@@ -558,8 +580,17 @@ EXTRA_STR = ''
 # try over both wind packing factor and blowing snow factor, now
 # order here is [WP, BS]
 #par_vals = np.array([5.8e-7, 2.9e-7]) # prior/initial values
-par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values from MCMC calibration from previous work
 
+# wind packing, blowing snow, blowing snow to atmosphere
+# par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07, 4.0059442776163867e-07*0.15])# values from MCMC calibration from previous work
+
+# new priors based on optimal values:
+
+# par_vals = np.array([2.0e-7, 2.0e-7, 3.0e-8])
+
+# continuing from previous chain
+
+# par_vals = np.array([1.7364598654456103e-06,1.6328740948427575e-06,3.6454407838734444e-08])
 
 #can also continue from previous mcmc with last accepted value
 
@@ -568,15 +599,33 @@ par_vals = np.array([2.0504155592128743e-06, 4.0059442776163867e-07])# values fr
 
 #par_vals = np.array([1.5709136754892937e-06, 3.0436526641925934e-07])
 
+# 4 params: wind packing, open water loss, atm loss, melt factor (negative of)
+# par_vals = np.array([1.14e-6, 1.01e-6, 2.5e-8, 1])
+
+# par_vals = np.array([5e-7, 5e-7, 1e-8, 0.5])
+
+
+par_vals = np.array([3.0])
+
 # initial (prior) parameter values
 PARS_INIT = par_vals.copy()
 
-# names of parameters used
-par_names = ['wind packing', 'blowing snow']
+# STEP_SCALING_FACTORS = [1e-7, 1e-7, 1e-8, 0.1] # scaling factors for step size, changes if number of pars changes
+# 1e-7 for wind packing, 1e-7 for blowing snow water, 1e-8 for blowing snow atm, 0.1 for melt factor
 
-# metadata for mcmc ouptut files
-metadata_headings = ['N_iter','uncert','prior_p1','prior_p2', 'sigma_p1','sigma_p2', 'oib_prod']
-metadata_values = [[ITER_MAX, UNCERT, par_vals[0], par_vals[1],PAR_SIGMA[0], PAR_SIGMA[1], 'MEDIAN']]
+STEP_SCALING_FACTORS = [0.1]
+# names of parameters used
+# par_names = ['wind packing', 'blowing snow water', 'blowing snow atm', 'melt factor']
+par_names = ['melt_factor']
+
+# metadata for mcmc output files
+
+# generalize for arbitrary number of params
+prior_str_list = ['prior_p{}'.format(x+1) for x in range(len(par_vals))]
+sigma_str_list = ['sigma_p{}'.format(x+1) for x in range(len(par_vals))]
+
+metadata_headings = ['N_iter','uncert'] + prior_str_list + sigma_str_list + ['oib_prod']
+metadata_values = [[ITER_MAX, UNCERT] + list(par_vals) + list(PAR_SIGMA) + ['MEDIAN']]
 
 # metadata dataframe for saving
 meta_df = pd.DataFrame(metadata_values, columns=metadata_headings)
@@ -657,6 +706,10 @@ trace_pars = [par_vals]
 trace_lls = [p0]
 trace_stats = [stats_0]
 
+# strings for file saving
+pars_str = '_'.join(PARS_INIT.astype(str))# allow for variable number of parameters
+sig_str = '_'.join([str(x) for x in PAR_SIGMA])
+
 # metropolis mcmc
 
 # pre-calculate all the MCMC step sizes from the prior
@@ -666,9 +719,16 @@ trace_stats = [stats_0]
 step_vals = np.random.normal(0, PAR_SIGMA, (ITER_MAX, NPARS))
 
 # scale to appropriate value
-step_vals[:,0] *= 1e-7 # scale wind packing
-step_vals[:,1] *= 1e-7 # scale blowing snow
+# step_vals[:,0] *= 1e-7 # scale wind packing
+# step_vals[:,1] *= 1e-7 # scale blowing snow water
+# step_vals[:,2] *= 1e-8 # scale blowing snow atm
+# step_vals[:,3] *= 0.1 # scale melt factor
 # reshape this if the number of params changes
+
+# scale step size to appropriate values; STEP_SCALING_FACTORS assigned above
+for i in range(NPARS):
+	step_vals[:,i] *= STEP_SCALING_FACTORS[i]
+
 
 # for calculating acceptance rate; may not actually be needed but leaving for now
 acceptance_count = 0
@@ -726,7 +786,8 @@ for i in range(ITER_MAX):
 		# save intermediate output every 1k iterations just in case 
 		print('Writing output for {} iterations...'.format(i))
 		# save in folder called mcmc_output_intermediate
-		fname = 'mcmc_output_intermediate/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}.h5'.format(i,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],EXTRA_STR)
+		
+		fname = 'mcmc_output_intermediate/mcmc_output_i{}_u_{}_p0_{}_s0_{}_{}.h5'.format(i,UNCERT,pars_str,sig_str,EXTRA_STR)
 
 		# include trace data also
 		write_to_file(fname, stats_list, par_list, loglike_list, par_names, rejected_stats, rejected_pars, rejected_lls, [trace_pars, trace_lls, trace_stats])
@@ -736,7 +797,7 @@ for i in range(ITER_MAX):
 # save final output to file
 
 # put in subfolder called 'mcmc_output'
-fname = 'mcmc_output/mcmc_output_i{}_u_{}_p0_{}_{}_s0_{}_{}_{}.h5'.format(ITER_MAX,UNCERT,PARS_INIT[0],PARS_INIT[1],PAR_SIGMA[0],PAR_SIGMA[1],EXTRA_STR)
+fname = 'mcmc_output/mcmc_output_i{}_u_{}_p0_{}_s0_{}_{}.h5'.format(ITER_MAX,UNCERT,pars_str,sig_str,EXTRA_STR)
 
 print(ITER_MAX)
 print(fname)
